@@ -1,0 +1,53 @@
+/*
+Theme Name:   ixion child theme
+Description:  Write here a brief description about your child-theme
+Author:       Thiago Ferreira de Sousa
+Author URL:   Write here the author's blog or website url
+Template:     ixion
+Version:      1.0
+License:      GNU General Public License v2 or later
+License URI:  http://www.gnu.org/licenses/gpl-2.0.html
+Text Domain:  ixion-child
+*/
+/*DESKTOP*/
+body div#page header#masthead div.branding-container div.site-branding {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+}
+
+body div#page header#masthead div.branding-container div.site-branding a img {
+  border-radius: 10px;
+  margin: 0 0.625rem 0 0;
+}
+
+body div#page header#masthead div.branding-container div.site-branding h1.site-title {
+  font-size: 1.5625rem;
+  margin: 0;
+  -webkit-transition: all 0.5s ease;
+  transition: all 0.5s ease;
+}
+
+body div#page header#masthead div.branding-container div.site-branding h1.site-title:hover {
+  color: #B22234;
+}
+
+body div#page header#masthead nav#site-navigation div.menu-menu-container ul#top-menu li a {
+  color: #3C3B6E;
+  -webkit-transition: all 0.5s ease;
+  transition: all 0.5s ease;
+}
+
+body div#page header#masthead nav#site-navigation div.menu-menu-container ul#top-menu li:hover a {
+  color: #B22234;
+}
+
+body div#page header#masthead nav#site-navigation div.menu-menu-container ul#top-menu li.current_page_item a {
+  color: #B22234;
+}
+
+/*MOBILE*/
+/*# sourceMappingURL=style.css.map */

@@ -1,0 +1,49 @@
+body{
+    div#page{
+        header#masthead{
+            div.branding-container{
+                div.site-branding{
+                    display: flex;
+                    align-items: center;
+                    a{
+                        img{
+                            border-radius: 10px;
+                            margin: 0 rem(10) 0 0;
+                        }
+                    }
+                    h1.site-title{
+                        font-size: rem(25);
+                        margin: 0;
+                        transition: all 0.5s ease;
+                        &:hover{
+                            color: $link-color-hover;
+                        }
+                    }
+                }
+                
+            }
+            nav#site-navigation{
+                    div.menu-menu-container{
+                        ul#top-menu{
+                            li{
+                                a{
+                                    color: $link-color;
+                                    transition: all 0.5s ease;
+                                }
+                                &:hover{
+                                    a{
+                                        color: $link-color-hover;
+                                    }
+                                }
+                            }
+                            li.current_page_item{
+                                a{
+                                    color: $link-color-hover;
+                                }
+                            }
+                        }
+                    }
+                }
+        }
+    }
+}

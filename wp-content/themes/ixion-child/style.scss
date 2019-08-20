@@ -1,0 +1,56 @@
+/*
+Theme Name:   ixion child theme
+Description:  Write here a brief description about your child-theme
+Author:       Thiago Ferreira de Sousa
+Author URL:   Write here the author's blog or website url
+Template:     ixion
+Version:      1.0
+License:      GNU General Public License v2 or later
+License URI:  http://www.gnu.org/licenses/gpl-2.0.html
+Text Domain:  ixion-child
+*/
+
+/*DESKTOP*/
+
+//variaveis
+@import "itcss/_01_settings.scss";
+
+//mixins e functions
+@import "itcss/_02_tools.scss";
+
+//resets
+@import "itcss/_03_generic.scss";
+
+//tags
+@import "itcss/_04_base.scss";
+
+//classes que sejam utilizadas no site inteiro
+@import "itcss/_05_objects.scss";
+
+//classes para elementos especificos
+@import "itcss/_06_components.scss";
+
+//!importants
+@import "itcss/_07_trumps.scss";
+
+/*MOBILE*/
+
+
+
+//variaveis
+@import "itcss_mobile/_01_settings_mobile.scss";
+
+//mixins e functions
+@import "itcss_mobile/_02_tools_mobile.scss";
+
+//tags
+@import "itcss_mobile/_04_base_mobile.scss";
+
+//classes que sejam utilizadas no site inteiro
+@import "itcss_mobile/_05_objects_mobile.scss";
+
+//classes para elementos especificos
+@import "itcss_mobile/_06_components_mobile.scss";
+
+//!importants
+@import "itcss_mobile/_07_trumps_mobile.scss";
