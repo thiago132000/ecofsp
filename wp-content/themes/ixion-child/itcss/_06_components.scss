@@ -45,5 +45,13 @@ body{
                     }
                 }
         }
+        footer#colophon{
+            div.site-info{
+                p{
+                    font-size: rem(14);
+                    color: $black;
+                }
+            }
+        }
     }
 }

@@ -49,5 +49,10 @@ body div#page header#masthead nav#site-navigation div.menu-menu-container ul#top
   color: #B22234;
 }
 
+body div#page footer#colophon div.site-info p {
+  font-size: 0.875rem;
+  color: #000;
+}
+
 /*MOBILE*/
 /*# sourceMappingURL=style.css.map */
