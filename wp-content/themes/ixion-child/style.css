@@ -10,6 +10,10 @@ License URI:  http://www.gnu.org/licenses/gpl-2.0.html
 Text Domain:  ixion-child
 */
 /*DESKTOP*/
+body div#page header#masthead {
+  border: unset;
+}
+
 body div#page header#masthead div.branding-container div.site-branding {
   display: -webkit-box;
   display: -ms-flexbox;
@@ -46,6 +50,24 @@ body div#page header#masthead nav#site-navigation div.menu-menu-container ul#top
 }
 
 body div#page header#masthead nav#site-navigation div.menu-menu-container ul#top-menu li.current_page_item a {
+  color: #B22234;
+}
+
+body div#page #tribe-events-content .tribe-events-calendar td a {
+  color: #fff;
+}
+
+body div#page #tribe-events-content .tribe-events-calendar td a:hover {
+  color: #fff;
+}
+
+body div#page #tribe-events-content .tribe-events-calendar td div.type-tribe_events a {
+  color: #3C3B6E;
+  -webkit-transition: all 0.5s ease;
+  transition: all 0.5s ease;
+}
+
+body div#page #tribe-events-content .tribe-events-calendar td div.type-tribe_events a:hover {
   color: #B22234;
 }
 

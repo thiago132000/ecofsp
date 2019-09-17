@@ -1,6 +1,7 @@
 body{
     div#page{
         header#masthead{
+            border: unset;
             div.branding-container{
                 div.site-branding{
                     display: flex;
@@ -44,6 +45,27 @@ body{
                         }
                     }
                 }
+        }
+        #tribe-events-content{ 
+            .tribe-events-calendar{ 
+                td{
+                    a{
+                        color: $white;
+                        &:hover{
+                            color: $white;
+                        }
+                    }
+                    div.type-tribe_events{
+                        a{
+                            color: $link-color;
+                            transition: all 0.5s ease;
+                            &:hover{
+                                color: $link-color-hover;
+                            }
+                        }
+                    }
+                }
+            }
         }
         footer#colophon{
             div.site-info{

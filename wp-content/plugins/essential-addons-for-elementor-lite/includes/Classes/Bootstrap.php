@@ -81,9 +81,6 @@ class Bootstrap
             $this->start_plugin_tracking();
         }
 
-        // post args
-        $this->post_args = apply_filters('eael/post_args', $this->post_args);
-
         // register extensions
         $this->register_extensions();
 
@@ -112,7 +109,6 @@ class Bootstrap
 
         // Elements
         add_action('elementor/elements/categories_registered', array($this, 'register_widget_categories'));
-        add_action('elementor/controls/controls_registered', array($this, 'register_controls_group'));
         add_action('elementor/widgets/widgets_registered', array($this, 'register_elements'));
         add_action('wp_footer', array($this, 'render_global_html'));
 
@@ -120,8 +116,9 @@ class Bootstrap
         if (is_admin()) {
             // Admin
             if (!$this->pro_enabled) {
-                $this->admin_notice();
+                // TODO: you have to call admin_notice for pro also.
             }
+            $this->admin_notice(); // this line of code
 
             add_action('admin_menu', array($this, 'admin_menu'));
             add_action('admin_enqueue_scripts', array($this, 'admin_enqueue_scripts'));
@@ -136,6 +133,11 @@ class Bootstrap
             if (!did_action('elementor/loaded')) {
                 add_action('admin_notices', array($this, 'elementor_not_loaded'));
             }
+
+        }
+
+        if(current_user_can('manage_options')) {
+            add_action( 'admin_bar_menu', [$this, 'admin_bar'], 900);
         }
     }
 }

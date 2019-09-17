@@ -6,7 +6,6 @@ if (!defined('ABSPATH')) {
     exit();
 } // Exit if accessed directly
 
-use Essential_Addons_Elementor\Classes\Group_Control_EA_Posts;
 use \Elementor\Core\Settings\Manager as Settings_Manager;
 
 trait Elements
@@ -24,16 +23,6 @@ trait Elements
                 'title' => __('Essential Addons', 'essential-addons-elementor'),
                 'icon' => 'font',
             ], 1);
-    }
-
-    /**
-     * Add new elementor group control
-     *
-     * @since v1.0.0
-     */
-    public function register_controls_group($controls_manager)
-    {
-        $controls_manager->add_group_control('eaeposts', new Group_Control_EA_Posts);
     }
 
     /**
@@ -58,6 +47,12 @@ trait Elements
 
             if (isset($this->registered_elements[$active_element]['condition'])) {
                 if ($this->registered_elements[$active_element]['condition'][0]($this->registered_elements[$active_element]['condition'][1]) == false) {
+                    continue;
+                }
+            }
+
+            if($this->pro_enabled && \version_compare(EAEL_PRO_PLUGIN_VERSION, '3.3.0', '<')) {
+                if(in_array($active_element, ['content-timeline', 'dynamic-filter-gallery', 'post-block', 'post-carousel', 'post-list'])) {
                     continue;
                 }
             }
@@ -117,7 +112,9 @@ trait Elements
                 </div>';
 
                 if ($page_settings_model->get_settings('eael_ext_reading_progress') != 'yes') {
-                    if ($global_settings['reading_progress']['display_condition'] == 'pages' && !is_page()) {
+                    if(get_post_status($global_settings['reading_progress']['post_id']) != 'publish') {
+                        return;
+                    } else if ($global_settings['reading_progress']['display_condition'] == 'pages' && !is_page()) {
                         return;
                     } else if ($global_settings['reading_progress']['display_condition'] == 'posts' && !is_single()) {
                         return;

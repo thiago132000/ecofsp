@@ -199,15 +199,22 @@ trait Admin
          * classes for wrapper, 
          * Message message for showing.
          */
-        $notice->classes( 'upsale', 'notice is-dismissible' );
-        $notice->message( 'upsale', '<p>'. __( '<a href="https://essential-addons.com/elementor/reading-progress/" target="_blank">Reading Progress Bar</a> is Now Available for Elementor. Increase 20-40% Sales & Interaction in Your Site With Our New Plugin <a href="https://notificationx.com" target="_blank">NotificationX!</a>', $notice->text_domain ) .'</p>' );
+        $notice->classes( 'upsale', 'notice is-dismissible ' );
+        $notice->message( 'upsale', '<p>'. __( '5000+ People already using <a href="hhttps://wpdeveloper.net/ea/notificationX" target="_blank">NotificationX</a> to increase their Sales & Engagement! Join Free or Get <a href="https://wpdeveloper.net/ea/notificationX" target="_blank">Exclusive Lifetime Pro</a> for only $39! Limied Time!', $notice->text_domain ) .'</p>' );
         $notice->thumbnail( 'upsale', plugins_url( 'assets/admin/images/nx-icon.svg', EAEL_PLUGIN_BASENAME ) );
+
+        // Update Notice For PRO Version
+        if( $this->pro_enabled && \version_compare( EAEL_PRO_PLUGIN_VERSION, '3.3.0', '<' ) ) {
+            $notice->classes( 'update', 'notice is-dismissible ' );
+            $notice->message( 'update', '<p>'. __( 'You are using an incompatible version of Essential Addons PRO. Please update to v3.3.0+. <a href="https://essential-addons.com/elementor/docs/manually-update-essential-addons-pro/" target="_blank">Follow manual update guide.</a>', $notice->text_domain ) .'</p>' );
+            $notice->thumbnail( 'update', plugins_url( 'assets/admin/images/icon-ea-logo.svg', EAEL_PLUGIN_BASENAME ) );
+        }
 
         $notice->upsale_args = array(
             'slug'      => 'notificationx',
             'page_slug' => 'nx-builder',
             'file'      => 'notificationx.php',
-            'btn_text'  => __( 'Install NotificationX', 'essential-addons-elementor' ),
+            'btn_text'  => __( 'Install Free', 'essential-addons-elementor' ),
             'condition' => [
                 'by' => 'class',
                 'class' => 'NotificationX'
@@ -221,7 +228,43 @@ trait Admin
                 'review' => $notice->makeTime($notice->timestamp, '3 Day'), // after 3 days
             ],
         );
+        if( $this->pro_enabled && \version_compare( EAEL_PRO_PLUGIN_VERSION, '3.3.0', '<' ) ) { 
+            $notice->options_args['notice_will_show']['update'] = $notice->timestamp;
+        }
 
         $notice->init();
+    }
+
+    public function admin_bar($wp_admin_bar) {
+        $wp_admin_bar->add_node([
+            'id'    => 'ea-wp-admin-bar',
+            'meta'  => [
+                'class' => 'ea-wp-admin-bar'
+            ],
+            'title' => 'EA Tools'
+        ]);
+
+        $wp_admin_bar->add_node([
+            'parent'    => 'ea-wp-admin-bar',
+            'id'    => 'ea-all-cache-clear',
+            'href'  => '#',
+            'meta'  => [
+                'class' => 'ea-all-cache-clear'
+            ],
+            'title' => 'Clear All Cache'
+        ]);
+
+        $wp_admin_bar->add_node([
+            'parent'    => 'ea-wp-admin-bar',
+            'id'    => 'ea-clear-cache-'.get_queried_object_id(),
+            'href'  => '#',
+            'meta'  => [
+                'class' => 'ea-clear-cache',
+                'html'   => '<div class="ea-clear-cache-id" data-pageid="'.get_queried_object_id().'">'
+            ],
+            'title' => 'Clear Page Cache'
+        ]);
+
+        
     }
 }
