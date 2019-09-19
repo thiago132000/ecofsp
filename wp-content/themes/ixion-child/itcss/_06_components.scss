@@ -2,7 +2,9 @@ body{
     div#page{
         header#masthead{
             border: unset;
+            margin-bottom: rem(10);
             div.branding-container{
+                padding: rem(10) rem(60);
                 div.site-branding{
                     display: flex;
                     align-items: center;
@@ -68,12 +70,56 @@ body{
             }
         }
         footer#colophon{
+            border: unset;
             div.site-info{
+                border: unset;
                 p{
                     font-size: rem(14);
                     color: $black;
                 }
             }
+        }
+    }
+}
+
+body.blog, body.single-post, body.archive, body.search{
+    div#primary, div.post-thumbnail, header.page-header, aside#secondary{
+        margin-top: rem(50);
+        section.EPS_Super_Search_Widget{
+            form.searchform{
+               div.input-group{
+                input{
+                    width: 100%
+                }
+                span{
+                    display: none;
+                }
+               } 
+            }
+        }
+    }
+    a{
+        color: $link-color;
+        transition: all 0.5s ease;
+        &:hover{
+            color: $link-color-hover;
+        }
+    }
+}
+
+div.post-thumbnail{
+    img{
+        object-fit: cover;
+        width: 100%;
+        object-position: center;
+        height: rem(300);
+    }
+    a{
+        img{
+            object-fit: cover;
+            width: 100%;
+            object-position: center;
+            height: rem(300);
         }
     }
 }

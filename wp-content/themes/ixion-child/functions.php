@@ -19,4 +19,6 @@ $parent_style = 'parent-style';
 	}
 add_action( 'wp_enqueue_scripts', 'ixion_child_enqueue_child_styles' );
 
+add_post_type_support( 'post', 'excerpt' );
+
 /*Write here your own functions */
