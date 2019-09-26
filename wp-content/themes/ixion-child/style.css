@@ -14,6 +14,21 @@ Text Domain:  ixion-child
   max-width: 100%;
 }
 
+.download {
+  color: #fff;
+  background-color: #3C3B6E;
+  padding: 1.25rem 3.125rem;
+  border-radius: 100px;
+  -webkit-transition: all 0.5s ease;
+  transition: all 0.5s ease;
+  font-weight: bold;
+}
+
+.download:hover, .download:focus {
+  background-color: #B22234;
+  color: #fff;
+}
+
 body div#page header#masthead {
   border: unset;
   margin-bottom: 0.625rem;

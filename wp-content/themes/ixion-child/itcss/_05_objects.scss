@@ -1,3 +1,16 @@
 .no-sidebar .recent-posts-header, .no-sidebar .entry-meta, .no-sidebar .hentry, .no-sidebar .comments-area, .no-sidebar.singular .entry-title, .no-sidebar .post-navigation, .no-sidebar .posts-navigation, .no-sidebar .page-header{
     max-width: 100%;
 }
+
+.download{
+    color: $white;
+    background-color: $link-color;
+    padding: rem(20) rem(50);
+    border-radius: 100px;
+    transition: all 0.5s ease;
+    font-weight: bold;
+    &:hover, &:focus{
+        background-color: $link-color-hover;
+        color: $white;
+    }
+}
