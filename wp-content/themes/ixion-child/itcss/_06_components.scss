@@ -8,6 +8,7 @@ body{
                 div.site-branding{
                     display: flex;
                     align-items: center;
+                    justify-content: center;
                     a{
                         img{
                             border-radius: 10px;
@@ -27,6 +28,10 @@ body{
             }
             nav#site-navigation{
                     div.menu-menu-container{
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        margin-top: rem(30);
                         ul#top-menu{
                             li{
                                 a{
@@ -82,7 +87,7 @@ body{
     }
 }
 
-body.blog, body.single-post, body.archive, body.search{
+body.blog, body.single-post, body.archive, body.search, body.page-template-page-video{
     div#primary, div.post-thumbnail, header.page-header, aside#secondary{
         margin-top: rem(50);
         section.EPS_Super_Search_Widget{
@@ -97,6 +102,16 @@ body.blog, body.single-post, body.archive, body.search{
                } 
             }
         }
+    }
+    .wp-pagenavi{
+        a{
+            color: $link-color;
+            transition: all 0.5s ease;
+            &:hover{
+                color: $link-color-hover;
+            }
+        } 
+        margin-bottom: rem(10);
     }
     a{
         color: $link-color;
@@ -121,5 +136,11 @@ div.post-thumbnail{
             object-position: center;
             height: rem(300);
         }
+    }
+}
+
+body.page-template-page-video{
+    h1{
+        text-align: center;
     }
 }

@@ -2,10 +2,10 @@
 Contributors: arjunthakur
 Tags: duplicate post, duplicate page, duplicate custom posts, wordpress page duplicator, wordpress post duplicator, page duplicate, page and post clone, page clone, post clone, wp post clone, gutenberg editor.
 Requires at least: 3.5
-Tested up to: 5.2.2
+Tested up to: 5.2.3
 Requires PHP: 5.2.4
-Stable tag: 2.5.3
-Version: 2.5.3
+Stable tag: 2.5.4
+Version: 2.5.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 

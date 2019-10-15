@@ -189,6 +189,7 @@ $config = [
             'class' => '\Essential_Addons_Elementor\Elements\Tooltip',
             'dependency' => [
                 'css' => [
+
                     EAEL_PLUGIN_PATH . DIRECTORY_SEPARATOR . 'assets/front-end/css/tooltip/index.min.css',
                 ],
             ],
@@ -296,6 +297,14 @@ $config = [
                 ],
             ],
         ],
+        'fluentform' => [
+            'class' => '\Essential_Addons_Elementor\Elements\FluentForm',
+            'dependency' => [
+                'css' => [
+                    EAEL_PLUGIN_PATH . DIRECTORY_SEPARATOR . 'assets/front-end/css/fluentform/index.min.css',
+                ],
+            ],
+        ],
     ],
     'extensions' => [
         'eael-reading-progress' => [
@@ -309,6 +318,9 @@ $config = [
                 ],
             ],
         ],
+        'eael-post-duplicator' => [
+            'class' => '\Essential_Addons_Elementor\Extensions\Post_Duplicator',
+        ]
     ],
 ];
 

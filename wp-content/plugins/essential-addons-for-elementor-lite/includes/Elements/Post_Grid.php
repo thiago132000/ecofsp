@@ -402,6 +402,7 @@ class Post_Grid extends Widget_Base
                 ],
                 'selectors' => [
                     '{{WRAPPER}} .eael-grid-post .eael-entry-overlay > i' => 'font-size: {{SIZE}}{{UNIT}};',
+                    '{{WRAPPER}} .eael-grid-post .eael-entry-overlay > img' => 'height: {{SIZE}}{{UNIT}}; width: {{SIZE}}{{UNIT}};'
                 ],
             ]
         );
@@ -435,6 +436,7 @@ class Post_Grid extends Widget_Base
             'eael_post_grid_columns' => $settings['eael_post_grid_columns'],
             'show_load_more' => $settings['show_load_more'],
             'show_load_more_text' => $settings['show_load_more_text'],
+            'expanison_indicator'   => $settings['excerpt_expanison_indicator']
         ];
 
         $this->add_render_attribute(

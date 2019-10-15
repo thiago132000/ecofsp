@@ -45,6 +45,9 @@ body div#page header#masthead div.branding-container div.site-branding {
   -webkit-box-align: center;
       -ms-flex-align: center;
           align-items: center;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
 }
 
 body div#page header#masthead div.branding-container div.site-branding a img {
@@ -61,6 +64,19 @@ body div#page header#masthead div.branding-container div.site-branding h1.site-t
 
 body div#page header#masthead div.branding-container div.site-branding h1.site-title:hover {
   color: #B22234;
+}
+
+body div#page header#masthead nav#site-navigation div.menu-menu-container {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  margin-top: 1.875rem;
 }
 
 body div#page header#masthead nav#site-navigation div.menu-menu-container ul#top-menu li a {
@@ -108,25 +124,39 @@ body div#page footer#colophon div.site-info p {
   color: #000;
 }
 
-body.blog div#primary, body.blog div.post-thumbnail, body.blog header.page-header, body.blog aside#secondary, body.single-post div#primary, body.single-post div.post-thumbnail, body.single-post header.page-header, body.single-post aside#secondary, body.archive div#primary, body.archive div.post-thumbnail, body.archive header.page-header, body.archive aside#secondary, body.search div#primary, body.search div.post-thumbnail, body.search header.page-header, body.search aside#secondary {
+body.blog div#primary, body.blog div.post-thumbnail, body.blog header.page-header, body.blog aside#secondary, body.single-post div#primary, body.single-post div.post-thumbnail, body.single-post header.page-header, body.single-post aside#secondary, body.archive div#primary, body.archive div.post-thumbnail, body.archive header.page-header, body.archive aside#secondary, body.search div#primary, body.search div.post-thumbnail, body.search header.page-header, body.search aside#secondary, body.page-template-page-video div#primary, body.page-template-page-video div.post-thumbnail, body.page-template-page-video header.page-header, body.page-template-page-video aside#secondary {
   margin-top: 3.125rem;
 }
 
-body.blog div#primary section.EPS_Super_Search_Widget form.searchform div.input-group input, body.blog div.post-thumbnail section.EPS_Super_Search_Widget form.searchform div.input-group input, body.blog header.page-header section.EPS_Super_Search_Widget form.searchform div.input-group input, body.blog aside#secondary section.EPS_Super_Search_Widget form.searchform div.input-group input, body.single-post div#primary section.EPS_Super_Search_Widget form.searchform div.input-group input, body.single-post div.post-thumbnail section.EPS_Super_Search_Widget form.searchform div.input-group input, body.single-post header.page-header section.EPS_Super_Search_Widget form.searchform div.input-group input, body.single-post aside#secondary section.EPS_Super_Search_Widget form.searchform div.input-group input, body.archive div#primary section.EPS_Super_Search_Widget form.searchform div.input-group input, body.archive div.post-thumbnail section.EPS_Super_Search_Widget form.searchform div.input-group input, body.archive header.page-header section.EPS_Super_Search_Widget form.searchform div.input-group input, body.archive aside#secondary section.EPS_Super_Search_Widget form.searchform div.input-group input, body.search div#primary section.EPS_Super_Search_Widget form.searchform div.input-group input, body.search div.post-thumbnail section.EPS_Super_Search_Widget form.searchform div.input-group input, body.search header.page-header section.EPS_Super_Search_Widget form.searchform div.input-group input, body.search aside#secondary section.EPS_Super_Search_Widget form.searchform div.input-group input {
+body.blog div#primary section.EPS_Super_Search_Widget form.searchform div.input-group input, body.blog div.post-thumbnail section.EPS_Super_Search_Widget form.searchform div.input-group input, body.blog header.page-header section.EPS_Super_Search_Widget form.searchform div.input-group input, body.blog aside#secondary section.EPS_Super_Search_Widget form.searchform div.input-group input, body.single-post div#primary section.EPS_Super_Search_Widget form.searchform div.input-group input, body.single-post div.post-thumbnail section.EPS_Super_Search_Widget form.searchform div.input-group input, body.single-post header.page-header section.EPS_Super_Search_Widget form.searchform div.input-group input, body.single-post aside#secondary section.EPS_Super_Search_Widget form.searchform div.input-group input, body.archive div#primary section.EPS_Super_Search_Widget form.searchform div.input-group input, body.archive div.post-thumbnail section.EPS_Super_Search_Widget form.searchform div.input-group input, body.archive header.page-header section.EPS_Super_Search_Widget form.searchform div.input-group input, body.archive aside#secondary section.EPS_Super_Search_Widget form.searchform div.input-group input, body.search div#primary section.EPS_Super_Search_Widget form.searchform div.input-group input, body.search div.post-thumbnail section.EPS_Super_Search_Widget form.searchform div.input-group input, body.search header.page-header section.EPS_Super_Search_Widget form.searchform div.input-group input, body.search aside#secondary section.EPS_Super_Search_Widget form.searchform div.input-group input, body.page-template-page-video div#primary section.EPS_Super_Search_Widget form.searchform div.input-group input, body.page-template-page-video div.post-thumbnail section.EPS_Super_Search_Widget form.searchform div.input-group input, body.page-template-page-video header.page-header section.EPS_Super_Search_Widget form.searchform div.input-group input, body.page-template-page-video aside#secondary section.EPS_Super_Search_Widget form.searchform div.input-group input {
   width: 100%;
 }
 
-body.blog div#primary section.EPS_Super_Search_Widget form.searchform div.input-group span, body.blog div.post-thumbnail section.EPS_Super_Search_Widget form.searchform div.input-group span, body.blog header.page-header section.EPS_Super_Search_Widget form.searchform div.input-group span, body.blog aside#secondary section.EPS_Super_Search_Widget form.searchform div.input-group span, body.single-post div#primary section.EPS_Super_Search_Widget form.searchform div.input-group span, body.single-post div.post-thumbnail section.EPS_Super_Search_Widget form.searchform div.input-group span, body.single-post header.page-header section.EPS_Super_Search_Widget form.searchform div.input-group span, body.single-post aside#secondary section.EPS_Super_Search_Widget form.searchform div.input-group span, body.archive div#primary section.EPS_Super_Search_Widget form.searchform div.input-group span, body.archive div.post-thumbnail section.EPS_Super_Search_Widget form.searchform div.input-group span, body.archive header.page-header section.EPS_Super_Search_Widget form.searchform div.input-group span, body.archive aside#secondary section.EPS_Super_Search_Widget form.searchform div.input-group span, body.search div#primary section.EPS_Super_Search_Widget form.searchform div.input-group span, body.search div.post-thumbnail section.EPS_Super_Search_Widget form.searchform div.input-group span, body.search header.page-header section.EPS_Super_Search_Widget form.searchform div.input-group span, body.search aside#secondary section.EPS_Super_Search_Widget form.searchform div.input-group span {
+body.blog div#primary section.EPS_Super_Search_Widget form.searchform div.input-group span, body.blog div.post-thumbnail section.EPS_Super_Search_Widget form.searchform div.input-group span, body.blog header.page-header section.EPS_Super_Search_Widget form.searchform div.input-group span, body.blog aside#secondary section.EPS_Super_Search_Widget form.searchform div.input-group span, body.single-post div#primary section.EPS_Super_Search_Widget form.searchform div.input-group span, body.single-post div.post-thumbnail section.EPS_Super_Search_Widget form.searchform div.input-group span, body.single-post header.page-header section.EPS_Super_Search_Widget form.searchform div.input-group span, body.single-post aside#secondary section.EPS_Super_Search_Widget form.searchform div.input-group span, body.archive div#primary section.EPS_Super_Search_Widget form.searchform div.input-group span, body.archive div.post-thumbnail section.EPS_Super_Search_Widget form.searchform div.input-group span, body.archive header.page-header section.EPS_Super_Search_Widget form.searchform div.input-group span, body.archive aside#secondary section.EPS_Super_Search_Widget form.searchform div.input-group span, body.search div#primary section.EPS_Super_Search_Widget form.searchform div.input-group span, body.search div.post-thumbnail section.EPS_Super_Search_Widget form.searchform div.input-group span, body.search header.page-header section.EPS_Super_Search_Widget form.searchform div.input-group span, body.search aside#secondary section.EPS_Super_Search_Widget form.searchform div.input-group span, body.page-template-page-video div#primary section.EPS_Super_Search_Widget form.searchform div.input-group span, body.page-template-page-video div.post-thumbnail section.EPS_Super_Search_Widget form.searchform div.input-group span, body.page-template-page-video header.page-header section.EPS_Super_Search_Widget form.searchform div.input-group span, body.page-template-page-video aside#secondary section.EPS_Super_Search_Widget form.searchform div.input-group span {
   display: none;
 }
 
-body.blog a, body.single-post a, body.archive a, body.search a {
+body.blog .wp-pagenavi, body.single-post .wp-pagenavi, body.archive .wp-pagenavi, body.search .wp-pagenavi, body.page-template-page-video .wp-pagenavi {
+  margin-bottom: 0.625rem;
+}
+
+body.blog .wp-pagenavi a, body.single-post .wp-pagenavi a, body.archive .wp-pagenavi a, body.search .wp-pagenavi a, body.page-template-page-video .wp-pagenavi a {
   color: #3C3B6E;
   -webkit-transition: all 0.5s ease;
   transition: all 0.5s ease;
 }
 
-body.blog a:hover, body.single-post a:hover, body.archive a:hover, body.search a:hover {
+body.blog .wp-pagenavi a:hover, body.single-post .wp-pagenavi a:hover, body.archive .wp-pagenavi a:hover, body.search .wp-pagenavi a:hover, body.page-template-page-video .wp-pagenavi a:hover {
+  color: #B22234;
+}
+
+body.blog a, body.single-post a, body.archive a, body.search a, body.page-template-page-video a {
+  color: #3C3B6E;
+  -webkit-transition: all 0.5s ease;
+  transition: all 0.5s ease;
+}
+
+body.blog a:hover, body.single-post a:hover, body.archive a:hover, body.search a:hover, body.page-template-page-video a:hover {
   color: #B22234;
 }
 
@@ -146,6 +176,10 @@ div.post-thumbnail a img {
   -o-object-position: center;
      object-position: center;
   height: 18.75rem;
+}
+
+body.page-template-page-video h1 {
+  text-align: center;
 }
 
 /*MOBILE*/

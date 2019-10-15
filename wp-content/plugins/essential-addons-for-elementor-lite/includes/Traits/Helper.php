@@ -143,7 +143,7 @@ trait Helper
                 'post_type' => '',
                 'multiple' => true,
                 'condition' => [
-                    'eaeposts_post_type!' => 'by_id',
+                    'post_type!' => 'by_id',
                 ],
             ]
         );
@@ -513,6 +513,19 @@ trait Helper
                 'label' => __('Excerpt Words', 'essential-addons-elementor'),
                 'type' => Controls_Manager::NUMBER,
                 'default' => '10',
+                'condition' => [
+                    'eael_show_excerpt' => '1',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'excerpt_expanison_indicator',
+            [
+                'label' => esc_html__('Expanison Indicator', 'essential-addons-elementor'),
+                'type' => Controls_Manager::TEXT,
+                'label_block' => false,
+                'default' => esc_html__('...', 'essential-addons-elementor'),
                 'condition' => [
                     'eael_show_excerpt' => '1',
                 ],
@@ -1237,6 +1250,34 @@ trait Helper
     }
 
     /**
+     * Get FluentForms List
+     * 
+     * @return array
+     */
+    public static function eael_select_fluent_forms()
+    {
+
+        $options = array();
+
+        if(defined('FLUENTFORM')) {
+            global $wpdb;
+            
+            $result = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}fluentform_forms" );
+            if($result) {
+                $options[0] = esc_html__('Select a Fluent Form', 'essential-addons-elementor');
+                foreach($result as $form) {
+                    $options[$form->id] = $form->title;
+                }
+            }else {
+                $options[0] = esc_html__('Create a Form First', 'essential-addons-elementor');
+            }
+        }
+
+        return $options;
+
+    }
+
+    /**
      * Get all elementor page templates
      *
      * @return array
@@ -1498,7 +1539,7 @@ trait Helper
                         <p>' . substr(str_replace(@$item['entities']['urls'][0]['url'], '', $item['full_text']), 0, $settings['eael_twitter_feed_content_length']) . '...</p>';
 
             if ($settings['eael_twitter_feed_show_read_more'] == 'true') {
-                $html .= '<a href="//twitter.com/' . @$item['user']['screen_name'] . '\/status/' . $item['id'] . '" target="_blank" class="read-more-link">Read More <i class="fas fa-angle-double-right"></i></a>';
+                $html .= '<a href="//twitter.com/' . @$item['user']['screen_name'] . '/status/' . $item['id'] . '" target="_blank" class="read-more-link">Read More <i class="fas fa-angle-double-right"></i></a>';
             }
             $html .= '</div>
                     ' . (isset($item['extended_entities']['media'][0]) && $settings['eael_twitter_feed_media'] == 'true' ? ($item['extended_entities']['media'][0]['type'] == 'photo' ? '<img src="' . $item['extended_entities']['media'][0]['media_url_https'] . '">' : '') : '') . '
