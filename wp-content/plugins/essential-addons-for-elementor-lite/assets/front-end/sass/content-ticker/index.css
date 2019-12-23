@@ -39,8 +39,6 @@
 .eael-ticker-wrap .swiper-button-prev {
   left: auto !important;
   right: 25px;
-  -webkit-transform: translateY(-50%) rotate(180deg) !important;
-          transform: translateY(-50%) rotate(180deg) !important;
 }
 
 .eael-ticker-wrap div.swiper-slide,
@@ -67,5 +65,19 @@
   .content-ticker-pagination {
     display: none;
   }
+}
+
+.eael-ticker-wrap .swiper-button-next, .eael-ticker-wrap .swiper-button-prev {
+  background-image: none;
+  outline: none;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
 }
 /*# sourceMappingURL=index.css.map */

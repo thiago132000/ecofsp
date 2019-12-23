@@ -651,7 +651,7 @@ class Feature_List extends Widget_Base
 				'type'      => Controls_Manager::COLOR,
 				'default'   => '#414247',
 				'selectors' => [
-					'{{WRAPPER}} .eael-feature-list-content-box .eael-feature-list-title' => 'color: {{VALUE}};',
+					'{{WRAPPER}} .eael-feature-list-content-box .eael-feature-list-title, {{WRAPPER}} .eael-feature-list-content-box .eael-feature-list-title > a, {{WRAPPER}} .eael-feature-list-content-box .eael-feature-list-title:visited' => 'color: {{VALUE}};',
 				],
 				'scheme'    => [
 					'type'  => Scheme_Color::get_type(),
@@ -731,7 +731,11 @@ class Feature_List extends Widget_Base
 		$padding = $settings['eael_feature_list_icon_padding']['size'];
 		$circle_size = $settings['eael_feature_list_icon_circle_size']['size'];
 		$font    = $settings['eael_feature_list_icon_size']['size'];
-		$border  = $settings['eael_feature_list_icon_border_width']['right'] + $settings['eael_feature_list_icon_border_width']['left'];
+
+		
+		if( isset($settings['eael_feature_list_icon_border_width']['right']) &&  isset($settings['eael_feature_list_icon_border_width']['left']) ) {
+			$border  = $settings['eael_feature_list_icon_border_width']['right'] + $settings['eael_feature_list_icon_border_width']['left'];
+		}
 
 
 		if ( $settings['eael_feature_list_icon_shape'] == 'rhombus' ) {
@@ -762,17 +766,15 @@ class Feature_List extends Widget_Base
 				$feat_title_tag = $settings['eael_feature_list_title_size'];
 
 				if( $item['eael_feature_list_link']['url'] ) {
-					$this->add_render_attribute( 'eael_feature_list_title'.$i, 'href', $item['eael_feature_list_link']['url'] );
+					$this->add_render_attribute( 'eael_feature_list_title_anchor'.$i, 'href', esc_url($item['eael_feature_list_link']['url']) );
 
 					if ( $item['eael_feature_list_link']['is_external'] ) {
-						$this->add_render_attribute( 'eael_feature_list_title'.$i, 'target', '_blank' );
+						$this->add_render_attribute( 'eael_feature_list_title_anchor'.$i, 'target', '_blank' );
 					}
 
 					if ( $item['eael_feature_list_link']['nofollow'] ) {
-						$this->add_render_attribute( 'eael_feature_list_title'.$i, 'rel', 'nofollow' );
+						$this->add_render_attribute( 'eael_feature_list_title_anchor'.$i, 'rel', 'nofollow' );
 					}
-
-					$feat_title_tag = 'a';
 				}
 
 				
@@ -847,7 +849,7 @@ class Feature_List extends Widget_Base
 							$feat_title_tag,
 							$this->get_render_attribute_string( 'eael_feature_list_title'.$i )
 						] ); ?>
-                        ><?php echo $item['eael_feature_list_title']; ?></<?php echo $feat_title_tag; ?>
+                        ><?php echo !empty($item['eael_feature_list_link']['url']) ? "<a {$this->get_render_attribute_string('eael_feature_list_title_anchor'.$i)}>": ''; ?><?php echo $item['eael_feature_list_title']; ?><?php echo !empty($item['eael_feature_list_link']['url']) ? "</a>": ''; ?></<?php echo $feat_title_tag; ?>
                     >
                     <p <?php echo $this->get_render_attribute_string( 'eael_feature_list_content'.$i ); ?>><?php echo $item['eael_feature_list_content']; ?></p>
                     </div>

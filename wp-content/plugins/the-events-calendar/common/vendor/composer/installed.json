@@ -1,5 +1,17 @@
 [
     {
+        "name": "faction23/a11y-dialog",
+        "version": "5.0.4",
+        "version_normalized": "5.0.4.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/faction23/a11y-dialog",
+            "reference": "master"
+        },
+        "type": "library",
+        "installation-source": "source"
+    },
+    {
         "name": "firebase/php-jwt",
         "version": "v5.0.0",
         "version_normalized": "5.0.0.0",
@@ -49,17 +61,17 @@
     },
     {
         "name": "lucatume/di52",
-        "version": "2.0.10",
-        "version_normalized": "2.0.10.0",
+        "version": "2.0.12",
+        "version_normalized": "2.0.12.0",
         "source": {
             "type": "git",
             "url": "https://github.com/lucatume/di52.git",
-            "reference": "1db42c08914ecc6c7d9ba86eeeb465f4eee7858c"
+            "reference": "b5ae39274b03c697f20d8d620e534539d6d8d27e"
         },
         "dist": {
             "type": "zip",
-            "url": "https://api.github.com/repos/lucatume/di52/zipball/1db42c08914ecc6c7d9ba86eeeb465f4eee7858c",
-            "reference": "1db42c08914ecc6c7d9ba86eeeb465f4eee7858c",
+            "url": "https://api.github.com/repos/lucatume/di52/zipball/b5ae39274b03c697f20d8d620e534539d6d8d27e",
+            "reference": "b5ae39274b03c697f20d8d620e534539d6d8d27e",
             "shasum": ""
         },
         "require": {
@@ -70,7 +82,7 @@
             "phpunit/phpunit-mock-objects-php52": "dev-1.1.0-php52",
             "phpunit/phpunit-php52": "dev-3.6.12-php52"
         },
-        "time": "2018-10-29T06:23:41+00:00",
+        "time": "2019-10-14T08:27:38+00:00",
         "type": "library",
         "installation-source": "dist",
         "autoload": {
@@ -174,27 +186,27 @@
     },
     {
         "name": "psr/log",
-        "version": "1.1.0",
-        "version_normalized": "1.1.0.0",
+        "version": "1.1.2",
+        "version_normalized": "1.1.2.0",
         "source": {
             "type": "git",
             "url": "https://github.com/php-fig/log.git",
-            "reference": "6c001f1daafa3a3ac1d8ff69ee4db8e799a654dd"
+            "reference": "446d54b4cb6bf489fc9d75f55843658e6f25d801"
         },
         "dist": {
             "type": "zip",
-            "url": "https://api.github.com/repos/php-fig/log/zipball/6c001f1daafa3a3ac1d8ff69ee4db8e799a654dd",
-            "reference": "6c001f1daafa3a3ac1d8ff69ee4db8e799a654dd",
+            "url": "https://api.github.com/repos/php-fig/log/zipball/446d54b4cb6bf489fc9d75f55843658e6f25d801",
+            "reference": "446d54b4cb6bf489fc9d75f55843658e6f25d801",
             "shasum": ""
         },
         "require": {
             "php": ">=5.3.0"
         },
-        "time": "2018-11-20T15:27:04+00:00",
+        "time": "2019-11-01T11:05:21+00:00",
         "type": "library",
         "extra": {
             "branch-alias": {
-                "dev-master": "1.0.x-dev"
+                "dev-master": "1.1.x-dev"
             }
         },
         "installation-source": "dist",

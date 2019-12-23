@@ -3,5 +3,6 @@
 @media only screen and (min-height:500px){body.login-designer-template-02 #login{padding:0}
 }body.login-designer-template-02 #login p{-webkit-transform:translate3d(0,0,0);transform:translate3d(0,0,0)}
 body.login-designer-template-02 #login .message{max-width:280px;margin-left:auto;margin-right:auto;margin-bottom:40px}
+body.login-designer-template-02 form{border:0}
 body.login-designer-template-02 #lostpasswordform label{display:block;text-align:center}
 body.login-designer-template-02 #lostpasswordform .submit .button{width:100%;margin-top:-15px}

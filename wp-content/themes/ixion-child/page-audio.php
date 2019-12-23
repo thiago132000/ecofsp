@@ -15,9 +15,12 @@ query_posts(array(
 				<header>
 					<h1 class="page-title screen-reader-text"><?php single_post_title(); ?></h1>
 				</header>
+				
 			<?php
 			endif;
-
+			?>
+			<h3 class="audios" >Todos os Áudios dos encontros abaixo para download </h3>
+			<?php
 			/* Start the Loop */
 			while ( have_posts() ) : the_post();
 
@@ -31,6 +34,7 @@ query_posts(array(
 				<article id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
 					<div class="entry-body">
 						<header class="entry-header">
+							
 							<?php
 
 								if ( ! is_single() ) {
@@ -39,6 +43,8 @@ query_posts(array(
 									}
 									the_title( '<h2 class="entry-title"><a href="' . esc_url( get_permalink() ) . '" rel="bookmark">', '</a></h2>' );
 								}
+								echo '<p class="data">Data do encontro: '.get_the_date().'</p>';
+								echo '<p>'.substr(get_the_content(), 0, 50).'...</p>';
 							?>
 						</header>
 					</div> <!-- .entry-body -->

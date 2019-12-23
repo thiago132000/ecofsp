@@ -10,7 +10,7 @@
  * Plugin Name:       Child Theme Generator
  * Plugin URI:        http://serafinocorriero.it/child-theme-generator
  * Description:       This plugin allow to generate a child theme, and all related files
- * Version:           2.2.3
+ * Version:           2.2.5
  * Author:            Serafino Corriero
  * Author URI:        http://serafinocorriero.it
  * License:           GPL-2.0+

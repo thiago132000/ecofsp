@@ -116,20 +116,23 @@ trait Admin
 
         parse_str($_POST['fields'], $settings);
 
-        // update new settings
-        $updated = update_option('eael_save_settings', array_merge(array_fill_keys($this->get_registered_elements(), 0), array_map(function ($value) {return 1;}, $settings)));
-
         // Saving Google Map Api Key
         update_option('eael_save_google_map_api', @$settings['google-map-api']);
-
+        
         // Saving Mailchimp Api Key
         update_option('eael_save_mailchimp_api', @$settings['mailchimp-api']);
         
         // Saving Duplicator Settings
         update_option('eael_save_post_duplicator_post_type', @$settings['post-duplicator-post-type']);
+        
+        $defaults = array_fill_keys(array_keys(array_merge($this->registered_elements, $this->registered_extensions, $this->additional_settings)), false);
+        $elements = array_merge($defaults, array_fill_keys(array_keys(array_intersect_key($settings, $defaults)), true));
+        
+        // update new settings
+        $updated = update_option('eael_save_settings', $elements);
 
         // Build assets files
-        $this->generate_scripts(array_keys($settings));
+        $this->generate_scripts(array_keys($elements));
 
         wp_send_json($updated);
     }
@@ -203,13 +206,13 @@ trait Admin
          * Message message for showing.
          */
         $notice->classes( 'upsale', 'notice is-dismissible ' );
-        $notice->message( 'upsale', '<p>'. __( '7000+ People already using <a href="https://wpdeveloper.net/ea/notificationX" target="_blank">NotificationX</a> to increase their Sales & Engagement!', $notice->text_domain ) .'</p>' );
+        $notice->message( 'upsale', '<p>'. __( '10,000+ People already using <a href="https://wpdeveloper.net/ea/notificationX" target="_blank">NotificationX</a> to increase their Sales & Engagement!', $notice->text_domain ) .'</p>' );
         $notice->thumbnail( 'upsale', plugins_url( 'assets/admin/images/nx-icon.svg', EAEL_PLUGIN_BASENAME ) );
 
         // Update Notice For PRO Version
-        if( $this->pro_enabled && \version_compare( EAEL_PRO_PLUGIN_VERSION, '3.3.0', '<' ) ) {
+        if( $this->pro_enabled && \version_compare( EAEL_PRO_PLUGIN_VERSION, '3.4.0', '<' ) ) {
             $notice->classes( 'update', 'notice is-dismissible ' );
-            $notice->message( 'update', '<p>'. __( 'You are using an incompatible version of Essential Addons PRO. Please update to v3.3.0+. <a href="https://essential-addons.com/elementor/docs/manually-update-essential-addons-pro/" target="_blank">Follow manual update guide.</a>', $notice->text_domain ) .'</p>' );
+            $notice->message( 'update', '<p>'. __( 'You are using an incompatible version of Essential Addons PRO. Please update to v3.4.0+. <a href="https://essential-addons.com/elementor/docs/manually-update-essential-addons-pro/" target="_blank">Follow manual update guide.</a>', $notice->text_domain ) .'</p>' );
             $notice->thumbnail( 'update', plugins_url( 'assets/admin/images/icon-ea-logo.svg', EAEL_PLUGIN_BASENAME ) );
         }
 
@@ -227,11 +230,11 @@ trait Admin
         $notice->options_args = array(
             'notice_will_show' => [
                 'opt_in' => $notice->timestamp,
-                'upsale' => $notice->makeTime($notice->timestamp, '1 Day'),
+                'upsale' => $notice->makeTime($notice->timestamp, '6 Day'),
                 'review' => $notice->makeTime($notice->timestamp, '3 Day'), // after 3 days
             ],
         );
-        if( $this->pro_enabled && \version_compare( EAEL_PRO_PLUGIN_VERSION, '3.3.0', '<' ) ) { 
+        if( $this->pro_enabled && \version_compare( EAEL_PRO_PLUGIN_VERSION, '3.4.0', '<' ) ) { 
             $notice->options_args['notice_will_show']['update'] = $notice->timestamp;
         }
 
@@ -262,7 +265,7 @@ trait Admin
             'meta'  => [
                 'class' => 'ea-all-cache-clear'
             ],
-            'title' => 'Clear All Cache'
+            'title' => 'Regenerate All Assets'
         ]);
 
         $wp_admin_bar->add_node([
@@ -273,7 +276,7 @@ trait Admin
                 'class' => 'ea-clear-cache',
                 'html'   => '<div class="ea-clear-cache-id" data-pageid="'.get_queried_object_id().'">'
             ],
-            'title' => 'Clear Page Cache'
+            'title' => 'Regenerate Page Assets'
         ]);
 
         

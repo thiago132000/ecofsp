@@ -20,7 +20,7 @@ trait Post_Grid
                 echo '<article class="eael-grid-post eael-post-grid-column">
                     <div class="eael-grid-post-holder">
                         <div class="eael-grid-post-holder-inner">';
-                            if (has_post_thumbnail() && $settings['eael_show_image'] == 1) {
+                            if (has_post_thumbnail() && $settings['eael_show_image'] == 'yes') {
                                 echo '<div class="eael-entry-media">';
                                     if ('none' !== $settings['eael_post_grid_hover_animation']) {
                                         echo '<div class="eael-entry-overlay ' . $settings['eael_post_grid_hover_animation'] . '">';
@@ -57,7 +57,7 @@ trait Post_Grid
                                     if ($settings['eael_show_excerpt']) {
                                         echo '<div class="eael-entry-content">
                                             <div class="eael-grid-post-excerpt">
-                                                <p>' . implode(" ", array_slice(explode(" ", strip_tags(strip_shortcodes(get_the_excerpt() ? get_the_excerpt() : get_the_content()))), 0, $settings['eael_excerpt_length'])) . $settings['expanison_indicator'] . '</p>';
+                                                <p>' . wp_trim_words(strip_shortcodes(get_the_excerpt() ? get_the_excerpt() : get_the_content()), $settings['eael_excerpt_length'], $settings['expanison_indicator']) . '</p>';
                                                 if ($settings['eael_show_read_more_button']) {
                                                     echo '<a href="' . get_the_permalink() . '" class="eael-post-elements-readmore-btn">' . esc_attr($settings['read_more_button_text']) . '</a>';
                                                 }

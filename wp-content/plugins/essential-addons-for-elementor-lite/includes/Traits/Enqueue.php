@@ -125,7 +125,7 @@ trait Enqueue
 
             wp_localize_script('eael-backend', 'localize', $this->localize_objects);
         } else {
-            if (is_singular() || is_home() || is_archive()) {
+            if (is_singular() || is_home() || is_archive() || is_404()) {
                 $queried_object = get_queried_object_id();
                 $post_type = (is_singular() || is_home() ? 'post' : 'term');
                 $elements = (array) get_metadata($post_type, $queried_object, 'eael_transient_elements', true);
@@ -164,14 +164,14 @@ trait Enqueue
             'eael-front-end',
             $this->safe_protocol($css_file),
             false,
-            EAEL_PLUGIN_VERSION
+            time()
         );
 
         wp_enqueue_script(
             'eael-front-end',
             $this->safe_protocol($js_file),
             ['jquery'],
-            EAEL_PLUGIN_VERSION,
+            time(),
             true
         );
 

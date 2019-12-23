@@ -3,15 +3,15 @@
  * View: Day View Nav Previous Button
  *
  * Override this template in your own theme by creating a file at:
- * [your-theme]/tribe/events/views/v2/day/nav/prev.php
+ * [your-theme]/tribe/events/v2/day/nav/prev.php
  *
  * See more documentation about our views templating system.
  *
  * @link {INSERT_ARTCILE_LINK_HERE}
  *
- * @var string $link The URL to the previous page, if any, or an empty string.
+ * @var string $link The URL to the previous page.
  *
- * @version 4.9.5
+ * @version 4.9.10
  *
  */
 ?>

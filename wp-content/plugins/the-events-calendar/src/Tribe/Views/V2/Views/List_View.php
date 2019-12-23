@@ -9,11 +9,13 @@
 namespace Tribe\Events\Views\V2\Views;
 
 use Tribe\Events\Views\V2\View;
+use Tribe__Context;
 use Tribe__Events__Main as TEC;
 use Tribe__Events__Rewrite as Rewrite;
 use Tribe__Utils__Array as Arr;
 
 class List_View extends View {
+	use List_Behavior;
 	/**
 	 * Slug for this view
 	 *
@@ -27,10 +29,18 @@ class List_View extends View {
 	 * Visibility for this view.
 	 *
 	 * @since 4.9.4
+	 * @since 4.9.11 Made the property static.
 	 *
 	 * @var bool
 	 */
-	protected $publicly_visible = true;
+	protected static $publicly_visible = true;
+
+	/**
+	 * Indicates List View supports the date as a query argument appended to its URL, not as part of a "pretty" URL.
+	 *
+	 * @var bool
+	 */
+	protected static $date_in_url = false;
 
 	/**
 	 * {@inheritDoc}
@@ -88,8 +98,8 @@ class List_View extends View {
 		$event_date_var = $default_date === $date ? '' : $date;
 
 		$past = tribe_events()->by_args( $this->setup_repository_args( $this->context->alter( [
-			'eventDisplay' => 'past',
-			'paged'        => $page,
+			'event_display_mode' => 'past',
+			'paged'              => $page,
 		] ) ) );
 
 		if ( $past->count() > 0 ) {
@@ -146,6 +156,7 @@ class List_View extends View {
 		$default_date   = 'now';
 		$date           = $this->context->get( 'event_date', $default_date );
 		$event_date_var = $default_date === $date ? '' : $date;
+		$url = '';
 
 		$upcoming = tribe_events()->by_args( $this->setup_repository_args( $this->context->alter( [
 			'eventDisplay' => 'list',
@@ -179,17 +190,15 @@ class List_View extends View {
 			) ) {
 				$url = add_query_arg( [ 'eventDate' => $event_date_var ], $url );
 			}
-
-			return $url;
 		}
 
-		return '';
+		return $url ?: $this->get_today_url( $canonical );
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-	protected function setup_repository_args( \Tribe__Context $context = null ) {
+	protected function setup_repository_args( Tribe__Context $context = null ) {
 		$context = null !== $context ? $context : $this->context;
 
 		$args = parent::setup_repository_args( $context );
@@ -207,5 +216,39 @@ class List_View extends View {
 		}
 
 		return $args;
+	}
+
+	/**
+	 * Overrides the base View method to fix the order of the events in the `past` display mode.
+	 *
+	 * @since 4.9.11
+	 *
+	 * @return array The List View template vars, modified if required.
+	 */
+	protected function setup_template_vars() {
+		$template_vars = parent::setup_template_vars();
+
+		// While we fetch events in DESC order, we want to show the results in ASC order in `past` display mode.
+		if (
+			! empty( $template_vars['events'] )
+			&& is_array( $template_vars['events'] )
+			&& 'past' === $this->context->get( 'event_display_mode' )
+		) {
+			$template_vars['events'] = array_reverse( $template_vars['events'] );
+		}
+
+		$template_vars = $this->setup_datepicker_template_vars( $template_vars );
+
+		return $template_vars;
+	}
+
+	/**
+	 * Overrides the base implementation to remove notions of a "past" events request on page reset.
+	 *
+	 * @since 4.9.11
+	 */
+	protected function on_page_reset() {
+		parent::on_page_reset();
+		$this->remove_past_query_args();
 	}
 }

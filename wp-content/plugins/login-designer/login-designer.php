@@ -1,36 +1,26 @@
 <?php
 /**
- * Plugin Name: Login Designer
- * Plugin URI: https://logindesigner.com
- * Description: The easiest way to completly customize your WordPress login page. Create stunning login templates in seconds with the most beautiful and elegant login customizer WordPress plugin.
- * Author: Rich Tabor
- * Author URI: https://richtabor.com
- * Version: 1.1.12
- * Text Domain: login-designer
- * Domain Path: languages
- * Requires at least: 4.7
- * Tested up to: 5.2
+ * Plugin Name:     Login Designer
+ * Plugin URI:      https://logindesigner.com
+ * Description:     The easiest way to completly customize your WordPress login page. Create stunning login templates in seconds with the most beautiful and elegant login customizer WordPress plugin.
+ * Author:          Rich Tabor
+ * Author URI:      https://logindesigner.com
+ * Text Domain:     login-designer
+ * Domain Path:     /languages
+ * Version:         1.2.1
  *
  * Login Designer is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2 of the License, or
+ * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- *
- * Login Designer is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
  * along with Login Designer. If not, see <http://www.gnu.org/licenses/>.
  *
- * @package Login Designer
+ * @package         Login Designer
  */
 
-// Exit if accessed directly.
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
+defined( 'ABSPATH' ) || exit;
 
 if ( ! class_exists( 'Login_Designer' ) ) :
 
@@ -40,10 +30,9 @@ if ( ! class_exists( 'Login_Designer' ) ) :
 	 * @since 1.0.0
 	 */
 	final class Login_Designer {
-		/** Singleton *************************************************************/
 
 		/**
-		 * Login_Designer The one true Login_Designer
+		 * This plugin's instance.
 		 *
 		 * @var string $instance
 		 */
@@ -57,12 +46,6 @@ if ( ! class_exists( 'Login_Designer' ) ) :
 		 *
 		 * @since 1.0.0
 		 * @static
-		 * @static var array $instance
-		 * @uses Login_Designer::constants() Setup the constants needed.
-		 * @uses Login_Designer::init() Initiate actions and filters.
-		 * @uses Login_Designer::includes() Include the required files.
-		 * @uses Login_Designer::load_textdomain() load the language files.
-		 * @see LOGIN_DESIGNER()
 		 * @return object|Login_Designer The one true Login_Designer
 		 */
 		public static function instance() {
@@ -89,7 +72,7 @@ if ( ! class_exists( 'Login_Designer' ) ) :
 		 * @return void
 		 */
 		public function __clone() {
-			_doing_it_wrong( __FUNCTION__, esc_html__( 'Cheatin&#8217; huh?', 'login-designer' ), '1.0' );
+			_doing_it_wrong( __FUNCTION__, esc_html__( 'Something went wrong.', 'login-designer' ), '1.0' );
 		}
 
 		/**
@@ -100,7 +83,7 @@ if ( ! class_exists( 'Login_Designer' ) ) :
 		 * @return void
 		 */
 		public function __wakeup() {
-			_doing_it_wrong( __FUNCTION__, esc_html__( 'Cheatin&#8217; huh?', 'login-designer' ), '1.0' );
+			_doing_it_wrong( __FUNCTION__, esc_html__( 'Something went wrong.', 'login-designer' ), '1.0' );
 		}
 
 		/**
@@ -112,7 +95,7 @@ if ( ! class_exists( 'Login_Designer' ) ) :
 		private function constants() {
 			$this->define( 'LOGIN_DESIGNER_DEBUG', false );
 			$this->define( 'LOGIN_DESIGNER_HAS_PRO', false );
-			$this->define( 'LOGIN_DESIGNER_VERSION', '1.1.12' );
+			$this->define( 'LOGIN_DESIGNER_VERSION', '1.2.1' );
 			$this->define( 'LOGIN_DESIGNER_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 			$this->define( 'LOGIN_DESIGNER_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 			$this->define( 'LOGIN_DESIGNER_PLUGIN_FILE', __FILE__ );
@@ -175,6 +158,7 @@ if ( ! class_exists( 'Login_Designer' ) ) :
 			require_once LOGIN_DESIGNER_PLUGIN_DIR . 'includes/class-login-designer-frontend-settings.php';
 			require_once LOGIN_DESIGNER_PLUGIN_DIR . 'includes/class-login-designer-templates.php';
 			require_once LOGIN_DESIGNER_PLUGIN_DIR . 'includes/class-login-designer-theme-template.php';
+			require_once LOGIN_DESIGNER_PLUGIN_DIR . 'includes/filters.php';
 			require_once LOGIN_DESIGNER_PLUGIN_DIR . 'includes/install.php';
 		}
 
@@ -620,21 +604,12 @@ if ( ! class_exists( 'Login_Designer' ) ) :
 		}
 	}
 
-endif; // End if class_exists check.
+endif;
 
 /**
- * The main function for that returns Login_Designer
+ * Returns the main instance of Login Designer.
  *
- * The main function responsible for returning the one true Login_Designer
- * Instance to functions everywhere.
- *
- * Use this function like you would a global variable, except without needing
- * to declare the global.
- *
- * Example: <?php $login_designer = login_designer(); ?>
- *
- * @since 1.0.0
- * @return object|Login_Designer The one true Login_Designer Instance.
+ * @return Login Designer
  */
 function login_designer() {
 	return Login_Designer::instance();

@@ -136,6 +136,20 @@ $config = [
                 ],
             ],
         ],
+        'facebook-feed' => [
+            'class' => '\Essential_Addons_Elementor\Elements\Facebook_Feed',
+            'dependency' => [
+                'css' => [
+                    EAEL_PLUGIN_PATH . DIRECTORY_SEPARATOR . 'assets/front-end/css/components/load-more.min.css',
+                    EAEL_PLUGIN_PATH . DIRECTORY_SEPARATOR . 'assets/front-end/css/facebook-feed/index.min.css',
+                ],
+                'js' => [
+                    EAEL_PLUGIN_PATH . DIRECTORY_SEPARATOR . 'assets/front-end/js/vendor/imagesLoaded/imagesloaded.pkgd.min.js',
+                    EAEL_PLUGIN_PATH . DIRECTORY_SEPARATOR . 'assets/front-end/js/vendor/isotope/isotope.pkgd.min.js',
+                    EAEL_PLUGIN_PATH . DIRECTORY_SEPARATOR . 'assets/front-end/js/facebook-feed/index.min.js',
+                ],
+            ],
+        ],
         'data-table' => [
             'class' => '\Essential_Addons_Elementor\Elements\Data_Table',
             'dependency' => [
@@ -302,6 +316,28 @@ $config = [
             'dependency' => [
                 'css' => [
                     EAEL_PLUGIN_PATH . DIRECTORY_SEPARATOR . 'assets/front-end/css/fluentform/index.min.css',
+                ],
+            ],
+        ],
+        'betterdocs-category-grid' => [
+            'class' => '\Essential_Addons_Elementor\Elements\Betterdocs_Category_Grid',
+        ],
+        'betterdocs-category-box'   => [
+            'class' => '\Essential_Addons_Elementor\Elements\Betterdocs_Category_Box',
+        ],
+        'betterdocs-search-form'   => [
+            'class' => '\Essential_Addons_Elementor\Elements\Betterdocs_Search_Form',
+        ],
+        'sticky-video' => [
+            'class' => '\Essential_Addons_Elementor\Elements\Sticky_Video',
+            'dependency' => [
+                'css' => [
+                    EAEL_PLUGIN_PATH . DIRECTORY_SEPARATOR . 'assets/front-end/css/vendor/sticky-video/sticky-video-plyr.min.css',
+                    EAEL_PLUGIN_PATH . DIRECTORY_SEPARATOR . 'assets/front-end/css/sticky-video/index.min.css',
+                ],
+                'js' => [
+                    EAEL_PLUGIN_PATH . DIRECTORY_SEPARATOR . 'assets/front-end/js/vendor/sticky-video/sticky-video-plyr.min.js',
+                    EAEL_PLUGIN_PATH . DIRECTORY_SEPARATOR . 'assets/front-end/js/sticky-video/index.min.js',
                 ],
             ],
         ],

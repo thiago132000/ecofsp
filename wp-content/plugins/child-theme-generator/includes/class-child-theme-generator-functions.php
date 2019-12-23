@@ -85,7 +85,7 @@ class Ch_Th_Gen_Functions {
 					<tr>
 						<td class="FBLabel"><?php esc_html_e('Heading:', 'child-theme-generator'); ?></td> 
 						<td class="FBInput"><input type="text" id="title" name="title" value=""></td>
-						<td class="FBDescr"><?php esc_html_e(' Write an easy title to remember (i.e. \'The Green Giants\')', 'child-theme-generator') ?></span></td>
+						<td class="FBDescr"><?php esc_html_e(' Write an easy title to remember (i.e. \'The Green Giants\') &nbsp; Remember: only chars, no number allowed!', 'child-theme-generator') ?></span></td>
 					</tr>
 					<tr>
 						<td class="FBLabel"><?php esc_html_e('Description:', 'child-theme-generator'); ?></td>

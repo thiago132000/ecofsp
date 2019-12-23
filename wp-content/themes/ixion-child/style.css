@@ -29,6 +29,28 @@ Text Domain:  ixion-child
   color: #fff;
 }
 
+h3.audios {
+  font-size: 2.25rem;
+  text-align: center;
+}
+
+.audio h2 {
+  text-align: center;
+}
+
+.audio h2 a {
+  font-size: 1.5625rem;
+}
+
+.audio p {
+  text-align: center;
+}
+
+.audio p.data {
+  font-size: 0.6875rem;
+  margin-bottom: 0.3125rem;
+}
+
 body div#page header#masthead {
   border: unset;
   margin-bottom: 0.625rem;
@@ -180,6 +202,11 @@ div.post-thumbnail a img {
 
 body.page-template-page-video h1 {
   text-align: center;
+}
+
+.audio h2 {
+  margin-bottom: 0.625rem !important;
+  padding: 0 !important;
 }
 
 /*MOBILE*/

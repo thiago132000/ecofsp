@@ -63,7 +63,7 @@ class Product_Grid extends Widget_Base
             ]
         );
 
-        $this->add_control(
+        $this->add_responsive_control(
             'eael_product_grid_column',
             [
                 'label' => esc_html__('Columns', 'essential-addons-elementor'),
@@ -77,6 +77,8 @@ class Product_Grid extends Widget_Base
                     '5' => esc_html__('5', 'essential-addons-elementor'),
                     '6' => esc_html__('6', 'essential-addons-elementor'),
                 ],
+                'toggle'    => true,
+                'prefix_class'  => 'eael-product-grid-column%s-'
             ]
         );
 
@@ -463,12 +465,22 @@ class Product_Grid extends Widget_Base
 
         if ($settings['eael_product_grid_product_filter'] == 'featured-products') {
             $args['tax_query'] = [
+                'relation' => 'AND',
                 [
 					'taxonomy' => 'product_visibility',
                     'field' => 'name',
-					'terms' => 'featured'
-				]
+                    'terms' => 'featured'
+                ]
             ];
+
+            if($settings['eael_product_grid_categories']) {
+                $args['tax_query'][] = [
+					'taxonomy' => 'product_cat',
+                    'field' => 'slug',
+                    'terms' => $settings['eael_product_grid_categories']
+                ];
+            }
+
         } else if ($settings['eael_product_grid_product_filter'] == 'best-selling-products') {
             $args['meta_key'] = 'total_sales';
             $args['orderby'] = 'meta_value_num';
@@ -500,9 +512,11 @@ class Product_Grid extends Widget_Base
             'eael_product_grid_column' => $settings['eael_product_grid_column']
         ];
 
+        // eael-product-columns-' . $settings['eael_product_grid_column'] . '
+
         echo '<div class="eael-product-grid ' . $settings['eael_product_grid_style_preset'] . '">
 			<div class="woocommerce">
-                <ul class="products eael-product-columns-' . $settings['eael_product_grid_column'] . '">
+                <ul class="products">
                     ' . self::__render_template($args, $settings) . '
                 </ul>
 			</div>

@@ -14,3 +14,26 @@
         color: $white;
     }
 }
+
+h3.audios{
+    font-size: rem(36);
+    text-align: center;
+}
+
+.audio{
+    h2{
+        text-align: center;
+        a{
+            font-size: rem(25);
+        }
+        
+    }
+    p{
+        text-align: center;
+    }
+    p.data{
+        font-size: rem(11);
+        margin-bottom: rem(5);
+        
+    }
+}

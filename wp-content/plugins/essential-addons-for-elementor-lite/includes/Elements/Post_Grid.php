@@ -252,6 +252,22 @@ class Post_Grid extends Widget_Base
         );
 
         $this->add_control(
+			'content_height',
+			[
+				'label' => esc_html__( 'Content Height', 'essential-addons-elementor' ),
+				'type' => Controls_Manager::SLIDER,
+				'size_units'	=> ['px', '%', 'em'],
+				'range' => [
+					'px' => [ 'max' => 300 ],
+					'%'	=> [ 'max'	=> 100 ]
+				],
+				'selectors' => [
+					'{{WRAPPER}} .eael-grid-post-holder .eael-entry-wrapper' => 'height: {{SIZE}}{{UNIT}};',
+				],
+			]
+		);
+
+        $this->add_control(
             'eael_post_grid_meta_style',
             [
                 'label' => __('Meta Style', 'essential-addons-elementor'),
@@ -410,6 +426,11 @@ class Post_Grid extends Widget_Base
         $this->end_controls_section();
 
         /**
+         * Read More Button Style Controls
+         */
+        $this->eael_read_more_button_style();
+
+        /**
          * Load More Button Style Controls!
          */
         $this->eael_load_more_button_style();
@@ -418,6 +439,7 @@ class Post_Grid extends Widget_Base
     protected function render()
     {
         $settings = $this->get_settings_for_display();
+        $settings = $this->fix_old_query($settings);
         $args = $this->eael_get_query_args($settings);
         $settings = [
             'eael_show_image' => $settings['eael_show_image'],
@@ -457,7 +479,7 @@ class Post_Grid extends Widget_Base
             <div class="clearfix"></div>
         </div>';
 		
-		if (1 == $settings['show_load_more']) {
+		if ('yes' == $settings['show_load_more']) {
 			if ($args['posts_per_page'] != '-1') {
 				echo '<div class="eael-load-more-button-wrap">
 					<button class="eael-load-more-button" id="eael-load-more-btn-' . $this->get_id() . '" data-widget="' . $this->get_id() . '" data-class="' . get_class($this) . '" data-args="' . http_build_query($args) . '" data-settings="' . http_build_query($settings) . '" data-layout="masonry" data-page="1">

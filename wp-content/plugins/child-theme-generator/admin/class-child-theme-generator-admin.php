@@ -119,11 +119,6 @@ class Ch_Th_Gen_Admin {
 			'manage_options', // $capability (string) (Required) The capability required for this menu to be displayed to the user.
 			$this->plugin_name, // $menu_slug (string) (Required) The slug name to refer to this menu by (should be unique for this menu).
 			array($this, 'display_options_page'), // $function (callable) (Optional) The function to be called to output the content for this page Default value: ''
-			'dashicons-image-filter', // $icon_url (string) (Optional) The URL to the icon to be used for this menu.
-			// * Pass a base64-encoded SVG using a data URI, which will be colored to match the color scheme. This should begin with 'data:image/svg+xml;base64,'.
-			// * Pass the name of a Dashicons helper class to use a font icon, e.g. 'dashicons-chart-pie'.
-			// * Pass 'none' to leave div.wp-menu-image empty so an icon can be added via CSS.
-			// Default value: ''
 			60 // $position (int) (Optional) The position in the menu order this one should appear. Default value: null
 			);
 	}
@@ -182,9 +177,16 @@ class Ch_Th_Gen_Admin {
 				'text-domain' => sanitize_title($_POST['title']),
 				);
 
-			if ( empty( $new_child_theme['title'] ) ) {
+			if ( !empty( $new_child_theme['title'] ) ) {
+				// then remove all chars except numbers
+				$new_child_theme['title'] =  preg_replace("/[^A-Za-z0-9]/", "", $new_child_theme['title']);
+				// remove number at the begginnig on string
+				$new_child_theme['title'] = ltrim($new_child_theme['title'], "0..9");
+				$new_child_theme['text-domain'] = $new_child_theme['title'];
+				echo "<p>ltrim: " . $new_child_theme['title'] . "</p>";
+			} else {
 				$new_child_theme['text-domain']  = $new_child_theme['parent'] . "-child";
-				$new_child_theme['title'] = $new_child_theme['parent'] . " child theme";
+				$new_child_theme['title'] = $new_child_theme['parent'] . " child theme";		
 			}
 
 			$new_child_theme['description'] = empty( $new_child_theme['description'] ) ? __('Write here a brief description about your child-theme', 'child-theme-generator') : $new_child_theme['description'];

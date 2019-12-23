@@ -3,8 +3,8 @@ Contributors: Seraph63
 Tags: child theme, design, themes
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=UNQC9QFV64XH6
 Requires at least: 4.6
-Tested up to: 5.2
-Stable tag: 2.2.3
+Tested up to: 5.3
+Stable tag: 2.2.5
 License: GNU General Public License v2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -60,6 +60,13 @@ Yes, you can.
 3. Finally, check on `Activate child theme` (optional) if you wish activate immediately, then click on `Finished` button to complete.
 
 == Changelog ==
+
+= 2.2.4 =
+Field $new_child_theme['title'] fixed, cannot start with numbers
+
+= 2.2.4 =
+Fixed add_submenu_page
+
 = 2.1.2.1 =
 Fixed pot file, added translation to plugin description 
 

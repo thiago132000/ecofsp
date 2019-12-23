@@ -5,7 +5,7 @@ Plugin URI: https://wordpress.org/plugins/duplicate-wp-page-post/
 Description: This plugin quickly creates a clone of page or post and supports Gutenberg.
 Author: Arjun Thakur
 Author URI: https://profiles.wordpress.org/arjunthakur#content-plugins
-Version: 2.5.4
+Version: 2.5.5
 License: GPLv2 or later
 Text Domain: dpp_wpp_page
 */
@@ -226,6 +226,18 @@ if(!class_exists('dcc_dpp_wpp_page')):
      echo '<script>window.location.href="'.$url.'"</script>';
     }
     }
-new dpp_wpp_page;
+    new dpp_wpp_page;
+
+    /*plugin settings page link*/
+    add_filter('plugin_action_links_'.plugin_basename(__FILE__), 'dpp_settings_link');
+    function dpp_settings_link( $links ) {
+        $links[] = '<a href="' .
+            admin_url( 'options-general.php?page=dpp_page_settings' ) .
+            '">' . __('Settings') . '</a>';
+        return $links;
+    }
+
 endif;
+
+
 ?>

@@ -3,13 +3,13 @@
  * View: Month View - Day
  *
  * Override this template in your own theme by creating a file at:
- * [your-theme]/tribe/events/views/v2/month/calendar-body/day.php
+ * [your-theme]/tribe/events/v2/month/calendar-body/day.php
  *
  * See more documentation about our views templating system.
  *
  * @link {INSERT_ARTCILE_LINK_HERE}
  *
- * @version 4.9.8
+ * @version 4.9.11
  *
  * @var string $today_date Today's date in the `Y-m-d` format.
  * @var string $day_date The current day date, in the `Y-m-d` format.
@@ -18,7 +18,7 @@
  *          @type bool $is_start_of_week Whether the current day is the first day of the week or not.
  *          @type string $year_number The day year number, e.g. `2019`.
  *          @type string $month_number The day year number, e.g. `6` for June.
- *          @type string $day_number The day number in the month, e.g. `11` for June 11th.
+ *          @type string $day_number The day number in the month with leading 0, e.g. `11` for June 11th.
  *          @type string $day_url The day url, e.g. `http://yoursite.com/events/2019-06-11/`.
  *          @type int $found_events The total number of events in the day including the ones not fetched due to the per
  *                                  page limit, including the multi-day ones.
@@ -54,7 +54,7 @@ if ( $today_date > $day_date ) {
 }
 
 // Only add id if events exist on the day.
-$mobile_day_id = 'tribe-events-calendar-mobile-day-' . $day_date;
+$mobile_day_id = 'tribe-events-calendar-mobile-day-' . $day['year_number'] . '-' . $day['month_number'] . '-' . $day['day_number'];
 ?>
 
 <div

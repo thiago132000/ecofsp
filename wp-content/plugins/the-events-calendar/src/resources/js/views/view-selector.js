@@ -91,6 +91,7 @@ tribe.events.views.viewSelector = {};
 		var $viewSelectorButton = $container.find( obj.selectors.viewSelectorButton );
 		var $viewSelectorListContainer = $container.find( obj.selectors.viewSelectorListContainer );
 		obj.deinitAccordion( $viewSelectorButton, $viewSelectorListContainer );
+		$viewSelectorButton.removeClass( obj.selectors.viewSelectorButtonActiveClass.className() );
 	};
 
 	/**
@@ -306,7 +307,9 @@ tribe.events.views.viewSelector = {};
 	obj.init = function( event, index, $container, data ) {
 		var $viewSelector = $container.find( obj.selectors.viewSelector );
 
-		if ( ! $viewSelector.length ) return;
+		if ( ! $viewSelector.length ) {
+			return;
+		}
 
 		obj.initState( $container );
 		obj.initViewSelector( $container );

@@ -1,11 +1,11 @@
 === Duplicate Page and Post ===
-Contributors: arjunthakur
-Tags: duplicate post, duplicate page, duplicate custom posts, wordpress page duplicator, wordpress post duplicator, page duplicate, page and post clone, page clone, post clone, wp post clone, gutenberg editor.
+Contributors: arjunthakur, efficientninja
+Tags: duplicate post, duplicate page, clone page, clone post, duplicate custom posts, clone custom post, wordpress page duplicator, wordpress post duplicator, page duplicate, clone page and post,  wp post clone.
 Requires at least: 3.5
-Tested up to: 5.2.3
+Tested up to: 5.2.4
 Requires PHP: 5.2.4
-Stable tag: 2.5.4
-Version: 2.5.4
+Stable tag: 2.5.5
+Version: 2.5.5
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -13,19 +13,19 @@ Duplicate post, Duplicate page and Duplicate custom post or clone page and clone
 
 == Description ==
 
-Duplicate page and post plugin provides functionality to creates a clone of page or posts. You can duplicate pages, posts and custom post by click and it will be saved as draft.
+Duplicate page and post plugin provides functionality to create a clone of page or posts. You can duplicate pages, posts and custom post by single click and it will be saved as draft.
 Duplicate page and post doesn't have a lot of features that other plugins have, but it also is lightning fast by comparison.
 
 = Major features of this plugin include =
 
-* ** Create a clone of particular page.**
-* ** Create a clone of particular post.**
-* ** Create a clone of particular custom post(CPT).**
-* ** Option to select editor (Classic and Gutenberg)**
-* ** Option to add Post Suffix.**
-* ** Option to add custom text for duplicate link button.**
-* ** Option to select Duplicate Posts Status.**
-* ** Option to Redirect after click on Duplicate.**
+* Create a clone of particular page.
+* Create a clone of particular post.
+* Create a clone of particular custom post(CPT).
+* Option to select editor (Classic and Gutenberg)
+* Option to add Post Suffix.
+* Option to add custom text for duplicate link button.
+* Option to select Duplicate Posts Status.
+* Option to Redirect after click on Duplicate.
 
 == Installation ==
 
