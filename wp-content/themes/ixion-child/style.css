@@ -210,4 +210,9 @@ body.page-template-page-video h1 {
 }
 
 /*MOBILE*/
+@media (max-width: 600px) {
+  .custom-logo-link {
+    display: none;
+  }
+}
 /*# sourceMappingURL=style.css.map */

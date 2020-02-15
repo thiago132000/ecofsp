@@ -126,7 +126,7 @@ SQL;
 		$host = parse_url(site_url(), PHP_URL_HOST);
 
 		header('Content-Type: application/json');
-		header('Content-Disposition: attachment; filename="asset-cleanup-exported-'.$wpacuExportFor.'-from-'.$host.'-'.$date.'.json"');
+		header('Content-Disposition: attachment; filename="asset-cleanup-lite-exported-'.$wpacuExportFor.'-from-'.$host.'-'.$date.'.json"');
 
 		echo $valuesJson;
 		exit();

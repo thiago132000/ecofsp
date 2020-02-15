@@ -4,7 +4,7 @@ if (! isset($data)) {
 	exit;
 }
 ?>
-<script type="text/javascript">
+<script type="text/javascript" data-wpacu-own-inline-script="true">
     var wpacuContentLinks           = document.getElementsByClassName('wpacu-assets-collapsible'),
         wpacuInlineCodeContentLinks = document.getElementsByClassName('wpacu-assets-inline-code-collapsible'),
         wpacuI, wpacuITwo;

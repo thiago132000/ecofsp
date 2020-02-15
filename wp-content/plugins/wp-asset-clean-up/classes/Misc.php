@@ -601,7 +601,7 @@ HTML;
 		$sqlQuery = <<<SQL
 SELECT pm.meta_value FROM `{$wpdb->prefix}postmeta` pm
 LEFT JOIN `{$wpdb->prefix}posts` p ON (p.ID = pm.post_id)
-WHERE p.post_status='publish' AND pm.meta_key LIKE '{$sqlPart}%'
+WHERE p.post_status='publish' AND pm.meta_key='{$sqlPart}'
 SQL;
 
 		$sqlResults = $wpdb->get_results($sqlQuery, ARRAY_A);
@@ -647,12 +647,10 @@ SQL;
 			$globalUnloadListJson = get_option(WPACU_PLUGIN_ID . '_global_unload');
 			$globalUnloadArray    = @json_decode($globalUnloadListJson, ARRAY_A);
 
-			if (isset($globalUnloadArray['styles']) && ! empty($globalUnloadArray['styles'])) {
-				$unloadedTotalAssets += count($globalUnloadArray['styles']);
-			}
-
-			if (isset($globalUnloadArray['scripts']) && ! empty($globalUnloadArray['scripts'])) {
-				$unloadedTotalAssets += count($globalUnloadArray['scripts']);
+			foreach (array('styles', 'scripts') as $assetType) {
+				if ( isset( $globalUnloadArray[$assetType] ) && ! empty( $globalUnloadArray[$assetType] ) ) {
+					$unloadedTotalAssets += count( $globalUnloadArray[$assetType] );
+				}
 			}
 		}
 
@@ -665,33 +663,23 @@ SQL;
 
 			foreach ($bulkUnloadedAllTypes as $bulkUnloadedType) {
 				if (in_array($bulkUnloadedType, array('search', 'date', '404'))) {
-					if (isset($bulkUnloadArray['styles'][$bulkUnloadedType])
-					    && ! empty($bulkUnloadArray['styles'][$bulkUnloadedType])) {
-						$unloadedTotalAssets += count($bulkUnloadArray['styles'][$bulkUnloadedType]);
-					}
-
-					if (isset($bulkUnloadArray['scripts'][$bulkUnloadedType])
-					    && ! empty($bulkUnloadArray['scripts'][$bulkUnloadedType])) {
-						$unloadedTotalAssets += count($bulkUnloadArray['scripts'][$bulkUnloadedType]);
+					foreach (array('styles', 'scripts') as $assetType) {
+						if ( isset( $bulkUnloadArray[$assetType][ $bulkUnloadedType ] ) && ! empty( $bulkUnloadArray[$assetType][ $bulkUnloadedType ] ) ) {
+							$unloadedTotalAssets += count( $bulkUnloadArray[$assetType][ $bulkUnloadedType ] );
+						}
 					}
 				} elseif ($bulkUnloadedType === 'author') {
-					if (isset($bulkUnloadArray['styles'][$bulkUnloadedType]['all'])
-					    && ! empty($bulkUnloadArray['styles'][$bulkUnloadedType]['all'])) {
-						$unloadedTotalAssets += count($bulkUnloadArray['styles'][$bulkUnloadedType]['all']);
-					}
-
-					if (isset($bulkUnloadArray['scripts'][$bulkUnloadedType]['all'])
-					    && ! empty($bulkUnloadArray['scripts'][$bulkUnloadedType]['all'])) {
-						$unloadedTotalAssets += count($bulkUnloadArray['scripts'][$bulkUnloadedType]['all']);
+					foreach (array('styles', 'scripts') as $assetType) {
+						if ( isset( $bulkUnloadArray[$assetType][ $bulkUnloadedType ]['all'] ) && ! empty( $bulkUnloadArray[$assetType][ $bulkUnloadedType ]['all'] ) ) {
+							$unloadedTotalAssets += count( $bulkUnloadArray[$assetType][ $bulkUnloadedType ]['all'] );
+						}
 					}
 				} elseif (in_array($bulkUnloadedType, array('post_type', 'taxonomy'))) {
-					if (isset($bulkUnloadArray['styles'][$bulkUnloadedType]) && ! empty($bulkUnloadArray['styles'][$bulkUnloadedType])) {
-						foreach ($bulkUnloadArray['styles'][$bulkUnloadedType] as $objectType => $objectValues) {
-							$unloadedTotalAssets += count($objectValues);
-						}
-
-						foreach ($bulkUnloadArray['scripts'][$bulkUnloadedType] as $objectType => $objectValues) {
-							$unloadedTotalAssets += count($objectValues);
+					foreach (array('styles', 'scripts') as $assetType) {
+						if ( isset( $bulkUnloadArray[$assetType][ $bulkUnloadedType ] ) && ! empty( $bulkUnloadArray[$assetType][ $bulkUnloadedType ] ) ) {
+							foreach ( $bulkUnloadArray[$assetType][ $bulkUnloadedType ] as $objectType => $objectValues ) {
+								$unloadedTotalAssets += count( $objectValues );
+							}
 						}
 					}
 				}
@@ -816,6 +804,7 @@ SQL;
 	public static function getAllActivePluginsIcons()
     {
 	    $popularPluginsIcons = array(
+	    	'all-in-one-wp-migration-s3-extension' => WPACU_PLUGIN_URL . '/assets/icons/premium-plugins/all-in-one-wp-migration-s3-extension.png',
 		    'elementor'     => WPACU_PLUGIN_URL . '/assets/icons/premium-plugins/elementor.svg',
 		    'elementor-pro' => WPACU_PLUGIN_URL . '/assets/icons/premium-plugins/elementor-pro.jpg',
 		    'oxygen'        => WPACU_PLUGIN_URL . '/assets/icons/premium-plugins/oxygen.png',
@@ -823,7 +812,8 @@ SQL;
 		    'revslider'     => WPACU_PLUGIN_URL . '/assets/icons/premium-plugins/revslider.png',
 		    'LayerSlider'   => WPACU_PLUGIN_URL . '/assets/icons/premium-plugins/LayerSlider.jpg',
 		    'wpdatatables'  => WPACU_PLUGIN_URL . '/assets/icons/premium-plugins/wpdatatables.jpg',
-		    'monarch'       => WPACU_PLUGIN_URL . '/assets/icons/premium-plugins/monarch.jpg'
+		    'monarch'       => WPACU_PLUGIN_URL . '/assets/icons/premium-plugins/monarch.jpg',
+		    'wp-rocket'     => WPACU_PLUGIN_URL . '/assets/icons/premium-plugins/wp-rocket.png'
 	    );
 
 	    $allActivePluginsIcons = self::fetchActiveFreePluginsIcons(true) ?: array();
@@ -953,5 +943,131 @@ SQL;
 		}
 
 		return $output;
+	}
+
+	/**
+	 * @param $list
+	 * @param string $for
+	 *
+	 * @return array
+	 */
+	public static function filterList($list, $for = 'empty_values')
+	{
+		if (! empty($list) && $for === 'empty_values') {
+			$list = self::arrayUnsetRecursive($list);
+		}
+
+		return $list;
+	}
+
+	/**
+	 * Source: https://stackoverflow.com/questions/7696548/php-how-to-remove-empty-entries-of-an-array-recursively
+	 *
+	 * @param $array
+	 *
+	 * @return array
+	 */
+	public static function arrayUnsetRecursive($array)
+	{
+		$array = (array)$array; // in case it's object, convert it to array
+
+		foreach ($array as $key => $value) {
+			if (is_array($value) || is_object($value)) {
+				$array[$key] = self::arrayUnsetRecursive($array[$key]);
+			}
+
+			if (empty($array[$key])) {
+				unset($array[$key]);
+			}
+		}
+
+		return $array;
+	}
+
+	/**
+	 * @param $name
+	 * @param $action
+	 *
+	 * @return mixed|string
+	 */
+	public static function scriptExecTimer($name, $action = 'start')
+	{
+		if (! array_key_exists('wpacu_debug', $_GET)) {
+			return ''; // only trigger it in debugging mode
+		}
+
+		$wpacuStartTimeName = 'wpacu_' . $name . '_start_time';
+		$wpacuExecTimeName  = 'wpacu_' . $name . '_exec_time';
+
+		if ($action === 'start') {
+			$startTime = (microtime(true) * 1000);
+
+			// Do not overwrite it if it's already there (e.g. in a function called several times)
+			if (wp_cache_get($wpacuStartTimeName, 'wpacu_exec_time')) {
+				return '';
+			}
+
+			wp_cache_set($wpacuStartTimeName, $startTime, 'wpacu_exec_time');
+		}
+
+		if ($action === 'end' && ($startTime = wp_cache_get($wpacuStartTimeName, 'wpacu_exec_time'))) {
+			// End clock time in seconds
+			$endTime = (microtime(true) * 1000);
+			$scriptExecTime = ($endTime !== $startTime && $endTime > $startTime) ? ($endTime - $startTime) : 0;
+
+			// Calculate script execution time
+			// Is there an existing exec time (e.g. from a function called several times)?
+			// Append it to the total execution time
+			if ($scriptExecTimeExisting = wp_cache_get($wpacuExecTimeName, 'wpacu_exec_time')) {
+				$scriptExecTime += $scriptExecTimeExisting;
+			}
+
+			wp_cache_set($wpacuExecTimeName, $scriptExecTime, 'wpacu_exec_time');
+			return $scriptExecTime;
+		}
+
+		return '';
+	}
+
+	/**
+	 * @param $wpacuCacheKey
+	 *
+	 * @return array
+	 */
+	public static function getTimingValues($wpacuCacheKey)
+	{
+		$wpacuExecTiming = wp_cache_get( $wpacuCacheKey, 'wpacu_exec_time' ) ?: 0;
+
+		$wpacuTimingFormatMs = str_replace('.00', '', number_format($wpacuExecTiming, 2));
+		$wpacuTimingFormatS  = str_replace('.00', '', number_format(($wpacuExecTiming / 1000), 3));
+
+		return array('ms' => $wpacuTimingFormatMs, 's' => $wpacuTimingFormatS);
+	}
+
+	/**
+	 * @param $timingKey
+	 * @param $htmlSource
+	 *
+	 * @return string|string[]
+	 */
+	public static function printTimingFor($timingKey, $htmlSource)
+	{
+		$wpacuCacheKey       = 'wpacu_' . $timingKey . '_exec_time';
+		$timingValues        = self::getTimingValues( $wpacuCacheKey);
+		$wpacuTimingFormatMs = $timingValues['ms'];
+		$wpacuTimingFormatS  = $timingValues['s'];
+
+		$htmlSource = str_replace(
+			array(
+				'{' . $wpacuCacheKey . '}',
+				'{' . $wpacuCacheKey . '_sec}'
+			),
+			array(
+				$wpacuTimingFormatMs . 'ms',
+				$wpacuTimingFormatS . 's',
+			), // clean it up
+			$htmlSource );
+
+		return $htmlSource;
 	}
 }

@@ -69,7 +69,6 @@ if ( ! class_exists( 'Login_Designer_Templates' ) ) :
 		 * @param array $classes Existing body classes to be filtered.
 		 */
 		public function body_class( $classes ) {
-
 			global $pagenow;
 
 			// Return if we're not on the Login Designer template.
@@ -139,7 +138,6 @@ if ( ! class_exists( 'Login_Designer_Templates' ) ) :
 
 				// Custom control styles.
 				wp_enqueue_style( $handle, $dir . '/' . $handle . LOGIN_DESIGNER_ASSET_SUFFIX . '.css', LOGIN_DESIGNER_VERSION, 'all' );
-
 			endforeach;
 
 			// Remove the default option. There's not one.
@@ -150,11 +148,9 @@ if ( ! class_exists( 'Login_Designer_Templates' ) ) :
 		 * Register templates.
 		 */
 		public function get_templates() {
-
 			$image_dir = LOGIN_DESIGNER_PLUGIN_URL . 'assets/images/';
 
 			if ( Login_Designer()->has_pro() ) {
-
 				$templates = array(
 					'default' => esc_url( $image_dir ) . 'customizer/default.jpg',
 					'01'      => esc_url( $image_dir ) . 'customizer/template-01.jpg',
@@ -162,9 +158,7 @@ if ( ! class_exists( 'Login_Designer_Templates' ) ) :
 					'03'      => esc_url( $image_dir ) . 'customizer/template-03.jpg',
 					'04'      => esc_url( $image_dir ) . 'customizer/template-04.jpg',
 				);
-
 			} else {
-
 				$templates = array(
 					'default' => esc_url( $image_dir ) . 'customizer/default.jpg',
 					'01'      => esc_url( $image_dir ) . 'customizer/template-01.jpg',
@@ -273,8 +267,8 @@ if ( ! class_exists( 'Login_Designer_Templates' ) ) :
 			$template_02_branding = apply_filters(
 				'login_designer_template_02_branding_defaults',
 				array(
-					'branding_color'      => '#3d3d3d',
-					'branding_icon_color' => '#4d4d4d',
+					'branding_color'      => '#353535',
+					'branding_icon_color' => '#353535',
 					'branding_position'   => 'right',
 				)
 			);

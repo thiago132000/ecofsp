@@ -207,6 +207,10 @@ class OptimizeJs
 		// Relative path to the new file
 		// Save it to /wp-content/cache/js/{OptimizeCommon::$optimizedSingleFilesDir}/
 		if ($fileVer !== $wp_version) {
+			if (is_array($fileVer)) {
+				// Convert to string if it's an array (rare cases)
+				$fileVer = implode('-', $fileVer);
+			}
 			$fileVer = trim(str_replace(' ', '_', preg_replace('/\s+/', ' ', $fileVer)));
 			$fileVer = (strlen($fileVer) > 50) ? substr(md5($fileVer), 0, 20) : $fileVer; // don't end up with too long filenames
 		}
@@ -431,16 +435,22 @@ class OptimizeJs
 			return $htmlSource;
 		}
 
+		/* [wpacu_timing] */ Misc::scriptExecTimer( 'alter_html_source_for_optimize_js' ); /* [/wpacu_timing] */
+
 		/* [wpacu_pro] */$htmlSource = apply_filters('wpacu_pro_maybe_move_jquery_after_body_tag', $htmlSource);/* [/wpacu_pro] */
 
 		if (! Main::instance()->preventAssetsSettings()) {
+			/* [wpacu_timing] */ $wpacuTimingName = 'alter_html_source_unload_ignore_deps_js'; Misc::scriptExecTimer($wpacuTimingName); /* [/wpacu_timing] */
 			// Are there any assets unloaded where their "children" are ignored?
 			// Since they weren't dequeued the WP way (to avoid unloading the "children"), they will be stripped here
 			$htmlSource = self::ignoreDependencyRuleAndKeepChildrenLoaded($htmlSource);
+			/* [wpacu_timing] */ Misc::scriptExecTimer($wpacuTimingName, 'end'); /* [/wpacu_timing] */
 
 			// Move any jQuery inline SCRIPT that is triggered before jQuery library is called through "jquery-core" handle
 			if (Main::instance()->settings['move_inline_jquery_after_src_tag']) {
+				/* [wpacu_timing] */ $wpacuTimingName = 'alter_html_source_move_inline_jquery_after_src_tag'; Misc::scriptExecTimer($wpacuTimingName); /* [/wpacu_timing] */
 				$htmlSource = self::moveInlinejQueryAfterjQuerySrc($htmlSource);
+				/* [wpacu_timing] */ Misc::scriptExecTimer($wpacuTimingName, 'end'); /* [/wpacu_timing] */
 			}
 		}
 
@@ -452,11 +462,14 @@ class OptimizeJs
 
 		// At least minify or cache dynamic loaded JS has to be enabled to proceed
 		if (self::isWorthCheckingForOptimization()) {
+			/* [wpacu_timing] */ $wpacuTimingName = 'alter_html_source_original_to_optimized_js'; Misc::scriptExecTimer($wpacuTimingName); /* [/wpacu_timing] */
 			// 'wpacu_js_optimize_list' caching list is also checked; if it's empty, no optimization is made
 			$htmlSource = self::updateHtmlSourceOriginalToOptimizedJs($htmlSource);
+			/* [wpacu_timing] */ Misc::scriptExecTimer($wpacuTimingName, 'end'); /* [/wpacu_timing] */
 		}
 
 		if (! Main::instance()->preventAssetsSettings()) {
+			/* [wpacu_timing] */ $wpacuTimingName = 'alter_html_source_for_preload_js'; Misc::scriptExecTimer($wpacuTimingName); /* [/wpacu_timing] */
 			$preloads = Preloads::instance()->getPreloads();
 
 			if (isset($preloads['scripts']) && ! empty($preloads['scripts'])) {
@@ -464,6 +477,7 @@ class OptimizeJs
 			}
 
 			$htmlSource = str_replace(Preloads::DEL_SCRIPTS_PRELOADS, '', $htmlSource);
+			/* [wpacu_timing] */ Misc::scriptExecTimer($wpacuTimingName, 'end'); /* [/wpacu_timing] */
 		}
 
 		$proceedWithCombineOnThisPage = true;
@@ -480,11 +494,14 @@ class OptimizeJs
 		}
 
 		if ($proceedWithCombineOnThisPage) {
+			/* [wpacu_timing] */ // Note: Load timing is checked within the method /* [/wpacu_timing] */
 			$htmlSource = CombineJs::doCombine($htmlSource);
 		}
 
 		if (self::isWorthCheckingForOptimization() && ! Main::instance()->preventAssetsSettings()) {
+			/* [wpacu_timing] */ $wpacuTimingName = 'alter_html_source_for_minify_inline_script_tags'; Misc::scriptExecTimer($wpacuTimingName); /* [/wpacu_timing] */
 			$htmlSource = self::optimizeInlineScriptTags($htmlSource);
+			/* [wpacu_timing] */ Misc::scriptExecTimer($wpacuTimingName, 'end'); /* [/wpacu_timing] */
 		}
 
 		// Final cleanups
@@ -492,6 +509,8 @@ class OptimizeJs
 
 		$htmlSource = preg_replace('#<script(\s+|)data-wpacu-script-rel-src-before=(["\'])' . '(.*)' . '(\1)#Usmi', '<script ', $htmlSource);
 		$htmlSource = preg_replace('#<script(.*)data-wpacu-script-handle=\'(.*)\'#Umi', '<script \\1', $htmlSource);
+
+		/* [wpacu_timing] */ Misc::scriptExecTimer('alter_html_source_for_optimize_js', 'end'); /* [/wpacu_timing] */
 
 		return $htmlSource;
 	}

@@ -106,7 +106,11 @@ jQuery(window).on('elementor/frontend/init', function () {
             videoIsActive = 0;
         });
 
-        $('.eael-sticky-video-wrapper').css('height', element.height() + 'px');
+        element.parent().css('height', element.height() + 'px');
+
+        $(window).resize(function() {
+            element.parent().css('height', element.height() + 'px');
+        });
     });
 
 });

@@ -81,7 +81,7 @@ foreach (\WpAssetCleanUp\MetaBoxes::$noMetaBoxesForPostTypes as $noMetaBoxesForP
 
                         <hr /><div class="wpacu-clearfix" style="height: 0;"></div>
 
-                        <p style="margin-top: 8px;"><?php _e('When you edit a post, page or custom post type and rarely manage loaded CSS/JS from the "Asset CleanUp: CSS & JavaScript Manager" meta box, you can choose to fetch the list when you click on a button. This will help declutter the edit page on load and also save resources as AJAX calls to the front-end won\'t be made to retrieve the assets\' list.', 'wp-asset-clean-up'); ?></p>
+                        <p style="margin-top: 8px;"><?php _e('When you are in the Dashboard and edit a post, page, custom post type, category or custom taxonomy and rarely manage loaded CSS/JS from the "Asset CleanUp: CSS & JavaScript Manager", you can choose to fetch the list when you click on a button. This will help declutter the edit page on load and also save resources as AJAX calls to the front-end won\'t be made to retrieve the assets\' list.', 'wp-asset-clean-up'); ?></p>
                         <ul style="margin-bottom: 0;">
                             <li>
                                 <label for="assets_list_show_status_default">
@@ -186,7 +186,7 @@ foreach (\WpAssetCleanUp\MetaBoxes::$noMetaBoxesForPostTypes as $noMetaBoxesForP
                         <li>
                             <label for="assets_list_layout_plugin_area_status_expanded">
                                 <input id="assets_list_layout_plugin_area_status_expanded"
-					                   checked="checked"
+				                       <?php if (! $data['assets_list_layout_plugin_area_status'] || $data['assets_list_layout_plugin_area_status'] === 'expanded') { ?>checked="checked"<?php } ?>
                                        type="radio"
                                        name="<?php echo WPACU_PLUGIN_ID . '_settings'; ?>[assets_list_layout_plugin_area_status]"
                                        value="expanded"> <?php _e('Expanded', 'wp-asset-clean-up'); ?> (<?php _e('Default', 'wp-asset-clean-up'); ?>)
@@ -381,22 +381,30 @@ foreach (\WpAssetCleanUp\MetaBoxes::$noMetaBoxesForPostTypes as $noMetaBoxesForP
                 <br />This is relevant in case there are alterations made to the content of the CSS/JS files via minification, combination or any other settings that would require an update to the content of a file (e.g. apply "font-display" to @font-face in stylesheets). When the caching is cleared, the previously cached CSS/JS files stored in <code><?php echo \WpAssetCleanUp\OptimiseAssets\OptimizeCommon::getRelPathPluginCacheDir(); ?></code> that are older than (X) days will be deleted as they are outdated and likely not referenced anymore in any source code (e.g. old cached pages, Google Search cached version etc.). <span style="color: #004567;" class="dashicons dashicons-info"></span> <a href="https://assetcleanup.com/docs/?p=237" target="_blank">Read more</a>
             </td>
         </tr>
-        <!-- [wpacu_lite] -->
+        <?php
+        ?>
+
         <tr valign="top">
             <th scope="row">
-                <label for="wpacu_disable_freemius"><?php _e('Disable Freemius Analytics &amp; Insights?', 'wp-asset-clean-up'); ?></label>
+                <label for="wpacu_frontend"><?php _e('Do not load the plugin on certain pages', 'wp-asset-clean-up'); ?></label>
             </th>
             <td>
-                <label class="wpacu_switch">
-                    <input id="wpacu_disable_freemius"
-                           type="checkbox"
-			            <?php echo (($data['disable_freemius'] == 1) ? 'checked="checked"' : ''); ?>
-                           name="<?php echo WPACU_PLUGIN_ID . '_settings'; ?>[disable_freemius]"
-                           value="1" /> <span class="wpacu_slider wpacu_round"></span> </label>
-                &nbsp;If enabled, it will not trigger any popup asking you about the reason why you decided to deactivate the plugin (from <em>"Plugins" -&gt; "Installed Plugins"</em> page). It's good if you do debugging and often deactivate the plugin or you just don't like plugin feedback popups. <span style="color: #004567;" class="dashicons dashicons-info"></span> <a id="wpacu-deactivate-modal-info-target" href="#wpacu-deactivate-modal-info"><?php _e('Read more', 'wp-asset-clean-up'); ?></a>
+                &nbsp;If you wish to prevent Asset CleanUp Pro from triggering on certain pages (except the Dashboard) or group of pages for any reason (e.g. incompatibility with another plugin), you can specify some URI patterns in the following textarea (one per line), just like the examples shown below:
+                <div style="margin: 8px 0 5px;">
+                <textarea id="wpacu_do_not_load_plugin_patterns"
+                           name="<?php echo WPACU_PLUGIN_ID . '_settings'; ?>[do_not_load_plugin_patterns]"
+                           rows="4"
+                           style="width: 100%;"><?php echo $data['do_not_load_plugin_patterns']; ?></textarea>
+                </div>
+                <div>
+                    <p>You can either use specific strings or patterns (the # delimiter will be automatically applied to the <code>preg_match()</code> PHP function that would check if the requested URI is matched). Please do not include the domain name. Here are a few examples:</p>
+                    <ul>
+                        <li><code>/checkout/</code> - if it contains the string</li>
+                        <li><code>/product/(.*?)/</code> - any product page (most likely from WooCommerce)</li>
+                    </ul>
+                </div>
             </td>
         </tr>
-        <!-- [/wpacu_lite] -->
     </table>
 </div>
 

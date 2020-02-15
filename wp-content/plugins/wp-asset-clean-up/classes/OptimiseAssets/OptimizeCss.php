@@ -18,7 +18,7 @@ class OptimizeCss
 	/**
 	 *
 	 */
-	const MOVE_NOSCRIPT_TO_BODY_FOR_ASYNC_PRELOADS = '<meta name="wpacu-generator" content="ASSET CLEANUP NOSCRIPT FOR ASYNC PRELOADS">';
+	const MOVE_NOSCRIPT_TO_BODY_FOR_ASYNC_PRELOADS = '<span style="display: none;" data-name=wpacu-delimiter data-content="ASSET CLEANUP NOSCRIPT FOR ASYNC PRELOADS"></span>';
 
 	/**
 	 * @var float|int
@@ -327,12 +327,11 @@ class OptimizeCss
 		// Relative path to the new file
 		// Save it to /wp-content/cache/css/{OptimizeCommon::$optimizedSingleFilesDir}/
 		if ($fileVer !== $wp_version) {
-			if (! is_array($fileVer)) {
-				$fileVer = trim( str_replace( ' ', '_', preg_replace( '/\s+/', ' ', $fileVer ) ) );
-			} else {
+			if (is_array($fileVer)) {
+				// Convert to string if it's an array (rare cases)
 				$fileVer = implode('-', $fileVer);
 			}
-
+			$fileVer = trim(str_replace(' ', '_', preg_replace('/\s+/', ' ', $fileVer)));
 			$fileVer = (strlen($fileVer) > 50) ? substr(md5($fileVer), 0, 20) : $fileVer; // don't end up with too long filenames
 		}
 
@@ -390,28 +389,42 @@ class OptimizeCss
 			return $htmlSource;
 		}
 
+		/* [wpacu_timing] */ Misc::scriptExecTimer('alter_html_source_for_optimize_css'); /* [/wpacu_timing] */
+
 		// Are there any assets unloaded where their "children" are ignored?
 		// Since they weren't dequeued the WP way (to avoid unloading the "children"), they will be stripped here
 		if (! Main::instance()->preventAssetsSettings()) {
+			/* [wpacu_timing] */ $wpacuTimingName = 'alter_html_source_unload_ignore_deps_css'; Misc::scriptExecTimer($wpacuTimingName); /* [/wpacu_timing] */
 			$htmlSource = self::ignoreDependencyRuleAndKeepChildrenLoaded($htmlSource);
+			/* [wpacu_timing] */ Misc::scriptExecTimer($wpacuTimingName, 'end'); /* [/wpacu_timing] */
 		}
 
 		if (self::isInlineCssEnabled()) {
+			/* [wpacu_timing] */ $wpacuTimingName = 'alter_html_source_for_inline_css'; Misc::scriptExecTimer($wpacuTimingName); /* [/wpacu_timing] */
 			$htmlSource = self::doInline($htmlSource);
+			/* [wpacu_timing] */ Misc::scriptExecTimer($wpacuTimingName, 'end'); /* [/wpacu_timing] */
 		}
 
 		if (self::isWorthCheckingForOptimization()) {
+			/* [wpacu_timing] */ $wpacuTimingName = 'alter_html_source_original_to_optimized_css'; Misc::scriptExecTimer($wpacuTimingName); /* [/wpacu_timing] */
 			// 'wpacu_css_optimize_list' caching list is also checked; if it's empty, no optimization is made
 			$htmlSource = self::updateHtmlSourceOriginalToOptimizedCss($htmlSource);
+			/* [wpacu_timing] */ Misc::scriptExecTimer($wpacuTimingName, 'end'); /* [/wpacu_timing] */
+
 
 			// Are there any dynamic loaded CSS that were optimized? Check them too
 			if (self::isInlineCssEnabled() && Main::instance()->settings['cache_dynamic_loaded_css']) {
+				/* [wpacu_timing] */ $wpacuTimingName = 'alter_html_source_for_dynamic_loaded_css'; Misc::scriptExecTimer($wpacuTimingName); /* [/wpacu_timing] */
 				$htmlSource = self::doInline($htmlSource, 'cached');
+				/* [wpacu_timing] */ Misc::scriptExecTimer($wpacuTimingName, 'end'); /* [/wpacu_timing] */
 			}
 		}
 
 		if (! Main::instance()->preventAssetsSettings()) {
+			/* [wpacu_timing] */ $wpacuTimingName = 'alter_html_source_for_preload_css'; Misc::scriptExecTimer($wpacuTimingName); /* [/wpacu_timing] */
+			/* [wpacu_pro] */ $htmlSource = apply_filters('wpacu_optimize_css_html_source', $htmlSource); /* [/wpacu_pro] */
 			$htmlSource = Preloads::instance()->doChanges($htmlSource);
+			/* [wpacu_timing] */ Misc::scriptExecTimer($wpacuTimingName, 'end'); /* [/wpacu_timing] */
 		}
 
 		$proceedWithCombineOnThisPage = true;
@@ -428,22 +441,33 @@ class OptimizeCss
 		}
 
 		if ($proceedWithCombineOnThisPage) {
+			/* [wpacu_timing] */ $wpacuTimingName = 'alter_html_source_for_combine_css'; Misc::scriptExecTimer($wpacuTimingName); /* [/wpacu_timing] */
 			$htmlSource = CombineCss::doCombine($htmlSource);
+			/* [wpacu_timing] */ Misc::scriptExecTimer($wpacuTimingName, 'end'); /* [/wpacu_timing] */
 		}
 
 		if (! Main::instance()->preventAssetsSettings() && Main::instance()->settings['minify_loaded_css'] && Main::instance()->settings['minify_loaded_css_inline']) {
+			/* [wpacu_timing] */ $wpacuTimingName = 'alter_html_source_for_minify_inline_style_tags'; Misc::scriptExecTimer($wpacuTimingName); /* [/wpacu_timing] */
 			$htmlSource = MinifyCss::minifyInlineStyleTags($htmlSource);
+			/* [wpacu_timing] */ Misc::scriptExecTimer($wpacuTimingName, 'end'); /* [/wpacu_timing] */
 		}
 
 		// Final cleanups
 		$htmlSource = preg_replace('#<link(\s+|)data-wpacu-link-rel-href-before=(["\'])' . '(.*)' . '(\1)#Usmi', '<link ', $htmlSource);
 		$htmlSource = preg_replace('#<link(.*)data-wpacu-style-handle=\'(.*)\'#Umi', '<link \\1', $htmlSource);
 
+		/* [wpacu_timing] */ $wpacuTimingName = 'alter_html_source_for_google_fonts_optimization_removal'; Misc::scriptExecTimer($wpacuTimingName); /* [/wpacu_timing] */
 		// Alter HTML Source for Google Fonts Optimization / Removal
 		$htmlSource = FontsGoogle::alterHtmlSource($htmlSource);
+		/* [wpacu_timing] */ Misc::scriptExecTimer($wpacuTimingName, 'end'); /* [/wpacu_timing] */
 
 		// NOSCRIPT fallbacks: Applies for Google Fonts (async) (Lite and Pro) and Preloads (Async in Pro version)
+		/* [wpacu_timing] */ $wpacuTimingName = 'alter_html_source_for_add_async_preloads_noscript'; Misc::scriptExecTimer($wpacuTimingName); /* [/wpacu_timing] */
 		$htmlSource = apply_filters('wpacu_add_async_preloads_noscript', $htmlSource);
+		/* [wpacu_timing] */ Misc::scriptExecTimer($wpacuTimingName, 'end'); /* [/wpacu_timing] */
+
+		// Final timing (for the whole HTML source)
+		/* [wpacu_timing] */ Misc::scriptExecTimer('alter_html_source_for_optimize_css', 'end'); /* [/wpacu_timing] */
 
 		return $htmlSource;
 	}
@@ -783,7 +807,7 @@ class OptimizeCss
 				$appendBeforeAnyRelPath = $cdnUrlForCss ? OptimizeCommon::cdnToUrlFormat($cdnUrlForCss, 'raw') : '';
 
 				$cssContent = self::maybeFixCssContent(
-					FileSystem::file_get_contents($localAssetPath), // CSS content
+					FileSystem::file_get_contents($localAssetPath, 'combine_css_imports'), // CSS content
 					$appendBeforeAnyRelPath . OptimizeCommon::getPathToAssetDir($linkHrefOriginal) . '/'
 				);
 

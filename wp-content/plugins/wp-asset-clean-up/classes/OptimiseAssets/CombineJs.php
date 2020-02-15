@@ -32,6 +32,9 @@ class CombineJs
 			return $htmlSource;
 		}
 
+		/* [wpacu_timing] */ $wpacuTimingName = 'alter_html_source_for_combine_js'; Misc::scriptExecTimer($wpacuTimingName); /* [/wpacu_timing] */
+
+
 		$combineLevel = 2;
 
 		$isDeferAppliedOnBodyCombineGroupNo = 0;
@@ -374,6 +377,8 @@ HTML;
 		}
 
 		libxml_clear_errors();
+
+		/* [wpacu_timing] */ Misc::scriptExecTimer($wpacuTimingName, 'end'); /* [/wpacu_timing] */
 
 		// Finally, return the HTML source
 		return $htmlSource;

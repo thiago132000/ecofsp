@@ -21,7 +21,7 @@ class MinifyJs
 	{
 		$minifier = new Minify\JS($jsContent);
 			return trim($minifier->minify());
-		}
+			}
 
 	/**
 	 * @param $src
@@ -55,7 +55,10 @@ class MinifyJs
 			'#/wp-content/plugins/elementor/assets/(.*?).min.js#',
 
 			// WooCommerce Assets
-			'#/wp-content/plugins/woocommerce/assets/js/(.*?).min.js#'
+			'#/wp-content/plugins/woocommerce/assets/js/(.*?).min.js#',
+
+            // TranslatePress Multilingual
+            '#/translatepress-multilingual/assets/js/trp-editor.js#',
 
 			);
 

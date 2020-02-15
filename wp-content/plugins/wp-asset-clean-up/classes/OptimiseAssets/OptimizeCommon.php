@@ -101,26 +101,75 @@ class OptimizeCommon
 	 */
 	public static function alterHtmlSource($htmlSource)
 	{
-		if (Plugin::preventAnyChanges()) {
+		// This is useful to avoid changing the DOM via wp_loaded action hook
+		// In order to check how fast the page loads without the DOM changes (for debugging purposes)
+		$wpacuNoHtmlChanges = array_key_exists( 'wpacu_no_html_changes', $_GET );
+
+		if ( $wpacuNoHtmlChanges || Plugin::preventAnyChanges() ) {
 			return $htmlSource;
 		}
 
-		$htmlSource = apply_filters('wpacu_html_source_before_optimization', $htmlSource);
+		// [wpacu_timing]
+		Misc::scriptExecTimer( 'alter_html_source' );
+		// [/wpacu_timing]
 
-		$htmlSource = OptimizeCss::alterHtmlSource($htmlSource);
-		$htmlSource = OptimizeJs::alterHtmlSource($htmlSource);
+		$htmlSource = apply_filters( 'wpacu_html_source_before_optimization', $htmlSource );
 
-		$htmlSource = Main::instance()->settings['remove_generator_tag'] ? CleanUp::removeMetaGenerators($htmlSource) : $htmlSource;
-		$htmlSource = Main::instance()->settings['remove_html_comments'] ? CleanUp::removeHtmlComments($htmlSource) : $htmlSource;
+		$htmlSource = OptimizeCss::alterHtmlSource( $htmlSource );
 
-		if (in_array(Main::instance()->settings['disable_xmlrpc'], array('disable_all', 'disable_pingback'))) {
+		$htmlSource = OptimizeJs::alterHtmlSource( $htmlSource );
+
+		$htmlSource = Main::instance()->settings['remove_generator_tag'] ? CleanUp::removeMetaGenerators( $htmlSource ) : $htmlSource;
+		$htmlSource = Main::instance()->settings['remove_html_comments'] ? CleanUp::removeHtmlComments( $htmlSource ) : $htmlSource;
+
+		if ( in_array( Main::instance()->settings['disable_xmlrpc'], array( 'disable_all', 'disable_pingback' ) ) ) {
 			// Also clean it up from the <head> in case it's hardcoded
-			$htmlSource = CleanUp::cleanPingbackLinkRel($htmlSource);
+			$htmlSource = CleanUp::cleanPingbackLinkRel( $htmlSource );
 		}
 
-		$htmlSource = apply_filters('wpacu_html_source', $htmlSource); // legacy
+		$htmlSource = apply_filters( 'wpacu_html_source', $htmlSource ); // legacy
 
-		return apply_filters('wpacu_html_source_after_optimization', $htmlSource);
+		// [wpacu_timing]
+		Misc::scriptExecTimer( 'alter_html_source', 'end' );
+		// [/wpacu_timing]
+
+		// [wpacu_debug]
+		if (array_key_exists('wpacu_debug', $_GET)) {
+			$timingKeys = array(
+				// All HTML alteration via "wp_loaded" action hook
+				'alter_html_source',
+
+				// CSS
+				'alter_html_source_for_optimize_css',
+				'alter_html_source_unload_ignore_deps_css',
+				'alter_html_source_for_google_fonts_optimization_removal',
+				'alter_html_source_for_inline_css',
+				'alter_html_source_original_to_optimized_css',
+				'alter_html_source_for_preload_css',
+
+				'alter_html_source_for_dynamic_loaded_css',
+				'alter_html_source_for_combine_css',
+				'alter_html_source_for_minify_inline_style_tags',
+
+				// JS
+				'alter_html_source_for_optimize_js',
+				'alter_html_source_unload_ignore_deps_js',
+
+				'alter_html_source_original_to_optimized_js',
+				'alter_html_source_for_preload_js',
+				'alter_html_source_for_dynamic_loaded_js',
+				'alter_html_source_for_combine_js',
+
+				'alter_html_source_move_inline_jquery_after_src_tag'
+			);
+
+			foreach ( $timingKeys as $timingKey ) {
+				$htmlSource = Misc::printTimingFor($timingKey, $htmlSource);
+			}
+		}
+		// [wpacu_debug]
+
+		return apply_filters( 'wpacu_html_source_after_optimization', $htmlSource );
 	}
 
 	/**
@@ -137,6 +186,9 @@ class OptimizeCommon
 	}
 
 	/**
+	 * Removes HTML comments including MSIE conditional ones as they are left intact
+	 * and not combined with other JavaScript files in case the method is called from CombineJs.php
+	 *
 	 * The following output is used only for fetching purposes
 	 * It will not be part of the final output
 	 *
@@ -146,9 +198,39 @@ class OptimizeCommon
 	 */
 	public static function cleanerHtmlSource($htmlSource)
 	{
-		// Removes HTML comments including MSIE conditional ones as they are left intact
-		// and not combined with other JavaScript files in case the method is called from CombineJs.php
-		return preg_replace('/<!--(.|\s)*?-->/', '', $htmlSource);
+		$htmlSourceBeforeAlt = $htmlSource;
+
+		$sourceHasComments = strpos($htmlSource, '<!--') !== false && strpos($htmlSource, '-->') !== false;
+
+		if (! $sourceHasComments) {
+			return $htmlSource; // nothing to clean
+		}
+
+		if (function_exists('libxml_use_internal_errors') && class_exists('\DOMDocument') && class_exists('\DOMXPath')) {
+			// Highest accuracy
+			$dom = new \DOMDocument();
+			libxml_use_internal_errors(true);
+			$dom->loadHtml($htmlSource);
+
+			$xpath = new \DOMXPath($dom);
+			libxml_use_internal_errors(true);
+			foreach ($xpath->query('//comment()') as $comment) {
+				if (isset($comment->nodeValue) && $comment->nodeValue) {
+					$htmlSource = str_replace( '<!--' . $comment->nodeValue . '-->', '', $htmlSource );
+				}
+			}
+
+			return $htmlSource; // altered via DOMDocument
+		}
+
+		// Fallback (RegEx)
+		$htmlSource = trim(preg_replace('/<!--(.|\s)*?-->/', '', $htmlSource));
+
+		if (! $htmlSource) {
+			return $htmlSourceBeforeAlt; // It returned null (rare cases with some pages, possible bug, return the source as it is)
+		}
+
+		return $htmlSource; // altered via RegEx (fallback)
 	}
 
 	/**
@@ -694,6 +776,9 @@ class OptimizeCommon
 			return;
 		}
 
+		$isAjaxCall = isset($_POST['action']) && $_POST['action'] === WPACU_PLUGIN_ID . '_clear_cache' && is_admin();
+		$clearedOutput = $keptOutput = array();
+
 		/*
 		 * STEP 1: Clear all .json, .css & .js files (older than $clearFilesOlderThan days) that are related to "Minify/Combine CSS/JS files" feature
 		 */
@@ -743,7 +828,7 @@ class OptimizeCommon
 				$jsonContentsArray = @json_decode($jsonContents, ARRAY_A);
 
 				$uriToFinalCssFileIndexKey = 'uri_to_final_css_file';
-				$uriToFinalJsFileIndexKey = 'uri_to_final_js_file';
+				$uriToFinalJsFileIndexKey  = 'uri_to_final_js_file';
 
 				if (is_array($jsonContentsArray) && strpos($jsonContents, $uriToFinalCssFileIndexKey) !== false) {
 					if (isset($jsonContentsArray['head'][$uriToFinalCssFileIndexKey])) {
@@ -763,6 +848,7 @@ class OptimizeCommon
 
 				// Clear the JSON files as new ones will be generated
 				@unlink($jsonFile);
+				/* [clear output] */if ($isAjaxCall && ! is_file($jsonFile)) { $clearedOutput[] = $jsonFile. ' (storage file)'; }/* [/clear output] */
 			}
 
 			// Finally, collect the rest of $allAssetsToKeep from the database transients
@@ -786,22 +872,33 @@ SQL;
 				}
 			}
 
+			/* [clear output] */
+			if ($isAjaxCall) {
+				foreach ($allAssetsToKeep as $assetToKeep) {
+					$keptOutput[] = $assetToKeep . ' (cached asset file)';
+				}
+			}
+			/* [/clear output] */
+
 			// Finally clear the matched assets, except the active ones
 			foreach ($allAssets as $assetFile) {
 				if (in_array($assetFile, $allAssetsToKeep)) {
 					continue;
 				}
 				@unlink($assetFile);
+				/* [clear output] */if ($isAjaxCall && ! is_file($assetFile)) { $clearedOutput[] = $assetFile. ' (cached asset file)'; }/* [/clear output] */
 			}
 
 			foreach (array_reverse($storageEmptyDirs) as $storageEmptyDir) {
 				@rmdir($storageEmptyDir);
+				/* [clear output] */if ($isAjaxCall && ! is_dir($storageEmptyDir)) { $clearedOutput[] = $storageEmptyDir. ' (storage empty directory)'; }/* [/clear output] */
 			}
 
 			// Remove empty dirs from /css/logged-in/ and /js/logged-in/
 			if (! empty($userIdDirs)) {
 				foreach ($userIdDirs as $userIdDir) {
 					@rmdir($userIdDir); // it needs to be empty, otherwise, it will not be removed
+					/* [clear output] */if ($isAjaxCall && ! is_dir($userIdDir)) { $clearedOutput[] = $userIdDir. ' (user empty directory)'; }/* [/clear output] */
 				}
 			}
 		}
@@ -820,9 +917,27 @@ SQL;
 		// Make sure all the caching files/folders are there in case the plugin was upgraded
 		Plugin::createCacheFoldersFiles(array('css', 'js'));
 
+		if ($isAjaxCall) {
+			if (! empty($clearedOutput)) {
+				echo 'The following files/directories have been cleared:'."\n";
+				foreach ($clearedOutput as $clearedInfo) {
+					echo $clearedInfo."\n";
+				}
+			}
+
+			if (! empty($keptOutput)) {
+				echo "\n".'The following files have been kept:'."\n";
+				foreach ($keptOutput as $keptInfo) {
+					echo $keptInfo."\n";
+				}
+			}
+
+			exit();
+		}
+
 		if ($redirectAfter && wp_get_referer()) {
 			wp_safe_redirect(wp_get_referer());
-			exit;
+			exit();
 		}
 	}
 
@@ -836,22 +951,35 @@ SQL;
 		if (is_dir($assetCleanUpCacheDir)) {
 			$dirItems = new \RecursiveDirectoryIterator($assetCleanUpCacheDir, \RecursiveDirectoryIterator::SKIP_DOTS);
 
+			// All files
 			$totalFiles = 0;
 			$totalSize = 0;
+
+			// Just .css & .js
+			$totalSizeAssets = 0;
+			$totalFilesAssets = 0;
 
 			foreach (new \RecursiveIteratorIterator($dirItems, \RecursiveIteratorIterator::SELF_FIRST, \RecursiveIteratorIterator::CATCH_GET_CHILD) as $item) {
 				$fileBaseName = trim(strrchr($item, '/'), '/');
 				$fileExt = strrchr($fileBaseName, '.');
 
-				if ($item->isFile() && in_array($fileExt, array('.css', '.js'))) {
+				if ($item->isFile()) {
 					$totalSize += $item->getSize();
-					$totalFiles++;
+					$totalFiles ++;
+
+					if (in_array($fileExt, array('.css', '.js'))) {
+						$totalSizeAssets += $item->getSize();
+						$totalFilesAssets ++;
+					}
 				}
 			}
 
 			return array(
-				'total_size'  => Misc::formatBytes($totalSize),
-				'total_files' => $totalFiles
+				'total_size'         => Misc::formatBytes($totalSize),
+				'total_files'        => $totalFiles,
+
+				'total_size_assets'  => Misc::formatBytes($totalSizeAssets),
+				'total_files_assets' => $totalFilesAssets
 			);
 		}
 
@@ -950,10 +1078,29 @@ SQL;
 	 */
 	public static function loadOptimizedAssetsIfQueryStrings()
 	{
-		$isPreview = (isset($_GET['preview_id'], $_GET['preview_nonce'], $_GET['preview']) || isset($_GET['preview']));
-		$isQueryStringDebug = isset($_GET['wpacu_no_css_minify']) || isset($_GET['wpacu_no_js_minify']) || isset($_GET['wpacu_no_css_combine']) || isset($_GET['wpacu_no_js_combine']);
+		$isPreview = (isset($_GET['preview_id'], $_GET['preview_nonce'], $_GET['preview'])
+		              || isset($_GET['preview'])); // show the CSS/JS as combined IF the option is enabled despite the query string (for debugging purposes)
 
-		return ($isPreview || $isQueryStringDebug);
+		$ignoreQueryStrings = array(
+			'wpacu_do_combine', // show the CSS/JS as combined IF the option is enabled despite the query string (for debugging purposes)
+			'wpacu_no_css_minify', 'wpacu_no_js_minify', 'wpacu_no_css_combine', 'wpacu_no_js_combine', 'wpacu_debug', 'wpacu_skip_test_mode',
+			'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'utm_expid', 'utm_referrer', // Google Analytics
+			'gclid', // Google Click ID
+			'fbclick', 'fbclid', 'fb_action_ids', 'fb_action_types', 'fb_source', // Facebook
+			'SSAID', 'sscid', // ShareASale
+			'ao_noptimize', // Autoptimize feature (strip its settings on page request for debugging purposes)
+		);
+
+		$isQueryString = false;
+
+		foreach ($ignoreQueryStrings as $ignoreQueryString) {
+			if (isset($_GET[$ignoreQueryString])) {
+				$isQueryString = true;
+				break;
+			}
+		}
+
+		return ($isPreview || $isQueryString);
 	}
 
 	/**

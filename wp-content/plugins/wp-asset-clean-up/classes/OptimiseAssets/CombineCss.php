@@ -217,7 +217,7 @@ HTML;
 	 */
 	public static function stripJustCombinedLinkTags($filesSources, $htmlSource)
 	{
-		preg_match_all('#<link[^>]*stylesheet[^>]*(>)#Usmi', $htmlSource, $matchesSourcesFromTags, PREG_SET_ORDER);
+		preg_match_all('#<link[^>]*(stylesheet|preload)[^>]*(>)#Umi', $htmlSource, $matchesSourcesFromTags, PREG_SET_ORDER);
 
 		$linkTagsStripped = 0;
 

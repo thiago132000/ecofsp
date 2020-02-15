@@ -7,7 +7,7 @@ Tags: login, custom login, customize wordpress login, wordpress login, customize
 Requires at least: 4.7
 Tested up to: 5.3
 Requires PHP: 5.2.4
-Stable tag: 1.2.1
+Stable tag: 1.2.4
 License: GPL-3.0
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -22,7 +22,7 @@ While Login Designer is not the first WordPress plugin designed for styling cust
 **Login Designer’s login customizing and templating experience is the best in class — _by a long shot_**.
 
 = A short video =
-[vimeo https://vimeo.com/243191812]
+[vimeo https://vimeo.com/382294867]
 
 = An unparalleled custom login styling experience =
 
@@ -87,9 +87,8 @@ Please reach out via the official [plugin support forum](https://wordpress.org/s
 == Changelog ==
 
 ### Enhancements
-* Add minor [UI tweaks](https://github.com/thatplugincompany/login-designer/pull/42) to better support WordPress 5.3
+* Modernize the [development stack](https://github.com/thatplugincompany/login-designer/pull/47) and employ PHPCS practices
+* Update Login Designer [branding and logo](https://github.com/thatplugincompany/login-designer/pull/52)
 
 ### Bug Fixes
-* Add [missing JavaScript variable](https://github.com/thatplugincompany/login-designer/pull/41) for customize partials
-* Improve the [RankMath filter](https://github.com/thatplugincompany/login-designer/pull/44)
-* Custom logos now display properly [on mobile](https://github.com/thatplugincompany/login-designer/pull/43)
+* Fix [logo display on FireFox](https://github.com/thatplugincompany/login-designer/pull/51)

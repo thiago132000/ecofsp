@@ -4,8 +4,8 @@
 get_header(); 
 query_posts(array( 
     'post_type' => 'video',
-	'showposts' => 2,
-	'posts_per_page' => 2,
+	'showposts' => 10,
+	'posts_per_page' => 10,
     'paged' => ( get_query_var('paged') ? get_query_var('paged') : 1)
 ) );  
 ?>

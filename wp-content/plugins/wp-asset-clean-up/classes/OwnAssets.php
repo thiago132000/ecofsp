@@ -43,6 +43,16 @@ class OwnAssets
 		    $wpacu_object_data['source_load_error_msg'] = __('It looks like the source is not reachable', 'wp-asset-clean-up');
 		    $wpacu_object_data['plugin_id'] = WPACU_PLUGIN_ID;
 		    $wpacu_object_data['ajax_url']  = admin_url('admin-ajax.php');
+		    $wpacu_object_data['clear_cache_on_page_load'] = false; // default
+
+		    // After homepage/post/page is saved and the page is reloaded, clear the cache
+            $unloadAssetsSubmit = (isset($_POST['wpacu_unload_assets_area_loaded']) && $_POST['wpacu_unload_assets_area_loaded']);
+		    $frontendViewPageAssetsJustUpdated = (! is_admin() && (isset($_GET['wpacu_updated']) && $_GET['wpacu_updated']));
+
+		    if ($unloadAssetsSubmit || $frontendViewPageAssetsJustUpdated) {
+		        $wpacu_object_data['clear_cache_on_page_load'] = true;
+		    }
+
 		    return $wpacu_object_data;
         });
     }
@@ -98,7 +108,6 @@ class OwnAssets
 		?>
         <style type="text/css">
             .menu-top.toplevel_page_wpassetcleanup_getting_started .wp-menu-image > img { width: 26px; position: absolute; left: 8px; top: -4px; }
-            .plugin-title .opt-in-or-opt-out.wp-asset-clean-up { display: none; }
         </style>
         <?php
     }
@@ -180,6 +189,10 @@ class OwnAssets
 	        return;
 	    }
 
+	    if (array_key_exists('wpacu_clean_load', $_GET)) {
+	        return;
+        }
+
         $this->enqueuePublicStyles();
         $this->enqueuePublicScripts();
     }
@@ -216,7 +229,7 @@ class OwnAssets
 			$postId = 0; // for home page
 		}
 
-		$scriptRelPath = '/assets/script.min.js';
+	    $scriptRelPath = '/assets/script.min.js';
 
         wp_register_script(
 	        WPACU_PLUGIN_ID . '-script',
@@ -228,19 +241,22 @@ class OwnAssets
 		// It can also be the front page URL
 		$pageUrl = Misc::getPageUrl($postId);
 
-		$svgReloadIcon = <<<HTML
+	    $svgReloadIcon = <<<HTML
 <svg aria-hidden="true" role="img" focusable="false" class="dashicon dashicons-cloud" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"><path d="M14.9 9c1.8.2 3.1 1.7 3.1 3.5 0 1.9-1.6 3.5-3.5 3.5h-10C2.6 16 1 14.4 1 12.5 1 10.7 2.3 9.3 4.1 9 4 8.9 4 8.7 4 8.5 4 7.1 5.1 6 6.5 6c.3 0 .7.1.9.2C8.1 4.9 9.4 4 11 4c2.2 0 4 1.8 4 4 0 .4-.1.7-.1 1z"></path></svg>
 HTML;
 
 		$wpacuObjectData = array(
 			'plugin_name'       => WPACU_PLUGIN_ID,
 			'plugin_id'         => WPACU_PLUGIN_ID,
+
 			'reload_icon'       => $svgReloadIcon,
 			'reload_msg'        => sprintf(__('Reloading %s CSS &amp; JS list', 'wp-asset-clean-up'), '<strong style="margin: 0 4px;">' . WPACU_PLUGIN_TITLE . '</strong>'),
 			'dom_get_type'      => Main::$domGetType,
 			'list_show_status'  => Main::instance()->settings['assets_list_show_status'],
-            'start_del'         => Main::START_DEL,
-			'end_del'           => Main::END_DEL,
+
+            'start_del_e'       => Main::START_DEL_ENQUEUED,
+			'end_del_e'         => Main::END_DEL_ENQUEUED,
+
 			'ajax_url'          => admin_url('admin-ajax.php'),
 			'post_id'           => $postId, // if any
 			'page_url'          => $pageUrl // post, page, custom post type, homepage etc.

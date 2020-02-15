@@ -293,8 +293,13 @@ SQL;
                 $src = site_url() . $src;
             }
 
-            $ver = (isset( $data['assets_info'][ $assetType ][ $handle ]['ver'] ) && $data['assets_info'][ $assetType ][ $handle ]['ver']) ? $data['assets_info'][ $assetType ][ $handle ]['ver'] : $wp_version;
-            ?>
+	        $ver = $wp_version; // default
+	        if (isset($data['assets_info'][ $assetType ][ $handle ]['ver'] ) && $data['assets_info'][ $assetType ][ $handle ]['ver'] ) {
+		        $ver = is_array($data['assets_info'][ $assetType ][ $handle ]['ver'] )
+			        ? implode(',', $data['assets_info'][ $assetType ][ $handle ]['ver'] )
+			        : $data['assets_info'][ $assetType ][ $handle ]['ver'] ;
+	        }
+	        ?>
             <strong><span style="color: green;"><?php echo $handle; ?></span></strong>
             <small><em>v<?php echo $ver; ?></em></small>
             <?php
@@ -421,7 +426,7 @@ SQL;
 	        if (isset($handleData['script_site_wide_attrs'])) {
 		        $handleExtras[4] = 'Site-wide attributes: ';
 		        foreach ( $handleData['script_site_wide_attrs'] as $attrValue ) {
-			        $handleExtras[4] .= '<strong>' . $attrValue . '</strong>';
+			        $handleExtras[4] .= '<strong>' . $attrValue . '</strong>, ';
 
 			        // Are there any exceptions? e.g. async, defer unloaded site-wide, but loaded on the homepage
 			        if ( isset( $handleData['attrs_no_load'] ) && ! empty( $handleData['attrs_no_load'] ) ) {
@@ -529,11 +534,27 @@ SQL;
 	        }
             ?>
 
-            <?php if ( $src ) {
-                $appendAfterSrc = strpos($src, '?') === false ? '?ver='.$ver : '&wpacu_ver='.$ver;
-                ?>
+            <?php
+            if ( $src ) {
+                $verDb = (isset($data['assets_info'][ $assetType ][ $handle ]['ver']) && $data['assets_info'][ $assetType ][ $handle ]['ver']) ? $data['assets_info'][ $assetType ][ $handle ]['ver'] : false;
+
+		        $appendAfterSrc = (strpos($src, '?') === false) ? '?' : '&';
+
+		        if ( $verDb ) {
+		            if (is_array($verDb)) {
+			            $appendAfterSrc .= http_build_query(array('ver' => $data['assets_info'][ $assetType ][ $handle ]['ver']));
+                    } else {
+			            $appendAfterSrc .= 'ver='.$ver;
+                    }
+		        } else {
+			        $appendAfterSrc .= 'ver='.$wp_version; // default
+		        }
+		        ?>
                 <div><a <?php if ($isExternalSrc) { ?> data-wpacu-external-source="<?php echo $src . $appendAfterSrc; ?>" <?php } ?> href="<?php echo $src . $appendAfterSrc; ?>" target="_blank"><small><?php echo str_replace( site_url(), '', $src ); ?></small></a> <?php if ($isExternalSrc) { ?><span data-wpacu-external-source-status></span><?php } ?></div>
-            <?php } ?>
+            <?php
+            }
+            ?>
+
             <?php
             // Any note?
             if (isset($handleData['notes']) && $handleData['notes']) {
@@ -684,7 +705,7 @@ SQL;
 
 		// Unload via RegEx
 		if (isset($handleData['unload_regex']) && $handleData['unload_regex']) {
-			$handleChangesOutput['unloaded_via_regex'] = '<span style="color: #cc0000;">Unloads if</span> the request URI (from the URL) matches this RegEx: <code>'.($handleData['unload_regex']).'</code>';
+			$handleChangesOutput['unloaded_via_regex'] = '<span style="color: #cc0000;">Unloads if</span> the request URI (from the URL) matches this RegEx(es): <code>'.nl2br($handleData['unload_regex']).'</code>';
 
 			if (isset($handleChangesOutput['site_wide'])) {
 				$handleChangesOutput['unloaded_via_regex'] .= ' * <em>overwritten by the site-wide rule</em>';
@@ -720,10 +741,10 @@ SQL;
 		    if (isset($handleChangesOutput['load_exception_on_this_post'])) {
 		        $textToShow = ' and also if the request URI (from the URL) matches this RegEx';
             } else {
-			    $textToShow = '<span style="color: green;">Loaded (as an exception)</span> if the request URI (from the URL) matches this RegEx';
+			    $textToShow = '<span style="color: green;">Loaded (as an exception)</span> if the request URI (from the URL) matches this RegEx(es)';
             }
 
-			$handleChangesOutput['load_exception_regex'] = $textToShow.': <code>'.$handleData['load_regex'].'</code>';
+			$handleChangesOutput['load_exception_regex'] = $textToShow.': <code>'.nl2br($handleData['load_regex']).'</code>';
 			$anyLoadExceptionRule = true;
 		}
 

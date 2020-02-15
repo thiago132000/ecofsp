@@ -395,7 +395,7 @@ class Tools
 	    $storageStats = OptimizeCommon::getStorageStats();
 
 	    if (isset($storageStats['total_size'], $storageStats['total_files'])) {
-		    $return .= 'Total cached assets: '.$storageStats['total_files'].' ('.$storageStats['total_size'].')';
+		    $return .= 'Total cached files: '.$storageStats['total_files'].' ('.$storageStats['total_size'].') of which '.$storageStats['total_files_assets'].' are CSS/JS assets ('.$storageStats['total_size_assets'].')';
 	    } else {
 		    $return .= 'Not used';
         }
@@ -660,7 +660,7 @@ SQL;
 	    $transientLikesSql = '';
 
 	    foreach ($transientLikes as $transientLike) {
-		    $transientLikesSql .= " option_name LIKE '%".$transientLike."%' OR ";
+		    $transientLikesSql .= " option_name LIKE '".$transientLike."%' OR ";
 	    }
 
 	    $transientLikesSql = rtrim($transientLikesSql, ' OR ');
