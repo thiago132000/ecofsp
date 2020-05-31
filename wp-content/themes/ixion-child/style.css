@@ -204,6 +204,126 @@ body.page-template-page-video h1 {
   text-align: center;
 }
 
+body.page-template-page-podcasts .podcast_list {
+  width: 68%;
+  float: left;
+}
+
+body.page-template-page-podcasts .entry-body {
+  width: calc(100% - 40px);
+  -ms-grid-columns: (1fr)[1];
+      grid-template-columns: repeat(1, 1fr);
+  grid-row-gap: 30px;
+  -webkit-box-align: stretch;
+      -ms-flex-align: stretch;
+          align-items: stretch;
+}
+
+body.page-template-page-podcasts .entry-body .podcast_row {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -webkit-box-pack: start;
+      -ms-flex-pack: start;
+          justify-content: flex-start;
+}
+
+body.page-template-page-podcasts .entry-body .podcast_row .podcast_img {
+  margin-right: 20px;
+  max-width: 100%;
+  width: 250px;
+  height: 250px;
+}
+
+body.page-template-page-podcasts .entry-body .podcast_row .podcast_img a {
+  width: 100%;
+  height: 100%;
+}
+
+body.page-template-page-podcasts .entry-body .podcast_row .podcast_img a img {
+  width: 100%;
+  height: 100%;
+  -o-object-fit: cover;
+     object-fit: cover;
+  -o-object-position: center;
+     object-position: center;
+}
+
+body.page-template-page-podcasts .entry-body .podcast_row .podcast_informacoes {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: column;
+          flex-direction: column;
+  -webkit-box-pack: start;
+      -ms-flex-pack: start;
+          justify-content: flex-start;
+  width: 490px;
+  max-width: 100%;
+}
+
+body.page-template-page-podcasts .entry-body .podcast_row .podcast_informacoes .podcast_titulo {
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+body.page-template-page-podcasts .entry-body .podcast_row .podcast_informacoes .podcast_titulo a h4 {
+  font-size: 24px;
+  font-weight: bold;
+  color: #192930;
+  line-height: normal;
+  margin: 0;
+}
+
+body.page-template-page-podcasts .entry-body .podcast_row .podcast_informacoes .podcast_data {
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+body.page-template-page-podcasts .entry-body .podcast_row .podcast_informacoes .podcast_data time {
+  margin: 0;
+  font-size: 14px;
+  font-weight: bold;
+  color: #192930;
+}
+
+body.page-template-page-podcasts .entry-body .podcast_row .podcast_informacoes .podcast_resumo {
+  width: 100%;
+}
+
+body.page-template-page-podcasts .entry-body .podcast_row .podcast_informacoes .podcast_resumo p {
+  font-size: 16px;
+  line-height: normal;
+  font-weight: 400;
+  color: #192930;
+}
+
+body.page-template-page-podcasts .entry-body .podcast_row .podcast_informacoes .podcast_link {
+  width: 100%;
+}
+
+body.page-template-page-podcasts .entry-body .podcast_row .podcast_informacoes .podcast_link a {
+  border: 0;
+  background: #d7b221;
+  -webkit-box-shadow: none;
+          box-shadow: none;
+  color: white;
+  font-weight: bold;
+  letter-spacing: 1px;
+  line-height: 1;
+  -webkit-transition: 0.3s;
+  transition: 0.3s;
+  float: right;
+  font-size: 14px;
+  border-radius: 10px;
+  padding: 15px;
+}
+
 .audio h2 {
   margin-bottom: 0.625rem !important;
   padding: 0 !important;

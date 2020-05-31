@@ -21,12 +21,14 @@ function includeWpAssetCleanUpClassesAutoload($class)
 
     $pathToClass = WPACU_PLUGIN_CLASSES_PATH.$classFilter.'.php';
 
-    if (file_exists($pathToClass)) {
+    if (is_file($pathToClass)) {
         include_once $pathToClass;
     }
 }
 
 spl_autoload_register('includeWpAssetCleanUpClassesAutoload');
+
+\WpAssetCleanUp\ObjectCache::wpacu_cache_init();
 
 // Main Class
 \WpAssetCleanUp\Main::instance();
@@ -45,9 +47,6 @@ $wpacuOwnAssets->init();
 $wpacuUpdate = new \WpAssetCleanUp\Update;
 $wpacuUpdate->init();
 
-// Various functions
-new \WpAssetCleanUp\Misc;
-
 // Menu
 new \WpAssetCleanUp\Menu;
 
@@ -59,6 +58,9 @@ new \WpAssetCleanUp\Info();
 
 // Any debug?
 new \WpAssetCleanUp\Debug();
+
+// Maintenance
+new \WpAssetCleanUp\Maintenance();
 
 // Common functions for both CSS & JS combinations
 // Clear CSS/JS caching functionality

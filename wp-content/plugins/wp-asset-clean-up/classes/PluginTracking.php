@@ -160,7 +160,7 @@ class PluginTracking
 
 		// Retrieve current plugin information
 		$adminPluginFile = ABSPATH . '/wp-admin/includes/plugin.php';
-		if (! function_exists( 'get_plugins') && file_exists($adminPluginFile)) {
+		if (! function_exists( 'get_plugins') && is_file($adminPluginFile)) {
 			include $adminPluginFile;
 		}
 

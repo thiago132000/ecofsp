@@ -31,7 +31,6 @@ class PluginReview
 
         // Code related to the AJAX calls and closing the notice
         add_action('admin_footer', array($this, 'noticeScripts'));
-
 	}
 
 	/**
@@ -211,39 +210,34 @@ class PluginReview
 		    }
 	    }
 
-	    // No first usage recorded? Do not continue
+	    // Make sure that at least {$daysPassedAfterFirstUsage} days has passed after the first usage of the plugin was recorded
 	    $firstUsageTimestamp = get_option(WPACU_PLUGIN_ID.'_first_usage');
 
 	    if (! $firstUsageTimestamp) {
 	        return false;
         }
-	    
-	    // At least 3 days have to pass
-        if (! ((time() - $firstUsageTimestamp) >= (3 * DAY_IN_SECONDS))) {
-            return false;
-        }
-        
+
 	    $unloadedTotalAssets = Misc::getTotalUnloadedAssets();
 
-	    // At least 10 assets have to be unloaded
-	    if ( $unloadedTotalAssets < 10 ) {
-	        return false;
-        }
-
-	    $daysPassedAfterFirstUsage = 7; // default
+	    // Show the notice after one week
+	    $daysPassedAfterFirstUsage = 7;
 
 	    // Unloaded at least thirty assets? Show the notice sooner
 	    if ($unloadedTotalAssets >= 30) {
 		    $daysPassedAfterFirstUsage = 4;
         }
 
-	    // More than $daysPassedAfterFirstUsage have to pass from the first recorded usage
-	    if ( ! ((time() - $firstUsageTimestamp) >= ($daysPassedAfterFirstUsage * DAY_IN_SECONDS)) ) {
+	    if ( ! ($firstUsageTimestamp && (time() - $firstUsageTimestamp) >= ($daysPassedAfterFirstUsage * DAY_IN_SECONDS)) ) {
 		    return false;
 	    }
 
-	    // All the conditions above were a match? Show the notice
-	    return true;
+	    $settings = new Settings();
+	    $allSettings = $settings->getAll();
+
+	    return ( $unloadedTotalAssets >= 10
+                 && ( $allSettings['wiki_read'] == 1
+	                  || $allSettings['minify_loaded_css'] == 1 || $allSettings['combine_loaded_css'] == 1
+	                  || $allSettings['minify_loaded_js']  == 1 || $allSettings['combine_loaded_js']  == 1 ) );
     }
 
 	/**

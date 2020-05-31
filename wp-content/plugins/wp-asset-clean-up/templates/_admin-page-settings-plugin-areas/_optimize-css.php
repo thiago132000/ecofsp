@@ -29,10 +29,10 @@ $availableForPro = '<a class="go-pro-link-no-style" target="_blank" href="' . WP
 		?>
         <div class="wpacu-warning" style="font-size: 13px; margin-bottom: 18px;">
             <span class="dashicons dashicons-warning"></span> <strong>Incompatibility Notice:</strong>
-            <?php if ($wpRocketIssues['minify_html']) { ?>
+            <?php if (isset($wpRocketIssues['minify_html']) && $wpRocketIssues['minify_html']) { ?>
                 <p style="margin-bottom: 0;">At this time, "<strong>Combine loaded CSS (Stylesheets) into fewer files</strong>" &amp; "<strong>Defer CSS Loaded in the &lt;BODY&gt; (Footer)</strong>" options do not take any effect as "<em>Minify HTML</em>" is active in "WP Rocket" -&gt; "File Optimization" Settings. If you wish to keep WP Rocket's Minify HTML on, consider optimizing CSS with WP Rocket while cleaning the useless CSS with <?php echo WPACU_PLUGIN_TITLE; ?>.</p>
             <?php } ?>
-	        <?php if ($wpRocketIssues['optimize_css_delivery']) { ?>
+	        <?php if (isset($wpRocketIssues['optimize_css_delivery']) && $wpRocketIssues['optimize_css_delivery']) { ?>
                 <p style="margin-bottom: 0;"><?php echo WPACU_PLUGIN_TITLE; ?>'s "<strong>Combine loaded CSS (Stylesheets) into fewer files</strong>" &amp; "<strong>Defer CSS Loaded in the &lt;BODY&gt; (Footer)</strong>" options do not take any effect as "<em>Optimize CSS Delivery</em>" is active in "WP Rocket" -&gt; "File Optimization" Settings. The feature is changing the way CSS is delivered by adding critical CSS to the HEAD section of the website as well as preloading the rest of the CSS files before applying their syntax on page loading. This doesn't affect the performance of your website as you can eliminate the bloat with <?php echo WPACU_PLUGIN_TITLE; ?> and use WP Rocket for CSS Optimization/Delivery if that's what works best for your website.</p>
 	        <?php } ?>
         </div>
@@ -110,7 +110,7 @@ $availableForPro = '<a class="go-pro-link-no-style" target="_blank" href="' . WP
         <tr>
             <td colspan="2" style="padding: 0;">
                 <div style="line-height: 22px; background: #f8f8f8; border-left: 4px solid #008f9c; padding: 10px; margin: 0 0 15px;">
-                    <strong><?php _e('NOTE', 'wp-asset-clean-up'); ?>:</strong> <?php echo __('Concatenating assets is no longer a recommended practice in HTTP/2', 'wp-asset-clean-up'); ?>. &nbsp; <span style="color: #0073aa;" class="dashicons dashicons-info"></span> <a id="wpacu-http2-info-css-target" href="#wpacu-http2-info-css"><?php _e('Read more', 'wp-asset-clean-up'); ?></a> &nbsp;|&nbsp; <a target="_blank" href="https://tools.keycdn.com/http2-test"><?php _e('Verify if your server has HTTP/2 support', 'wp-asset-clean-up'); ?></a>
+                    <strong><?php _e('NOTE', 'wp-asset-clean-up'); ?>:</strong> <?php echo __('Concatenating assets is no longer a recommended practice in HTTP/2', 'wp-asset-clean-up'); ?>. &nbsp; <a id="wpacu-http2-info-css-target" href="#wpacu-http2-info-css"><?php _e('Read more', 'wp-asset-clean-up'); ?></a> &nbsp;/&nbsp; <a class="wpacu_hide wpacu_verify_http2_protocol" target="_blank" href="https://tools.keycdn.com/http2-test"><strong><?php _e('Verify if the website is delivered through the HTTP/2 network protocol', 'wp-asset-clean-up'); ?></strong></a> <span class="wpacu_hide wpacu_http2_protocol_is_supported" style="color: green; font-weight: 400;"><span class="dashicons dashicons-yes-alt"></span> Your website `<span style="font-weight: 500;"><?php echo get_site_url(); ?></span>` is delivered through the HTTP/2 network protocol.</span>
                 </div>
             </td>
         </tr>
@@ -160,16 +160,9 @@ $availableForPro = '<a class="go-pro-link-no-style" target="_blank" href="' . WP
                         </label>
                     </p>
 
-                    <!-- [wpacu_lite] -->
-                    <div style="padding: 10px; background: #f2faf2;" class="wpacu-fancy-checkbox">
-		                <?php echo $availableForPro; ?>&nbsp;
-                        <input id="combine_loaded_css_append_handle_extra_checkbox"
-                               disabled="disabled"
-                               type="checkbox" />
-                        <label for="combine_loaded_css_append_handle_extra_checkbox">Add inline tag contents associated with a style (handle) to the combined group of files before/after the main script's contents</label>
-                        <p style="margin-top: 10px;"><small>When a file is added to a combined group of files, any other inline content (e.g. added via <code style="font-size: inherit;">wp_add_inline_style()</code>) associated with it, will also be added to the combined files. This reduces the number of DOM elements as well makes sure the CSS code will load in the right (set) order.</small></p>
-                    </div>
-                    <!-- [/wpacu_lite] -->
+                    <p style="margin-top: 10px;"><strong>Note:</strong> When a stylesheet is added to a combined group of files, any other inline content (e.g. added via <code style="font-size: inherit;">wp_add_inline_style()</code>) associated with it, will also be added to the combined files. This reduces the number of DOM elements as well makes sure the CSS code will load in the right (set) order.</p>
+
+                    <hr />
 
                     <div id="wpacu_combine_loaded_css_exceptions_area">
                         <div style="margin: 8px 0 6px;"><?php _e('Do not combine the CSS files matching the patterns below', 'wp-asset-clean-up'); ?> (<?php _e('one per line', 'wp-asset-clean-up'); ?>):</div>
@@ -185,10 +178,7 @@ $availableForPro = '<a class="go-pro-link-no-style" target="_blank" href="' . WP
                     </div>
 
                     <p>This scans the remaining CSS files (left after cleaning up the unnecessary ones) from the <code>&lt;head&gt;</code> and <code>&lt;body&gt;</code> locations and combines them into ~2 files (one in each location). To be 100% sure everything works fine after activation, consider enabling this feature only for logged-in administrator, so only you can see the updated page. If all looks good, you can later uncheck the option to apply the feature to everyone else.</p>
-                    <p style="margin: 8px 0 4px;"><span style="color: #ffc107;" class="dashicons dashicons-lightbulb"></span> The following stylesheets are not included in the combined CSS files (split in groups depending on the "media" attribute value) for maximum performance:</p>
-                    <ul style="list-style: disc; margin-top: 0; margin-left: 35px; margin-bottom: 0;">
-                        <li style="margin-bottom: 0;">Have any <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/HTML/Preloading_content">preloading added to them</a> via <code>rel="preload"</code> will not be combined as they have priority in loading and shouldn't be mixed with the rest of the CSS.</li>
-                    </ul>
+
                     <hr />
                     <p style="margin: 8px 0 4px;"><span style="color: #ffc107;" class="dashicons dashicons-lightbulb"></span> This feature will not work <strong>IF</strong>:</p>
                     <ul style="margin-top: 0; margin-left: 35px; list-style: disc;">
@@ -232,17 +222,15 @@ $availableForPro = '<a class="go-pro-link-no-style" target="_blank" href="' . WP
 
                     <div id="wpacu_inline_css_files_list_area">
                         <div style="margin: 12px 0 6px;"><?php _e('Alternatively or in addition to automatic inlining, you can place the relative path(s) or part of them to the files you wish to inline below:', 'wp-asset-clean-up'); ?> (<strong><?php _e('one per line', 'wp-asset-clean-up'); ?></strong>):</div>
+                        <p style="margin-top: 8px;"><span class="dashicons dashicons-warning" style="color: #ffc107;"></span> <strong>Note:</strong> Please input the sources to the original CSS files (one per line) like in the examples below, not to the cached/optimized ones (which are usually located in <em><?php echo str_replace(site_url(), '', WP_CONTENT_URL) . OptimizeCommon::getRelPathPluginCacheDir(); ?></em>).</p>
                         <label for="wpacu_inline_css_files_list">
                                     <textarea style="width: 100%;"
                                               rows="4"
                                               id="wpacu_inline_css_files_list"
                                               name="<?php echo WPACU_PLUGIN_ID . '_settings'; ?>[inline_css_files_list]"><?php echo $data['inline_css_files_list']; ?></textarea>
                         </label>
-
-                        <p><strong>Examples</strong> (you don't have to add the full URL, as it's recommended to use relative paths, especially if you use dev/staging environments or change the domain name of your website):</p>
+                        <p style="margin-bottom: 6px;"><strong>Examples</strong> (you don't have to add the full URL, as it's recommended to use relative paths, especially if you use dev/staging environments or change the domain name of your website):</p>
                         <code>/wp-content/plugins/plugin-title/styles/small-file.css<br />/wp-content/themes/my-wp-theme-dir/css/small.css</code>
-
-                        <p style="margin-top: 18px;"><span class="dashicons dashicons-warning" style="color: #ffc107;"></span> <strong>Note:</strong> Please input the sources to the original CSS files (one per line), not to any optimized ones (which are usually located in <em><?php echo str_replace(site_url(), '', WP_CONTENT_URL) . OptimizeCommon::getRelPathPluginCacheDir(); ?></em>).</p>
                     </div>
                 </div>
                 <hr />

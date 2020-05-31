@@ -42,7 +42,7 @@ foreach (\WpAssetCleanUp\MetaBoxes::$noMetaBoxesForPostTypes as $noMetaBoxesForP
                     <div id="wpacu-settings-assets-retrieval-mode" <?php if (! ($data['dashboard_show'] == 1)) { echo 'style="display: none;"'; } ?>>
                         <ul id="wpacu-dom-get-type-selections">
                         <li>
-                            <label for="wpacu_dom_get_type"><?php _e('Select a retrieval way', 'wp-asset-clean-up'); ?>:</label>
+                            <label><?php _e('Select a retrieval way', 'wp-asset-clean-up'); ?>:</label>
                         </li>
                         <li>
                             <label>
@@ -212,24 +212,37 @@ foreach (\WpAssetCleanUp\MetaBoxes::$noMetaBoxesForPostTypes as $noMetaBoxesForP
         </tr>
 
         <tr valign="top">
-            <th scope="row">
-                <label for="wpacu_hide_from_admin_bar"><?php echo sprintf(__('Hide %s from the top Admin Bar', 'wp-asset-clean-up'), '"'.WPACU_PLUGIN_TITLE.'"'); ?></label>
+            <th scope="row" class="setting_title">
+                <label><?php echo sprintf(__('Hide %s menus', 'wp-asset-clean-up'), '"'.WPACU_PLUGIN_TITLE.'"'); ?></label>
+                <p class="wpacu_subtitle"><small><em><?php _e('Are you rarely using the plugin and want to make some space in the admin menus?', 'wp-asset-clean-up'); ?></em></small></p>
             </th>
             <td>
-                <label class="wpacu_switch">
-                    <input id="wpacu_hide_from_admin_bar"
-                           type="checkbox"
-						<?php echo (($data['hide_from_admin_bar'] == 1) ? 'checked="checked"' : ''); ?>
-                           name="<?php echo WPACU_PLUGIN_ID . '_settings'; ?>[hide_from_admin_bar]"
-                           value="1" /> <span class="wpacu_slider wpacu_round"></span> </label>
-
-                This is useful if you're not using too often the plugin's options from the top Admin Bar and wish to make up some space there. <span style="color: #004567;" class="dashicons dashicons-info"></span> <a href="https://assetcleanup.com/docs/?p=187" target="_blank">Read more</a>
+                <ul style="padding: 0;">
+                    <li style="margin-bottom: 14px;">
+                        <label for="wpacu_hide_from_admin_bar">
+                            <input id="wpacu_hide_from_admin_bar"
+                                   type="checkbox"
+                                <?php echo (($data['hide_from_admin_bar'] == 1) ? 'checked="checked"' : ''); ?>
+                                   name="<?php echo WPACU_PLUGIN_ID . '_settings'; ?>[hide_from_admin_bar]"
+                                   value="1" /> <span class="wpacu_slider wpacu_round"></span>
+                        <span>Hide it from the top admin bar</span> / This could be useful if your top admin bar is filled with too many items and you rarely use the plugin.</label> <span style="color: #004567;" class="dashicons dashicons-info"></span> <a href="https://assetcleanup.com/docs/?p=187" target="_blank">Read more</a>
+                    </li>
+                    <li>
+                        <label for="wpacu_hide_from_side_bar">
+                            <input id="wpacu_hide_from_side_bar"
+                                   type="checkbox"
+			                    <?php echo (($data['hide_from_side_bar'] == 1) ? 'checked="checked"' : ''); ?>
+                                   name="<?php echo WPACU_PLUGIN_ID . '_settings'; ?>[hide_from_side_bar]"
+                                   value="1" /> <span class="wpacu_slider wpacu_round"></span>
+                        <span>Hide it from the left sidebar within the Dashboard</span> / The only access will be from <em>"Settings" -&gt; "<?php echo WPACU_PLUGIN_TITLE; ?>"</em>.</label> <span style="color: #004567;" class="dashicons dashicons-info"></span> <a href="https://assetcleanup.com/docs/?p=584" target="_blank">Read more</a>
+                    </li>
+                </ul>
             </td>
         </tr>
 
         <tr valign="top">
             <th scope="row">
-                <label><?php _e('On Assets List Layout Load, keep the expandable areas:', 'wp-asset-clean-up'); ?></label>
+                <label><?php _e('On Assets List Layout Load, keep the groups:', 'wp-asset-clean-up'); ?></label>
             </th>
             <td>
                 <ul class="assets_list_layout_areas_status_choices">
@@ -361,9 +374,9 @@ foreach (\WpAssetCleanUp\MetaBoxes::$noMetaBoxesForPostTypes as $noMetaBoxesForP
             <td>
                 <select id="wpacu_fetch_cached_files_details_from"
                         name="<?php echo WPACU_PLUGIN_ID . '_settings'; ?>[fetch_cached_files_details_from]">
-                    <option <?php if ($data['fetch_cached_files_details_from'] === 'db_disk') { ?>selected="selected"<?php } ?> value="db_disk">Database &amp; Disk (50% / 50%)</option>
+                    <option <?php if ($data['fetch_cached_files_details_from'] === 'disk') { ?>selected="selected"<?php } ?> value="disk">Disk (default)</option>
                     <option <?php if ($data['fetch_cached_files_details_from'] === 'db') { ?>selected="selected"<?php } ?> value="db">Database</option>
-                    <option <?php if ($data['fetch_cached_files_details_from'] === 'disk') { ?>selected="selected"<?php } ?> value="disk">Disk</option>
+                    <option <?php if ($data['fetch_cached_files_details_from'] === 'db_disk') { ?>selected="selected"<?php } ?> value="db_disk">Database &amp; Disk (50% / 50%)</option>
                 </select> &nbsp; <span style="color: #004567; vertical-align: middle;" class="dashicons dashicons-info"></span> <a style="vertical-align: middle;" id="wpacu-fetch-assets-details-location-modal-target" href="#wpacu-fetch-assets-details-location-modal">Read more</a>
             </td>
         </tr>
@@ -443,28 +456,16 @@ foreach (\WpAssetCleanUp\MetaBoxes::$noMetaBoxesForPostTypes as $noMetaBoxesForP
 <div id="wpacu-fetch-assets-details-location-modal" class="wpacu-modal" style="padding-top: 100px;">
     <div class="wpacu-modal-content" style="max-width: 800px;">
         <span class="wpacu-close">&times;</span>
-        <p>Any optimized files (e.g. via minification, combination) have their caching information (such as original location, new optimized location, version) stored in both the database and the disk by default to balance the usage of resources when you have loads of files to have their details fetched.</p>
+        <p>Any optimized files (e.g. via minification, combination) have their caching information (such as original location, new optimized location, version) stored in the disk by default (in most cases, it's the most effective option) to avoid extra connections to the database for a few files' information.</p>
+        <p>However, if you already have a light database and lots of Apache/NGINX resources already in use by your theme/other plugins, you can balance the usage of <?php echo WPACU_PLUGIN_TITLE; ?>'s resources and go for the "Database &amp; Disk (50% / 50%)" option (Example: If, for instance, on a page, there are 19 CSS/JS files which are optimized &amp; cached, 10 would have their caching information fetched from the database while 9 from the disk).</p>
 
         <p>The contents are stored like in the following example:</p>
         <p><code>{"source_uri":"\/wp-content\/plugins\/plugin-title-here\/assets\/style.css","optimize_uri":"\/wp-content\/uploads\/asset-cleanup\/css\/item\/handle-title-here-v10-8683e3d8975dab70c7f368d58203e66e70fb3e06.css","ver":10}</code></p>
 
         <p>Once this information is retrieved, the file's original URL will be updated to match the optimized one for the file's content stored in <code><?php echo \WpAssetCleanUp\OptimiseAssets\OptimizeCommon::getRelPathPluginCacheDir(); ?></code>.</p>
 
-        <p>If, for instance, on a page, there are 19 CSS/JS files which are optimized &amp; cached, 10 would have their caching information fetched from the database while 9 from the disk in case you leave it to the default option which is <strong>Database &amp; Disk (50% / 50%)</strong>. If your website has a very large database and you will want to reduce the database queries, you could choose to get the information from the <strong>Disk</strong> instead.</p>
-
         <p><strong>Note:</strong> If you are using a plugin such as WP Rocket, WP Fastest Cache or the caching system provided by your hosting company, then this fetching process would be significantly reduced as visitors will access static HTML pages read from the caching. Technically, no SQL queries should be made as the WordPress environment would not be loaded as it happens with a non-cached page (e.g. when you are logged-in and access the front-end pages).</p>
     </div>
 </div>
 
-<!-- [wpacu_lite] -->
-<div id="wpacu-deactivate-modal-info" class="wpacu-modal" style="padding-top: 60px;">
-    <div class="wpacu-modal-content" style="max-width: 650px;">
-        <span class="wpacu-close">&times;</span>
-        <h2 style="margin-top: 5px;"><?php _e('Asset CleanUp: Deactivation Modal', 'wp-asset-clean-up'); ?></h2>
-        <p>When you use the "Deactivate" link for "Asset CleanUp: Page Speed Booster" plugin from "Plugins" -&gt; "Installed Plugins", a popup like the one in the below example shows up allowing you the option to <em>Skip &amp; Deactivate</em> or select an uninstall reason, sending your feedback and deactivate it. Collecting feedback is very useful to understand why you decided to deactivate the plugin so we can further improve it based on the overall feedback.</p>
-        <p>However, there are times when you might do debugging on your website and you have to often deactivate the plugin. You can disable the feedback modal and you will not be asked for any uninstall reason anytime you use the "Deactivate" link.</p>
-        <hr />
-        <img style="margin: 0 auto; width: 100%; max-width: 500px; display: table;" src="<?php echo WPACU_PLUGIN_URL. '/assets/images/wpacu-deactivate-modal.jpg'; ?>" alt="" />
-    </div>
-</div>
-<!-- [/wpacu_lite] -->
+<!-- -->

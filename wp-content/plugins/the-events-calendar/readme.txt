@@ -4,8 +4,8 @@ Contributors: ModernTribe, borkweb, barry.hughes, bordoni, brianjessee, aguseo, 
 Tags: events, calendar, event, venue, organizer, dates, date, google maps, conference, workshop, concert, meeting, seminar, summit, class, modern tribe, tribe, widget
 Donate link: http://m.tri.be/29
 Requires at least: 4.9
-Stable tag: 5.0.1
-Tested up to: 5.3.2
+Stable tag: 5.1.2
+Tested up to: 5.4.1
 Requires PHP: 5.6
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -94,17 +94,14 @@ That's it! Just configure your settings as you see fit, and you're on your way t
 == Screenshots ==
 
 1. Month View with hover
-2. Month View
-3. List View
-4. Day View
-5. Single event
-6. Event Editor
-7. Events admin listing
-8. General Settings
-9. Display Settings
-10. Events List Widget
-11. Mobile Month View
-12. CSV Importer
+2. Mobile Views
+3. Single event
+4. List View
+5. Event Editor
+6. Events admin listing
+7. General Settings
+8. Display Settings
+9. CSV Importer
 
 == Frequently Asked Questions ==
 
@@ -222,6 +219,105 @@ Previous versions of The Events Calendar are not cross-compatible with 5.X add-o
 Remember to always make a backup of your database and files before updating!
 
 == Changelog ==
+
+= [5.1.2] 2020-05-27 =
+
+* Tweak - Prevent undefined errors when using tribe_get_events and forcing a cache refresh.
+* Fix - Prevent `E_ERROR` for `Tribe__Events__Meta__Save` construct when dealing with revisions, which some WP Engine customers were seeing.
+* Language - 0 new strings added, 49 updated, 0 fuzzied, and 0 obsoleted
+
+= [5.1.1] 2020-05-11 =
+
+* Feature - Move all the featured event icons to templates. [TEC-3441]
+* Feature - Added a helper method `Tribe__Plugins::is_active( 'slug' )` to check if a given plugin is active.
+* Feature - Add entry points through filters to be able to add content after the opening html tag or before the closing html tag. [TCMN-65]
+* Tweak - Deprecated the `Tribe__Events__Main::get_i18n_strings_for_domains()` and `Tribe__Events__Main::get_i18n_strings()` methods; use the methods with the same name and signature provided by the `tribe( 'tec.18n' )` object [TEC-3404]
+* Tweak - Add new filter `tribe_aggregator_manage_record_column_source_html` to customize the source column content HTML used on the Event Aggregator Import "History" tab.
+* Tweak - Modify language variables to improve translations readability on Updated Views navigation previous and next buttons. [props @justlevine]
+* Tweak - Add new filter `tribe_aggregator_manage_record_column_source_html` to customize the source column content HTML used on the Event Aggregator Import "History" tab.
+* Fix - Enqueue Customizer stylesheets properly via `tribe_customizer_inline_stylesheets` in Common. [TEC-3401]
+* Fix - Not being able to create events because capabilities were not set on activation or update of the plugin. [TEC-3350]
+* Fix - Adjust templates to show time zone in event details when "Show time zone" is checked. [TEC-2979]
+* Fix - Correct bad defaults from `Template->attr()` and ensure that the timezone info is correctly hydrated in the case of an unchanged block. [TEC-2964]
+* Fix - Show the correct counts on the Event Aggregator Import "History" tab for non-Event content types being imported.
+* Fix - Prevent creation of empty venue when removing a Venue inside of the Events using the Classic editor that had a US state selected. [TEC-3416]
+* Fix - Event Aggregator imported events when using default status or categories from the Settings Page will now be imported correctly. [TEC-3445]
+* Fix - A localization support that would mangle Views URLs when WPML plugin is active alongside Views v2 [TEC-3404]
+* Fix - Prevent problems with `func_get_args()` usage around template inclusion for legacy template files [TEC-3104]
+* Tweak - Extended support for namespaced classes in the Autoloader.
+* Tweak - Make Customizer stylesheet enqueue filterable via `tribe_customizer_inline_stylesheets`. [TEC-3401]
+* Tweak - Normalize namespaced prefixes with trailing backslash when registering them in the Autoloader. [VE-14]
+* Language - 2 new strings added, 243 updated, 0 fuzzied, and 1 obsoleted
+
+= [5.1.0] 2020-04-23 =
+
+* Feature - Add a "fast forward" link to Month and Day views when there are no events to show. [TEC-3400]
+* Feature - Add `tribe_events_views_v2_use_ff_link` and `tribe_events_views_v2_{$this->slug}_use_ff_link` filters to allow control of the link. [TEC-3400]
+* Feature - Add Recent Past Events Views. [TEC-3385]
+* Tweak - Improved on meta data handling of for Blocks editor.
+* Tweak - Deprecate Select2 3.5.4 in favor of SelectWoo
+* Tweak - Load plugin text domain on the new `tribe_load_text_domains` action hook, which fires on `init` instead of on the `plugins_loaded` hook. [TEC-3406]
+* Tweak - Add a constant `TRIBE_CACHE_VIEWS` to turn off views HTML caching.
+* Fix - Theme navigation warning around `post_date = '0'` no longer happens when using Page template for Updated Views [TEC-3434]
+* Fix - Selecting other Page templates from Settings > Display now loads the correct template properly, to display events.
+* Fix - Preventing redirects from updated Views V2 to be too broad and end up catching requests from other Plugins, reported by GravityView team on Gravity Forms bug with imports.
+* Fix - Prevent PHP errors from happening during bulk activation or deactivation of the plugin [TCMN-53]
+* Fix - Correct iCal link on month view for months other than the current one [TEC-3267]
+* Fix - Correct a few incorrect and/or typoed text domains [TEC-3390]
+* Fix - Ensure we pass search keywords when changing views and in the top-bar nav [TEC-3282]
+* Fix - Prevent Blocks editor from throwing browser alert when leaving the page without any changes applied to the edited post.
+* Fix - Several strings have been adjusted for consistency and better translatability [BTRIA-307]
+* Hook - Add the `tribe_events_blocks_editor_is_on` filter; returning a falsy value from this filter will prevent the Blocks Editor to ever be active on Events; else the settings from Events > Settings will apply [TEC-3349]
+* Tweak - Add some filters for better control of link targets, standardize the way we create those links [TEC-3402]
+* Language - 4 new strings added, 286 updated, 1 fuzzied, and 2 obsoleted
+
+= [5.0.3.1] 2020-03-23 =
+
+* Fix - Assets class modification to prevent JavaScript and CSS failing to load when `SCRIPT_DEBUG=true` [TCMN-52]
+
+= [5.0.3] 2020-03-23 =
+
+* Feature - Allow users to set a custom name for new Event Aggregator Imports. [TEC-3286]
+* Tweak - Add back missing JSON-LD to Single Events. [TEC-3262]
+* Tweak - Minify the Freemius svg assets. [TEC-3215]
+* Tweak - Remove "(beta)" label from URL source type of import. [TEC-3289]
+* Tweak - Reword the Filter Activation setting's labels for better clarity.  [FBAR-79]
+* Fix - Ensure that any values for `liveFilterUpdate` that are not `automatic` or `manual` get converted. [FBAR-83]
+* Fix - Breakpoint code compatibility with the latest version of jQuery 3.4.1 [BTRIA-154]
+* Fix - Remove numbers from listed events in event list widget for Genesis theme. [TEC-2957]
+* Fix - Customizer accent color affects featured line and text. [TEC-3277]
+* Fix - Resolve conflict between datepicker holding consistent size when navigating and flexibility on small screen sizes. [TEC-3322]
+* Fix - Respect EA `post_status` from settings when an event does not have a defined value. [TEC-3255]
+* Fix - Save the `post_status` for a scheduled import when using a different value other than `publish`. [TEC-3296]
+* Fix - Update events, venues, and organizers to use dynamic labels. [TEC-3280]
+* Fix - Resolve an issue in Views v2 that would break URLs when the event single and archive slugs have the same value due to the "Events URL slug" and "Single event URL slug" settings or due to their translations [TEC-3254]
+* Fix - Restore correct handling of events RSS feeds; events will show in the RSS feed in ascending start date, starting from the current day and the event publish date will be set to the event start date [TEC-3252]
+* Hook - Add filters `tribe_events_liveupdate_automatic_label_text` and `tribe_events_liveupdate_manual_label_text` to allow Filter Bar to include itself in those lables. [TEC-3322]
+* Hook - Add the `tribe_views_v2_events_query_controller_active` filter; returning a falsy value from this filter will prevent Views v2 from altering the WordPress query. This filter allows handling situations where Views v2 might interfere with third party plugins (e.g. custom RSS feed implementations) [TEC-3252]
+* Tweak - Added filters: `tribe_events_option_convert_live_filters`, `tribe_events_views_v2_messages_need_events_label_keys`
+* Tweak - Removed filters: `tribe_events_ical_export_text`
+* Tweak - Changed views: `v2/components/events-bar/search/keyword`, `v2/month/calendar-body/day`
+* Language - 11 new strings added, 81 updated, 0 fuzzied, and 6 obsoleted
+
+= [5.0.2.1] 2020-02-25 =
+
+* Fix - Plugin dependency registration with `Plugin_Register` will not prevent loading of all plugins in list if the last item loaded fails. [TCMN-41]
+
+= [5.0.2] 2020-02-19 =
+
+* Version - The Events Calendar 5.0.2 is only compatible with Filter Bar 4.9.2 and higher
+* Version - The Events Calendar 5.0.2 is only compatible with Events Calendar PRO 5.0.2 and higher
+* Tweak - Modify Link Color Customizer option for single event links in description, the venue, the organizer, and the website link in classic editor.  [TEC-3219]
+* Tweak - Move link color option to General tab in Customizer and remove Text tab.  [TEC-3244]
+* Tweak - Freemius Opt-out workflow now present on all occasions [TEC-3171]
+* Tweak - Freemius updated to the latest version 2.3.2 [TEC-3171]
+* Tweak - Remove the "Default stylesheet - full" option from display settings, for the new views. [TEC-3125]
+* Tweak - Change the live refresh option to a radio, adjust conditional checks to accommodate. [TEC-3072]
+* Fix - Freemius activation URL send via email works as expected [TEC-3218]
+* Fix - Improve compatibility from Updated Views V2 with Beaver Builder plugins [TEC-3248]
+* Fix - More robust handling of `hide_from_listings` in REST API v2, thanks @maxm123
+* Fix - Make sure the new Views (v2) will correctly print JSON-LD schema information [TEC-3241]
+* Language - 4 new strings added, 248 updated, 1 fuzzied, and 3 obsoleted
 
 = [5.0.1] 2020-02-12 =
 

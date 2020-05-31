@@ -5,7 +5,7 @@ Plugin URI: https://wordpress.org/plugins/duplicate-wp-page-post/
 Description: This plugin quickly creates a clone of page or post and supports Gutenberg.
 Author: Arjun Thakur
 Author URI: https://profiles.wordpress.org/arjunthakur#content-plugins
-Version: 2.5.6
+Version: 2.5.8
 License: GPLv2 or later
 Text Domain: dpp_wpp_page
 */
@@ -40,8 +40,8 @@ if(!class_exists('dcc_dpp_wpp_page')):
         {
         $defaultsettings = array('dpp_post_status'      => 'draft',
                                   'dpp_post_redirect'   => 'to_list',
-                                  'dpp_posteditor'      => 'classic',
                                   'dpp_post_suffix'     => '',
+                                  'dpp_posteditor'      => 'classic',
                                   'dpp_post_link_title' => '', );
         $opt = get_option('dpp_wpp_page_options');
            if(!$opt['dpp_post_status'])
@@ -69,13 +69,19 @@ if(!class_exists('dcc_dpp_wpp_page')):
    
     /*Important function*/
      public function dt_dpp_post_as_draft()
-        {
+        {    
+         
+              $nonce = $_REQUEST['nonce'];
+              $post_id = (isset($_GET['post']) ? intval($_GET['post']) : intval($_POST['post']));
+         
+         
+              if(wp_verify_nonce( $nonce, 'dt-duplicate-page-'.$post_id) && current_user_can('edit_posts')) {
               global $wpdb;
    
               /*sanitize_GET POST REQUEST*/
-              $post_copy = sanitize_text_field( $_POST["post"] );
-              $get_copy = sanitize_text_field( $_GET['post'] );
-              $request_copy = sanitize_text_field( $_REQUEST['action'] );
+              //$post_copy = sanitize_text_field( $_POST["post"] );
+              //$get_copy = sanitize_text_field( $_GET['post'] );
+              //$request_copy = sanitize_text_field( $_REQUEST['action'] );
  
               $opt = get_option('dpp_wpp_page_options');
               $suffix = !empty($opt['dpp_post_suffix']) ? ' -- '.$opt['dpp_post_suffix'] : '';
@@ -83,13 +89,14 @@ if(!class_exists('dcc_dpp_wpp_page')):
               $post_status = !empty($opt['dpp_post_status']) ? $opt['dpp_post_status'] : 'draft';
               $redirectit = !empty($opt['dpp_post_redirect']) ? $opt['dpp_post_redirect'] : 'to_list';
 
-                if (! ( isset( $get_copy ) || isset( $post_copy ) || ( isset($request_copy) && 'dt_dpp_post_as_draft' == $request_copy ) ) ) {
+                //if (! ( isset( $get_copy ) || isset( $post_copy ) || ( isset($request_copy) && 'dt_dpp_post_as_draft' == $request_copy ) ) ) {
+                if (!(isset($_GET['post']) || isset($_POST['post']) || (isset($_REQUEST['action']) && 'dt_dpp_post_as_draft' == $_REQUEST['action']))) {
                 wp_die('No post!');
                 }
                 $returnpage = '';
    
                 /* Get post id */
-                $post_id = (isset($get_copy) ? $get_copy : $post_copy );
+                //$post_id = (isset($get_copy) ? $get_copy : $post_copy );
 
                 $post = get_post( $post_id );
                 
@@ -104,7 +111,7 @@ if(!class_exists('dcc_dpp_wpp_page')):
                     'post_author' => $new_post_author,
                     'post_content' => (isset($opt['dpp_posteditor']) && $opt['dpp_posteditor'] == 'gutenberg') ? wp_slash($post->post_content) : $post->post_content,
                     'post_excerpt' => $post->post_excerpt,
-                    'post_name' => $post->post_name,
+                    //'post_name' => $post->post_name,
                     'post_parent' => $post->post_parent,
                     'post_password' => $post->post_password,
                     'post_status' => $post_status,
@@ -146,7 +153,11 @@ if(!class_exists('dcc_dpp_wpp_page')):
                      } else {
                      wp_die('Error! Post creation failed: ' . $post_id);
                      }
+              }  else {
+                    wp_die('Security check issue, Please try again.');
+                   }
        }
+    
 
     /*Add link to action*/
     public function dt_dpp_post_link( $actions, $post ) {
@@ -155,7 +166,7 @@ if(!class_exists('dcc_dpp_wpp_page')):
       $opt = get_option('dpp_wpp_page_options');
       $post_status = !empty($opt['dpp_post_status']) ? $opt['dpp_post_status'] : 'draft';
       if (current_user_can('edit_posts')) {
-         $actions['dpp'] = '<a href="admin.php?action=dt_dpp_post_as_draft&amp;post=' . $post->ID . '" title="Clone this as '.$post_status.'" rel="permalink">'.$link_title.'</a>';
+         $actions['dpp'] = '<a href="admin.php?action=dt_dpp_post_as_draft&amp;post='.$post->ID.'&amp;nonce='.wp_create_nonce( 'dt-duplicate-page-'.$post->ID ).'" title="Clone this as '.$post_status.'" rel="permalink">'.$link_title.'</a>';
           }
           return $actions;
       }
@@ -164,12 +175,12 @@ if(!class_exists('dcc_dpp_wpp_page')):
     public function dpp_wpp_page_custom_button(){
        $opt = get_option('dpp_wpp_page_options');
        $link_title = !empty($opt['dpp_post_link_title']) ? $opt['dpp_post_link_title'] : 'Duplicate';
+       global $post;
        $opt = get_option('dpp_wpp_page_options');
        $post_status = !empty($opt['dpp_post_status']) ? $opt['dpp_post_status'] : 'draft';
-       global $post;
        $html  = '<div id="major-publishing-actions">';
        $html .= '<div id="export-action">';
-       $html .= '<a href="admin.php?action=dt_dpp_post_as_draft&amp;post=' . $post->ID . '" title="Duplicate this as '.$post_status.'" rel="permalink">'.$link_title.'</a>';
+       $html .= '<a href="admin.php?action=dt_dpp_post_as_draft&amp;post='.$post->ID.'&amp;nonce='.wp_create_nonce( 'dt-duplicate-page-'.$post->ID ).'" title="Duplicate this as '.$post_status.'" rel="permalink">'.$link_title.'</a>';
        $html .= '</div>';
        $html .= '</div>';
        echo $html;
@@ -186,10 +197,12 @@ if(!class_exists('dcc_dpp_wpp_page')):
                 if (isset($opt['dpp_posteditor']) && $opt['dpp_posteditor'] == 'gutenberg') {
                     ?>
              <style> .link_gutenberg {text-align: center; margin-top: 15px;} .link_gutenberg a {text-decoration: none; display: block; height: 40px; line-height: 28px; padding: 3px 12px 2px; background: #0073AA; border-radius: 3px; border-width: 1px; border-style: solid; color: #ffffff; font-size: 16px; } .link_gutenberg a:hover { background: #23282D; border-color: #23282D; }</style>       
-             <script>jQuery(window).load(function(e){var dpp_postid = "<?php echo $post->ID; ?>";
+             <script>jQuery(window).load(function(e){
+                var dpp_postid = "<?php echo $post->ID; ?>";
+                var dtnonce = "<?php echo wp_create_nonce( 'dt-duplicate-page-'.$post->ID );?>"; 
                 var dpp_posttitle = "Duplicate this as <?php echo $post_status; ?>";
                 var dpp_duplicatelink = '<div class="link_gutenberg">';
-				    dpp_duplicatelink += '<a href="admin.php?action=dt_dpp_post_as_draft&amp;post='+dpp_postid+'" title="'+dpp_posttitle+'">Duplicate</a>';
+				    dpp_duplicatelink += '<a href="admin.php?action=dt_dpp_post_as_draft&amp;post='+dpp_postid'&amp;nonce='+dtnonce+'" title="'+dpp_posttitle+'">Duplicate</a>';
 				    dpp_duplicatelink += '</div>';
                 jQuery('.edit-post-post-status').append(dpp_duplicatelink);
 				});</script>
@@ -215,8 +228,8 @@ if(!class_exists('dcc_dpp_wpp_page')):
             'parent' => 'edit',
             'id' => 'dpp_this',
             'title' => __("Clone this as ".$post_status."", 'dpp_wpp_page'),
-            'href' => admin_url().'admin.php?action=dt_dpp_post_as_draft&amp;post=' . $post->ID
-          ) );
+            'href' => admin_url().'admin.php?action=dt_dpp_post_as_draft&amp;post='.$post->ID.'&amp;nonce='.wp_create_nonce( 'dt-duplicate-page-'.$post->ID )
+          ));
       }
     }
 

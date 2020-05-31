@@ -18,11 +18,19 @@ if(isset($_POST['submit_dpp_wpp_page']) && wp_verify_nonce( $_POST['dpp_nonce_fi
 		if($dpp_settings_save){ dpp_wpp_page::dp_redirect('options-general.php?page=dpp_page_settings&instruct=1'); }
 		else{ dpp_wpp_page::dp_redirect('options-general.php?page=dpp_page_settings&instruct=2'); }endif;
 if(!empty($instruct) && $instruct == 1):
-  _e( '<div class="updated settings-error dpp_pluginnotice is-dismissible" id="setting-error-settings_updated"> 
-<p><strong>Changes saved.</strong></p><button class="notice-ignore" type="button"><span class="screen-reader-text">Ignore this notice.</span></button></div>', 'dpp_wpp_page');	
+  _e( '<div id="message" class="updated notice notice-success is-dismissible">
+          <p>Changes Saved!</p>
+          <button type="button" class="notice-dismiss">
+             <span class="screen-reader-text">Ignore this notice.</span>
+          </button>
+       </div>', 'dpp_wpp_page');	
 elseif(!empty($instruct) && $instruct == 2):
-  _e( '<div class="error settings-error dpp_pluginnotice is-dismissible" id="setting-error-settings_updated"> 
-<p><strong>Changes not saved.</strong></p><button class="notice-ignore" type="button"><span class="screen-reader-text">Ignore this notice.</span></button></div>', 'dpp_wpp_page');
+  _e( '<div id="message" class="error notice notice-error is-dismissible">
+          <p>Changes not saved!</p>
+          <button type="button" class="notice-dismiss">
+             <span class="screen-reader-text">Ignore this notice.</span>
+          </button>
+       </div>', 'dpp_wpp_page');
 endif;
 //$dpp_post_status = array('draft');
 ?> 

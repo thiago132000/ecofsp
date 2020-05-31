@@ -119,6 +119,11 @@ HTML;
 			<td><?php echo $svgTick; ?></td>
 		</tr>
 		<tr>
+			<td><?php _e('Manage hardcoded (non-enqueued) CSS &amp; JavaScript files', 'wp-asset-clean-up'); ?></td>
+			<td><span class="na">❌</span></td>
+			<td><?php echo $svgTick; ?></td>
+		</tr>
+		<tr>
 			<td><?php _e('Move CSS &amp; JavaScript files from <code>&lt;HEAD&gt;</code> to <code>&lt;BODY&gt;</code> (to reduce render-blocking) or vice-versa (for very early triggering)', 'wp-asset-clean-up'); ?></td>
 			<td><span class="na">❌</span></td>
 			<td><?php echo $svgTick; ?></td>

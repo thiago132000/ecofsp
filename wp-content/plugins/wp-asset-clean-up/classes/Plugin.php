@@ -2,6 +2,8 @@
 namespace WpAssetCleanUp;
 
 use WpAssetCleanUp\OptimiseAssets\OptimizeCommon;
+use WpAssetCleanUp\OptimiseAssets\OptimizeCss;
+use WpAssetCleanUp\OptimiseAssets\OptimizeJs;
 
 /**
  * Class Plugin
@@ -15,13 +17,12 @@ class Plugin
 	const RATE_URL = 'https://wordpress.org/support/plugin/wp-asset-clean-up/reviews/?filter=5#new-post';
 
 	/**
-	 * The functions below are only called within the Dashboard
-	 *
 	 * Plugin constructor.
 	 */
 	public function __construct()
 	{
 		register_activation_hook(WPACU_PLUGIN_FILE, array($this, 'whenActivated'));
+		register_deactivation_hook(WPACU_PLUGIN_FILE, array($this, 'whenDeactivated'));
 	}
 
 	/**
@@ -34,7 +35,7 @@ class Plugin
 
 		// [wpacu_lite]
 		// Admin footer text: Ask the user to review the plugin
-		add_filter('admin_footer_text', array($this, 'adminFooter'), 1, 1);
+		add_filter('admin_footer_text', array($this, 'adminFooterText'), 1, 1);
 		// [/wpacu_lite]
 
 		// Show "Settings" and "Go Pro" as plugin action links
@@ -62,7 +63,7 @@ class Plugin
 	 *
 	 * @return string
 	 */
-	public function adminFooter($text)
+	public function adminFooterText($text)
 	{
 		if (isset($_GET['page']) && strpos($_GET['page'], WPACU_PLUGIN_ID) !== false) {
 			$text = sprintf(__('Thank you for using %s', 'wp-asset-clean-up'), WPACU_PLUGIN_TITLE.' v'.WPACU_PLUGIN_VERSION)
@@ -82,7 +83,7 @@ class Plugin
 	// [/wpacu_lite]
 
 	/**
-	 *
+	 * Actions taken when the plugin is activated
 	 */
 	public function whenActivated()
 	{
@@ -106,14 +107,10 @@ class Plugin
 		 * /wp-content/cache/asset-cleanup/css/
          * /wp-content/cache/asset-cleanup/css/item/
 		 * /wp-content/cache/asset-cleanup/css/index.php
-		 * /wp-content/cache/asset-cleanup/css/logged-in/
-		 * /wp-content/cache/asset-cleanup/css/logged-in/index.php
          *
          * /wp-content/cache/asset-cleanup/js/
          * /wp-content/cache/asset-cleanup/js/item/
          * /wp-content/cache/asset-cleanup/js/index.php
-         * /wp-content/cache/asset-cleanup/js/logged-in/
-         * /wp-content/cache/asset-cleanup/js/logged-in/index.php
          *
 		 */
 		self::createCacheFoldersFiles(array('css','js'));
@@ -133,6 +130,99 @@ class Plugin
 			Misc::doNotApplyOptimizationOnPage($eddPurchasePage);
 		}
 	}
+
+	/**
+	 * Actions taken when the plugin is deactivated
+	 */
+	public function whenDeactivated()
+    {
+    	// Clear traces of the plugin which are re-generated once the plugin is enabled
+	    // This is good when the admin wants to completely uninstall the plugin
+        self::clearAllTransients();
+	    self::removeCacheDirWithoutAssets();
+
+	    // Clear other plugin's cache (if they are active)
+        OptimizeCommon::clearOtherPluginsCache();
+    }
+
+	/**
+	 * Removes all plugin's transients, this is usually done when the plugin is deactivated
+	 */
+	public static function clearAllTransients()
+    {
+	    global $wpdb;
+
+	    // Remove all transients
+	    $transientLikes = array(
+		    '_transient_wpacu_',
+		    '_transient_'.WPACU_PLUGIN_ID.'_'
+	    );
+
+	    $transientLikesSql = '';
+
+	    foreach ($transientLikes as $transientLike) {
+		    $transientLikesSql .= " option_name LIKE '".$transientLike."%' OR ";
+	    }
+
+	    $transientLikesSql = rtrim($transientLikesSql, ' OR ');
+
+	    $sqlQuery = <<<SQL
+SELECT option_name FROM `{$wpdb->prefix}options` WHERE {$transientLikesSql}
+SQL;
+	    $transientsToClear = $wpdb->get_col($sqlQuery);
+
+	    foreach ($transientsToClear as $transientToClear) {
+		    $transientNameToClear = str_replace('_transient_', '', $transientToClear);
+		    delete_transient($transientNameToClear);
+	    }
+    }
+
+	/**
+	 * This is usually triggered when the plugin is deactivated
+	 * If the caching directory doesn't have any CSS/JS left, it will clear itself
+	 * The admin might want to clear all traces of the plugin
+	 * If the plugin is re-activated, the caching directory will be re-created automatically
+	 */
+	public static function removeCacheDirWithoutAssets()
+    {
+	    $pathToCacheDir    = WP_CONTENT_DIR . OptimizeCommon::getRelPathPluginCacheDir();
+
+	    if (! is_dir($pathToCacheDir)) {
+	        return;
+        }
+
+	    $pathToCacheDirCss = WP_CONTENT_DIR . OptimizeCss::getRelPathCssCacheDir();
+	    $pathToCacheDirJs  = WP_CONTENT_DIR . OptimizeJs::getRelPathJsCacheDir();
+
+	    $allCssFiles = glob( $pathToCacheDirCss . '**/*.css' );
+	    $allJsFiles  = glob( $pathToCacheDirJs . '**/*.js' );
+
+	    // Only valid when there's no CSS or JS (not one single file) there
+	    if ( count( $allCssFiles ) === 0 && count( $allJsFiles ) === 0 ) {
+		    $dirItems = new \RecursiveDirectoryIterator( $pathToCacheDir );
+
+		    $allDirs = array($pathToCacheDir);
+
+		    // First, remove the files
+		    foreach ( new \RecursiveIteratorIterator( $dirItems, \RecursiveIteratorIterator::SELF_FIRST,
+				    \RecursiveIteratorIterator::CATCH_GET_CHILD ) as $item) {
+		        if (is_dir($item)) {
+		            $allDirs[] = $item;
+                } else {
+		            @unlink($item);
+                }
+		    }
+
+		    usort($allDirs, static function($a, $b) {
+			    return strlen($b) - strlen($a);
+		    });
+
+		    // Then, remove the empty dirs in descending order (up to the root)
+            foreach ($allDirs as $dir) {
+                @rmdir($dir);
+            }
+	    }
+    }
 
 	/**
 	 * @param $assetTypes
@@ -164,21 +254,24 @@ HTACCESS;
 		    }
 
 		    if ( ! is_file( $cacheDir . 'index.php' ) ) {
-			    // /wp-content/cache/asset-cleanup/cache/{$assetType}/index.php
+			    // /wp-content/cache/asset-cleanup/cache/(css|js)/index.php
 			    FileSystem::file_put_contents( $cacheDir . 'index.php', $emptyPhpFileContents );
 		    }
 
-		    if ( ! is_dir( $cacheDir . 'logged-in' ) ) {
-			    @mkdir( $cacheDir . 'logged-in', 0755 );
-		    }
-
 			if ( ! is_dir( $cacheDir . OptimizeCommon::$optimizedSingleFilesDir ) ) {
+				// /wp-content/cache/asset-cleanup/cache/(css|js)/item/
 				@mkdir( $cacheDir . OptimizeCommon::$optimizedSingleFilesDir, 0755 );
 			}
 
-		    if ( ! is_file( $cacheDir . 'logged-in/index.php' ) ) {
-			    // /wp-content/cache/asset-cleanup/cache/{$assetType}/logged-in/index.html
-			    FileSystem::file_put_contents( $cacheDir . 'logged-in/index.php', $emptyPhpFileContents );
+			// For large inline STYLE & SCRIPT tags
+			if ( ! is_dir( $cacheDir . OptimizeCommon::$optimizedSingleFilesDir.'/inline' ) ) {
+				// /wp-content/cache/asset-cleanup/cache/(css|js)/item/inline/
+			    @mkdir( $cacheDir . OptimizeCommon::$optimizedSingleFilesDir.'/inline', 0755 );
+		    }
+
+		    if ( ! is_file( $cacheDir . OptimizeCommon::$optimizedSingleFilesDir.'/inline/index.php' ) ) {
+			    // /wp-content/cache/asset-cleanup/cache/(css|js)/item/inline/index.php
+			    FileSystem::file_put_contents( $cacheDir . OptimizeCommon::$optimizedSingleFilesDir.'/inline/index.php', $emptyPhpFileContents );
 		    }
 
 		    $htAccessFilePath = dirname( $cacheDir ) . '/.htaccess';
@@ -266,7 +359,8 @@ HTACCESS;
 	}
 
 	/**
-     * This works like /?wpacu_no_load with a fundamental difference:
+     * This works like /?wpacu_no_lo
+	 * ad with a fundamental difference:
      * It needs to be triggered through a very early 'init' action hook after all plugins are loaded, thus it can't be used in /early-triggers.php
      * e.g. in situations when the page is an AMP one, prevent any changes to the HTML source by Asset CleanUp Pro
      *
@@ -279,6 +373,12 @@ HTACCESS;
         if (! defined('WPACU_ALL_ACTIVE_PLUGINS_LOADED') || is_admin()) {
             return false;
         }
+
+        // Perhaps the editor from "Pro" (theme.co) is on
+	    if (apply_filters('wpacu_prevent_any_changes', false)) {
+		    define('WPACU_PREVENT_ANY_CHANGES', true);
+		    return true;
+	    }
 
         if (defined('WPACU_PREVENT_ANY_CHANGES')) {
 	        return WPACU_PREVENT_ANY_CHANGES;
@@ -297,6 +397,7 @@ HTACCESS;
 	    }
 
 	    if (array_key_exists('wpacu_clean_load', $_GET)) {
+		    define('WPACU_PREVENT_ANY_CHANGES', true);
 	        return true;
         }
 

@@ -2,8 +2,10 @@
 // Don't load directly
 defined( 'WPINC' ) or die;
 
+use Tribe__Cache_Listener as Cache_Listener;
 use Tribe__Events__Main as TEC;
 use Tribe__Main as Common;
+use Tribe__Utils__Array as Arr;
 
 /**
  * Rewrite Configuration Class
@@ -29,6 +31,15 @@ class Tribe__Events__Rewrite extends Tribe__Rewrite {
 	 * @var boolean
 	 */
 	protected $hook_lock = false;
+
+	/**
+	 * A map providing each current base to its current locale translation.
+	 *
+	 * @since 5.1.1
+	 *
+	 * @var array<string,string>
+	 */
+	protected $localized_bases = [];
 
 	/**
 	 * Static Singleton Factory Method
@@ -271,10 +282,15 @@ class Tribe__Events__Rewrite extends Tribe__Rewrite {
 		$bases = apply_filters( 'tribe_events_rewrite_base_slugs', $default_bases );
 
 		// Remove duplicates (no need to have 'month' twice if no translations are in effect, etc)
-		$bases = array_map( 'array_unique', $bases );
+		$bases            = array_map( 'array_unique', $bases );
+		$unfiltered_bases = $bases;
 
-		// By default we always have `en_US` to avoid 404 with older URLs
-		$languages = apply_filters( 'tribe_events_rewrite_i18n_languages', array_unique( array( 'en_US', get_locale() ) ) );
+		apply_filters_deprecated(
+			'tribe_events_rewrite_i18n_languages',
+			[ array_unique( array( 'en_US', get_locale() ) ) ],
+			'TBD',
+			'Deprecated in version 5.1.1, not used since version 4.2.'
+		);
 
 		// By default we load the Default and our plugin domains
 		$domains = apply_filters( 'tribe_events_rewrite_i18n_domains', array(
@@ -316,6 +332,9 @@ class Tribe__Events__Rewrite extends Tribe__Rewrite {
 		 *                        domains with a `'plugin-slug' => '/absolute/path/to/lang/dir'`
 		 */
 		$bases = apply_filters( 'tribe_events_rewrite_i18n_slugs', $bases, $method, $domains );
+
+		// In this moment set up the object locale bases too.
+		$this->localized_bases = $this->get_localized_bases( $unfiltered_bases, $domains );
 
 		$this->bases = $bases;
 
@@ -505,6 +524,16 @@ class Tribe__Events__Rewrite extends Tribe__Rewrite {
 	protected function get_localized_matchers() {
 		$localized_matchers = parent::get_localized_matchers();
 
+		// If possible add a `localized_slug` entry to each localized matcher to support multi-language.
+		array_walk(
+			$localized_matchers,
+			function ( array &$localized_matcher ) {
+				if ( isset( $localized_matcher['base'], $this->localized_bases[ $localized_matcher['base'] ] ) ) {
+					$localized_matcher['localized_slug'] = $this->localized_bases[ $localized_matcher['base'] ];
+				}
+			}
+		);
+
 		// Handle the dates.
 		$localized_matchers['(\d{4}-\d{2})']       = 'eventDate';
 		$localized_matchers['(\d{4}-\d{2}-\d{2})'] = 'eventDate';
@@ -538,8 +567,9 @@ class Tribe__Events__Rewrite extends Tribe__Rewrite {
 				 * Categories can be hierarchical and the path will be something like
 				 * `/events/category/grand-parent/parent/child/list/page/2/`.
 				 * If we can match the category to an existing one then let's make sure to build the hierarchical slug.
+				 * We cast to comma-separated list to ensure multi-category queries will not resolve to a URL.
 				 */
-				$category_slug = $query_vars['tribe_events_cat'];
+				$category_slug = Arr::to_list( $query_vars['tribe_events_cat'] );
 				$category_term = get_term_by( 'slug', $category_slug, TEC::TAXONOMY );
 				if ( $category_term instanceof WP_Term ) {
 					$category_slug = get_term_parents_list(
@@ -630,34 +660,90 @@ class Tribe__Events__Rewrite extends Tribe__Rewrite {
 	 *               an entry..
 	 */
 	protected function get_option_controlled_slug_entry( array $localized_matchers, $default_slug, $option_name ) {
-		$using_default_archive_slug = $default_slug === tribe_get_option( $option_name, $default_slug );
+		$current_slug       = tribe_get_option( $option_name, $default_slug );
+		$using_default_slug = $default_slug === $current_slug;
 
-		$filter = static function ( $matcher ) use ( $default_slug )
-		{
-			return isset( $matcher['query_var'] )
-			       && 'post_type' === $matcher['query_var']
-			       && isset( $matcher['localized_slugs'] )
-			       && is_array( $matcher['localized_slugs'] )
-			       && in_array( $default_slug, $matcher['localized_slugs'], true );
+		$filter = static function ( $matcher ) use ( $default_slug ) {
+			return isset( $matcher['query_var'], $matcher['localized_slugs'] )
+				   && 'post_type' === $matcher['query_var']
+				   && is_array( $matcher['localized_slugs'] );
 		};
 
-		$archive_localized_matcher = array_filter( $localized_matchers, $filter );
-		$archive_localized_matcher = reset( $archive_localized_matcher );
+		$target_matcher = array_filter( $localized_matchers, $filter );
+		$target_matcher = reset( $target_matcher );
 
-		if ( $using_default_archive_slug || false === $archive_localized_matcher ) {
+		if ( $using_default_slug || false === $target_matcher ) {
 			return [];
 		}
 
-		$archive_localized_matcher['localized_slugs'][] = $archive_localized_matcher['en_slug'];
-		// Create an entry for each localized slug to replace (?:events).
+		/**
+		 * Add the slugs in the following order: default slug, option-controlled slug, localized slug.
+		 */
+		array_unshift( $target_matcher['localized_slugs'], $default_slug, $current_slug );
+
+		// Make sure we do not have duplicated slugs.
+		$target_matcher['localized_slugs'] = array_unique( $target_matcher['localized_slugs'] );
+
+		// Create a replacement string that contains all of them.
+		$all_slugs = array_unique( array_reverse( $target_matcher['localized_slugs'] ) );
+
 		$entry = [
-			'(?:' . $default_slug . ')' => [
+			// Create an entry for the localized slug to replace `(?:events)`.
+			'(?:' . $default_slug . ')'              => [
 				'query_var'       => 'post_type',
-				'en_slug'         => $archive_localized_matcher['en_slug'],
-				'localized_slugs' => $archive_localized_matcher['localized_slugs']
-			]
+				'en_slug'         => $target_matcher['en_slug'],
+				'localized_slugs' => $target_matcher['localized_slugs'],
+			],
+			// Create an entry for the localized slug to replace `(?:events|foo|bar)`.
+			'(?:' . implode( '|', $all_slugs ) . ')' => [
+				'query_var'       => 'post_type',
+				'en_slug'         => $target_matcher['en_slug'],
+				'localized_slugs' => $target_matcher['localized_slugs'],
+			],
 		];
 
 		return $entry;
+	}
+
+	/**
+	 * Returns the map of localized bases for the specified text domains.
+	 *
+	 * The bases are the ones used to build the permalinks, the domains are those of the currently activated plugins
+	 * that include a localized rewrite component.
+	 *
+	 * @since 5.1.1
+	 *
+	 * @param array<string> $bases   The bases to set up the locale translation for.
+	 * @param array<string> $domains A list of text domains belonging to the plugins currently active that handle and
+	 *                               provide support for a localized rewrite component.
+	 *
+	 * @return array<string,string> A map relating the bases in their English, lowercase form to their current locale
+	 *                              translated form.
+	 */
+	public function get_localized_bases( array $bases, array $domains ) {
+		$locale             = get_locale();
+		$cache_key          = __METHOD__ . md5( serialize( array_merge( $bases, $domains, [ $locale ] ) ) );
+		$expiration_trigger = Cache_Listener::TRIGGER_GENERATE_REWRITE_RULES;
+
+		$cached = tribe_cache()->get( $cache_key, $expiration_trigger, false );
+
+		if ( false !== $cached ) {
+			return $cached;
+		}
+
+		$localized_bases = tribe( 'tec.i18n' )->get_i18n_strings_for_domains( $bases, [ $locale ], $domains );
+
+		$return = array_filter(
+			array_map(
+				static function ( $locale_base ) {
+					return is_array( $locale_base ) ? end( $locale_base ) : false;
+				},
+				$localized_bases
+			)
+		);
+
+		tribe_cache()->set( $cache_key, $return, DAY_IN_SECONDS, $expiration_trigger );
+
+		return $return;
 	}
 }

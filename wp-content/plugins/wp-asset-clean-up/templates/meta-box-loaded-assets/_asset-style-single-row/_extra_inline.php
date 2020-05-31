@@ -16,8 +16,13 @@ if (! empty($data['row']['extra_data_css_list'])) { ?>
 		<div class="wpacu-assets-inline-code-collapsible-content <?php if ($inlineCodeStatus !== 'contracted') { echo 'wpacu-open'; } ?>">
 			<div>
 				<p style="margin-bottom: 15px; line-height: normal !important;">
-					<?php foreach ($data['row']['extra_data_css_list'] as $extraDataCSS) {
-						echo '<em>'.htmlspecialchars($extraDataCSS).'</em>'.'<br />';
+					<?php
+					foreach ($data['row']['extra_data_css_list'] as $extraDataCSS) {
+					    $htmlInline = trim(\WpAssetCleanUp\OptimiseAssets\OptimizeCss::generateInlineAssocHtmlForHandle(
+						    $data['row']['obj']->handle,
+						    $extraDataCSS
+					    ));
+						echo '<small><code>'.nl2br(htmlspecialchars($htmlInline)).'</code></small>';
 					}
 					?>
 				</p>

@@ -3,7 +3,6 @@ namespace WpAssetCleanUp\OptimiseAssets;
 
 use MatthiasMullie\Minify\Minify;
 
-use MatthiasMullie\Minify\Exceptions\FileImportException;
 use MatthiasMullie\PathConverter\ConverterInterface;
 use MatthiasMullie\PathConverter\Converter;
 
@@ -103,7 +102,6 @@ class CombineCssImports extends Minify
 	 *
 	 * @return string
 	 *
-	 * @throws FileImportException
 	 */
 	protected function combineImports($source, $content, $parents)
 	{

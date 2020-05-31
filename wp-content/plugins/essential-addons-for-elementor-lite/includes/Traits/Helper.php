@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Essential_Addons_Elementor\Traits;
 
 if (!defined('ABSPATH')) {
@@ -8,12 +7,13 @@ if (!defined('ABSPATH')) {
 } // Exit if accessed directly
 
 use \Elementor\Controls_Manager;
+use \Elementor\Group_Control_Background;
 use \Elementor\Group_Control_Border;
 use \Elementor\Group_Control_Box_Shadow;
 use \Elementor\Group_Control_Image_Size;
 use \Elementor\Group_Control_Typography;
 use \Elementor\Utils;
-use \Elementor\Group_Control_Background;
+use \Essential_Addons_Elementor\Elements\Woo_Checkout;
 
 trait Helper
 {
@@ -215,7 +215,7 @@ trait Helper
             [
                 'name' => 'content_area_bg',
                 'types' => ['classic', 'gradient'],
-                'selector' => '{{WRAPPER}} .betterdocs-categories-wrap'
+                'selector' => '{{WRAPPER}} .betterdocs-categories-wrap',
             ]
         );
 
@@ -262,7 +262,7 @@ trait Helper
                     'size' => 1600,
                     'unit' => 'px',
                 ],
-                'size_units' => [ 'px', 'em'],
+                'size_units' => ['px', 'em'],
                 'range' => [
                     'px' => [
                         'max' => 1600,
@@ -292,22 +292,40 @@ trait Helper
         );
 
         if ('eael-post-grid' === $this->get_name()) {
-            $this->add_control(
+            $this->add_responsive_control(
                 'eael_post_grid_columns',
                 [
-                    'label' => esc_html__('Number of Columns', 'essential-addons-for-elementor-lite'),
+                    'label' => esc_html__('Column', 'essential-addons-for-elementor-lite'),
                     'type' => Controls_Manager::SELECT,
                     'default' => 'eael-col-4',
+                    'tablet_default' => 'eael-col-2',
+                    'mobile_default' => 'eael-col-1',
                     'options' => [
-                        'eael-col-1' => esc_html__('Single Column', 'essential-addons-for-elementor-lite'),
-                        'eael-col-2' => esc_html__('Two Columns', 'essential-addons-for-elementor-lite'),
-                        'eael-col-3' => esc_html__('Three Columns', 'essential-addons-for-elementor-lite'),
-                        'eael-col-4' => esc_html__('Four Columns', 'essential-addons-for-elementor-lite'),
-                        'eael-col-5' => esc_html__('Five Columns', 'essential-addons-for-elementor-lite'),
-                        'eael-col-6' => esc_html__('Six Columns', 'essential-addons-for-elementor-lite'),
+                        'eael-col-1' => esc_html__('1', 'essential-addons-for-elementor-lite'),
+                        'eael-col-2' => esc_html__('2', 'essential-addons-for-elementor-lite'),
+                        'eael-col-3' => esc_html__('3', 'essential-addons-for-elementor-lite'),
+                        'eael-col-4' => esc_html__('4', 'essential-addons-for-elementor-lite'),
+                        'eael-col-5' => esc_html__('5', 'essential-addons-for-elementor-lite'),
+                        'eael-col-6' => esc_html__('6', 'essential-addons-for-elementor-lite'),
+                    ],
+                    'prefix_class' => 'elementor-grid%s-',
+                    'frontend_available' => true,
+                ]
+            );
+
+            $this->add_control(
+                'layout_mode',
+                [
+                    'label' => esc_html__('Layout', 'essential-addons-for-elementor-lite'),
+                    'type' => Controls_Manager::SELECT,
+                    'default' => 'masonry',
+                    'options' => [
+                        'grid' => esc_html__('Grid', 'essential-addons-for-elementor-lite'),
+                        'masonry' => esc_html__('Masonry', 'essential-addons-for-elementor-lite'),
                     ],
                 ]
             );
+
         }
 
         if ('eael-post-block' === $this->get_name()) {
@@ -340,11 +358,11 @@ trait Helper
                         'type' => Controls_Manager::SELECT,
                         'default' => 'center',
                         'options' => [
-                            'left'   => esc_html__('Right', 'essential-addons-for-elementor-lite'),
+                            'left' => esc_html__('Right', 'essential-addons-for-elementor-lite'),
                             'center' => esc_html__('Center', 'essential-addons-for-elementor-lite'),
-                            'right'  => esc_html__('Left', 'essential-addons-for-elementor-lite'),
+                            'right' => esc_html__('Left', 'essential-addons-for-elementor-lite'),
                         ],
-                        'default'   => 'center'
+                        'default' => 'center',
                     ]
                 );
 
@@ -355,13 +373,13 @@ trait Helper
                         'type' => Controls_Manager::SELECT,
                         'default' => 'inside',
                         'options' => [
-                            'inside'   => esc_html__('Inside', 'essential-addons-for-elementor-lite'),
-                            'outside' => esc_html__('Outside', 'essential-addons-for-elementor-lite')
+                            'inside' => esc_html__('Inside', 'essential-addons-for-elementor-lite'),
+                            'outside' => esc_html__('Outside', 'essential-addons-for-elementor-lite'),
                         ],
-                        'default'   => 'inside',
+                        'default' => 'inside',
                         'condition' => [
-                            'content_timeline_layout!'  => 'center'
-                        ]
+                            'content_timeline_layout!' => 'center',
+                        ],
                     ]
                 );
 
@@ -370,11 +388,11 @@ trait Helper
                     'show_load_more',
                     [
                         'label' => __('Show Load More', 'essential-addons-for-elementor-lite'),
-                        'type'      => Controls_Manager::SWITCHER,
-                        'label_on'  => __( 'Show', 'essential-addons-for-elementor-lite'),
-                        'label_off' => __( 'Hide', 'essential-addons-for-elementor-lite'),
+                        'type' => Controls_Manager::SWITCHER,
+                        'label_on' => __('Show', 'essential-addons-for-elementor-lite'),
+                        'label_off' => __('Hide', 'essential-addons-for-elementor-lite'),
                         'return_value' => 'yes',
-                        'default' => ''
+                        'default' => '',
                     ]
                 );
 
@@ -399,11 +417,11 @@ trait Helper
                 'eael_show_image',
                 [
                     'label' => __('Show Image', 'essential-addons-for-elementor-lite'),
-                    'type'      => Controls_Manager::SWITCHER,
-                    'label_on'  => __( 'Show', 'essential-addons-for-elementor-lite'),
-                    'label_off' => __( 'Hide', 'essential-addons-for-elementor-lite'),
+                    'type' => Controls_Manager::SWITCHER,
+                    'label_on' => __('Show', 'essential-addons-for-elementor-lite'),
+                    'label_off' => __('Hide', 'essential-addons-for-elementor-lite'),
                     'return_value' => 'yes',
-                    'default' => 'yes'
+                    'default' => 'yes',
                 ]
             );
 
@@ -488,7 +506,7 @@ trait Helper
                 'eael_content_timeline_circle_icon_new',
                 [
                     'label' => esc_html__('Icon', 'essential-addons-for-elementor-lite'),
-                    'fa4compatibility' 		=> 'eael_content_timeline_circle_icon',
+                    'fa4compatibility' => 'eael_content_timeline_circle_icon',
                     'type' => Controls_Manager::ICONS,
                     'default' => [
                         'value' => 'fas fa-pencil-alt',
@@ -507,58 +525,100 @@ trait Helper
             'eael_show_title',
             [
                 'label' => __('Show Title', 'essential-addons-for-elementor-lite'),
-                'type'      => Controls_Manager::SWITCHER,
-                'label_on'  => __( 'Show', 'essential-addons-for-elementor-lite'),
-                'label_off' => __( 'Hide', 'essential-addons-for-elementor-lite'),
+                'type' => Controls_Manager::SWITCHER,
+                'label_on' => __('Show', 'essential-addons-for-elementor-lite'),
+                'label_off' => __('Hide', 'essential-addons-for-elementor-lite'),
                 'return_value' => 'yes',
-                'default' => 'yes'
+                'default' => 'yes',
             ]
         );
+
+        if ('eael-post-grid' === $this->get_name() || 'eael-post-carousel' === $this->get_name()) {
+            $this->add_control(
+                'eael_title_length',
+                [
+                    'label' => __('Title Length', 'essential-addons-for-elementor-lite'),
+                    'type' => Controls_Manager::NUMBER,
+                    'condition' => [
+                        'eael_show_title' => 'yes'
+                    ],
+                ]
+            );
+        }
 
         $this->add_control(
             'eael_show_excerpt',
             [
                 'label' => __('Show excerpt', 'essential-addons-for-elementor-lite'),
-                'type'      => Controls_Manager::SWITCHER,
-                'label_on'  => __( 'Show', 'essential-addons-for-elementor-lite'),
-                'label_off' => __( 'Hide', 'essential-addons-for-elementor-lite'),
+                'type' => Controls_Manager::SWITCHER,
+                'label_on' => __('Show', 'essential-addons-for-elementor-lite'),
+                'label_off' => __('Hide', 'essential-addons-for-elementor-lite'),
                 'return_value' => 'yes',
-                'default' => 'yes'
+                'default' => 'yes',
             ]
         );
 
-        $this->add_control(
-            'eael_excerpt_length',
-            [
-                'label' => __('Excerpt Words', 'essential-addons-for-elementor-lite'),
-                'type' => Controls_Manager::NUMBER,
-                'default' => '10',
-                'condition' => [
-                    'eael_show_excerpt' => 'yes',
-                ],
-            ]
-        );
+        if ('eael-content-timeline' === $this->get_name()) {
+            $this->add_control(
+                'eael_excerpt_length',
+                [
+                    'label' => __('Excerpt Words', 'essential-addons-for-elementor-lite'),
+                    'type' => Controls_Manager::NUMBER,
+                    'default'   => 10,
+                    'condition' => [
+                        'eael_show_excerpt' => 'yes',
+                        'eael_content_timeline_choose' => 'dynamic',
+                    ],
+                ]
+            );
 
-        $this->add_control(
-            'excerpt_expanison_indicator',
-            [
-                'label' => esc_html__('Expanison Indicator', 'essential-addons-for-elementor-lite'),
-                'type' => Controls_Manager::TEXT,
-                'label_block' => false,
-                'default' => esc_html__('...', 'essential-addons-for-elementor-lite'),
-                'condition' => [
-                    'eael_show_excerpt' => 'yes',
-                ],
-            ]
-        );
+            $this->add_control(
+                'excerpt_expanison_indicator',
+                [
+                    'label' => esc_html__('Expanison Indicator', 'essential-addons-for-elementor-lite'),
+                    'type' => Controls_Manager::TEXT,
+                    'label_block' => false,
+                    'default' => esc_html__('...', 'essential-addons-for-elementor-lite'),
+                    'condition' => [
+                        'eael_show_excerpt' => 'yes',
+                        'eael_content_timeline_choose' => 'dynamic',
+                    ],
+                ]
+            );
+        } else {
+            $this->add_control(
+                'eael_excerpt_length',
+                [
+                    'label' => __('Excerpt Words', 'essential-addons-for-elementor-lite'),
+                    'type' => Controls_Manager::NUMBER,
+                    'default'   => 10,
+                    'condition' => [
+                        'eael_show_excerpt' => 'yes',
+                    ],
+                ]
+            );
+
+            $this->add_control(
+                'excerpt_expanison_indicator',
+                [
+                    'label' => esc_html__('Expanison Indicator', 'essential-addons-for-elementor-lite'),
+                    'type' => Controls_Manager::TEXT,
+                    'label_block' => false,
+                    'default' => esc_html__('...', 'essential-addons-for-elementor-lite'),
+                    'condition' => [
+                        'eael_show_excerpt' => 'yes',
+                    ],
+                ]
+            );
+        }
 
         $this->add_control(
             'eael_show_read_more',
             [
                 'label' => __('Show Read More', 'essential-addons-for-elementor-lite'),
-                'type'      => Controls_Manager::SWITCHER,
-                'label_on'  => __( 'Show', 'essential-addons-for-elementor-lite'),
-                'label_off' => __( 'Hide', 'essential-addons-for-elementor-lite'),
+                'type' => Controls_Manager::SWITCHER,
+                'label_on' => __('Show', 'essential-addons-for-elementor-lite'),
+                'label_off' => __('Hide', 'essential-addons-for-elementor-lite'),
                 'return_value' => 'yes',
                 'default' => 'yes',
                 'condition' => [
@@ -590,11 +650,14 @@ trait Helper
                 'eael_show_read_more_button',
                 [
                     'label' => __('Show Read More Button', 'essential-addons-for-elementor-lite'),
-                    'type'      => Controls_Manager::SWITCHER,
-                    'label_on'  => __( 'Show', 'essential-addons-for-elementor-lite'),
-                    'label_off' => __( 'Hide', 'essential-addons-for-elementor-lite'),
+                    'type' => Controls_Manager::SWITCHER,
+                    'label_on' => __('Show', 'essential-addons-for-elementor-lite'),
+                    'label_off' => __('Hide', 'essential-addons-for-elementor-lite'),
                     'return_value' => 'yes',
-                    'default' => 'yes'
+                    'default' => 'yes',
+                    'condition' => [
+                        'post_type!' => 'product',
+                    ],
                 ]
             );
 
@@ -606,9 +669,60 @@ trait Helper
                     'default' => __('Read More', 'essential-addons-for-elementor-lite'),
                     'condition' => [
                         'eael_show_read_more_button' => 'yes',
+                        'post_type!' => 'product',
                     ],
                 ]
             );
+        }
+
+        if ('eael-post-carousel' === $this->get_name() || 'eael-post-grid' === $this->get_name()) {
+            $this->add_control(
+                'eael_show_post_terms',
+                [
+                    'label' => __('Show Post Terms', 'essential-addons-for-elementor-lite'),
+                    'type' => Controls_Manager::SWITCHER,
+                    'label_on' => __('Show', 'essential-addons-for-elementor-lite'),
+                    'label_off' => __('Hide', 'essential-addons-for-elementor-lite'),
+                    'return_value' => 'yes',
+                    'condition' => [
+                        'eael_show_image' => 'yes',
+                    ],
+                ]
+            );
+
+            $this->add_control(
+                'eael_post_terms',
+                [
+                    'label' => __('Show Terms From', 'essential-addons-for-elementor-lite'),
+                    'type' => Controls_Manager::SELECT,
+                    'options' => [
+                        'category' => __('Category', 'essential-addons-for-elementor-lite'),
+                        'tags' => __('Tags', 'essential-addons-for-elementor-lite'),
+                    ],
+                    'default' => 'category',
+                    'condition' => [
+                        'eael_show_post_terms' => 'yes',
+                    ],
+                ]
+            );
+
+            $this->add_control(
+                'eael_post_terms_max_length',
+                [
+                    'label' => __('Max Terms to Show', 'essential-addons-for-elementor-lite'),
+                    'type' => Controls_Manager::SELECT,
+                    'options' => [
+                        1 => __('1', 'essential-addons-for-elementor-lite'),
+                        2 => __('2', 'essential-addons-for-elementor-lite'),
+                        3 => __('3', 'essential-addons-for-elementor-lite'),
+                    ],
+                    'default' => 1,
+                    'condition' => [
+                        'eael_show_post_terms' => 'yes',
+                    ],
+                ]
+            );
+
         }
 
         if ('eael-post-grid' === $this->get_name() || 'eael-post-block' === $this->get_name() || 'eael-post-carousel' === $this->get_name()) {
@@ -617,11 +731,11 @@ trait Helper
                 'eael_show_meta',
                 [
                     'label' => __('Show Meta', 'essential-addons-for-elementor-lite'),
-                    'type'      => Controls_Manager::SWITCHER,
-                    'label_on'  => __( 'Show', 'essential-addons-for-elementor-lite'),
-                    'label_off' => __( 'Hide', 'essential-addons-for-elementor-lite'),
+                    'type' => Controls_Manager::SWITCHER,
+                    'label_on' => __('Show', 'essential-addons-for-elementor-lite'),
+                    'label_off' => __('Hide', 'essential-addons-for-elementor-lite'),
                     'return_value' => 'yes',
-                    'default' => 'yes'
+                    'default' => 'yes',
                 ]
             );
 
@@ -641,7 +755,127 @@ trait Helper
                 ]
             );
 
+            $this->add_control(
+                'eael_show_avatar',
+                [
+                    'label' => __('Show Avatar', 'essential-addons-for-elementor-lite'),
+                    'type' => Controls_Manager::SWITCHER,
+                    'label_on' => __('Show', 'essential-addons-for-elementor-lite'),
+                    'label_off' => __('Hide', 'essential-addons-for-elementor-lite'),
+                    'return_value' => 'yes',
+                    'default' => 'yes',
+                    'condition' => [
+                        'meta_position' => 'meta-entry-footer',
+                        'eael_show_meta' => 'yes',
+                    ],
+                ]
+            );
+
+            $this->add_control(
+                'eael_show_author',
+                [
+                    'label' => __('Show Author Name', 'essential-addons-for-elementor-lite'),
+                    'type' => Controls_Manager::SWITCHER,
+                    'label_on' => __('Show', 'essential-addons-for-elementor-lite'),
+                    'label_off' => __('Hide', 'essential-addons-for-elementor-lite'),
+                    'return_value' => 'yes',
+                    'default' => 'yes',
+                    'condition' => [
+                        'eael_show_meta' => 'yes',
+                    ],
+                ]
+            );
+
+            $this->add_control(
+                'eael_show_date',
+                [
+                    'label' => __('Show Date', 'essential-addons-for-elementor-lite'),
+                    'type' => Controls_Manager::SWITCHER,
+                    'label_on' => __('Show', 'essential-addons-for-elementor-lite'),
+                    'label_off' => __('Hide', 'essential-addons-for-elementor-lite'),
+                    'return_value' => 'yes',
+                    'default' => 'yes',
+                    'condition' => [
+                        'eael_show_meta' => 'yes',
+                    ],
+                ]
+            );
+
         }
+
+        $this->end_controls_section();
+    }
+
+    protected function terms_style()
+    {
+        $this->start_controls_section(
+            'section_terms_style',
+            [
+                'label' => __('Terms', 'essential-addons-elementor'),
+                'tab' => Controls_Manager::TAB_STYLE,
+                'condition' => [
+                    'eael_show_post_terms' => 'yes',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'terms_color',
+            [
+                'label' => __('Color', 'essential-addons-elementor'),
+                'type' => Controls_Manager::COLOR,
+                'default' => '',
+                'selectors' => [
+                    '{{WRAPPER}} .post-carousel-categories li a, {{WRAPPER}} .post-carousel-categories li:after' => 'color: {{VALUE}};',
+                ],
+            ]
+        );
+
+        $this->add_group_control(
+            Group_Control_Typography::get_type(),
+            [
+                'name' => 'terms_typography',
+                'label' => __('Typography', 'essential-addons-elementor'),
+                'selector' => '{{WRAPPER}} .post-carousel-categories li a',
+            ]
+        );
+
+        $this->add_responsive_control(
+            'terms_color_alignment',
+            [
+                'label' => __('Alignment', 'essential-addons-elementor'),
+                'type' => Controls_Manager::CHOOSE,
+                'options' => [
+                    'left' => [
+                        'title' => __('Left', 'essential-addons-elementor'),
+                        'icon' => 'fa fa-align-left',
+                    ],
+                    'center' => [
+                        'title' => __('Center', 'essential-addons-elementor'),
+                        'icon' => 'fa fa-align-center',
+                    ],
+                    'right' => [
+                        'title' => __('Right', 'essential-addons-elementor'),
+                        'icon' => 'fa fa-align-right',
+                    ],
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .post-carousel-categories' => 'text-align: {{VALUE}};',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'terms_spacing',
+            [
+                'label' => __('Spacing', 'essential-addons-elementor'),
+                'type' => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', '%'],
+                'selectors' => [
+                    '{{WRAPPER}} .post-carousel-categories li' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
 
         $this->end_controls_section();
     }
@@ -662,6 +896,7 @@ trait Helper
                     'tab' => Controls_Manager::TAB_STYLE,
                     'condition' => [
                         'eael_show_read_more_button' => 'yes',
+                        'post_type!' => 'product',
                     ],
                 ]
             );
@@ -676,114 +911,114 @@ trait Helper
 
             $this->start_controls_tabs('read_more_button_tabs');
 
-                $this->start_controls_tab(
-                    'read_more_button_style_normal',
-                    [
-                        'label' => __( 'Normal', 'essential-addons-for-elementor-lite'),
-                    ]
-                );
+            $this->start_controls_tab(
+                'read_more_button_style_normal',
+                [
+                    'label' => __('Normal', 'essential-addons-for-elementor-lite'),
+                ]
+            );
 
-                $this->add_control(
-                    'eael_post_read_more_btn_color',
-                    [
-                        'label' => esc_html__('Text Color', 'essential-addons-for-elementor-lite'),
-                        'type' => Controls_Manager::COLOR,
-                        'default' => '#61ce70',
-                        'selectors' => [
-                            '{{WRAPPER}} .eael-post-elements-readmore-btn' => 'color: {{VALUE}};',
-                        ],
-                    ]
-                );
-    
-                $this->add_group_control(
-                    Group_Control_Background::get_type(),
-                    [
-                        'name' => 'read_more_btn_background',
-                        'label' => __( 'Background', 'essential-addons-for-elementor-lite'),
-                        'types' => [ 'classic', 'gradient' ],
-                        'selector' => '{{WRAPPER}} .eael-post-elements-readmore-btn',
-                        'exclude' => [
-                            'image'
-                        ],
-                    ]
-                );
-    
-                $this->add_group_control(
-                    Group_Control_Border::get_type(),
-                    [
-                        'name' => 'read_more_btn_border',
-                        'label' => __( 'Border', 'essential-addons-for-elementor-lite'),
-                        'selector' => '{{WRAPPER}} .eael-post-elements-readmore-btn',
-                    ]
-                );
-    
-                $this->add_responsive_control(
-                    'read_more_btn_border_radius',
-                    [
-                        'label' => esc_html__('Border Radius', 'essential-addons-for-elementor-lite'),
-                        'type' => Controls_Manager::DIMENSIONS,
-                        'size_units' => ['px', 'em', '%'],
-                        'selectors' => [
-                            '{{WRAPPER}} .eael-post-elements-readmore-btn' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
-                        ],
-                    ]
-                );
+            $this->add_control(
+                'eael_post_read_more_btn_color',
+                [
+                    'label' => esc_html__('Text Color', 'essential-addons-for-elementor-lite'),
+                    'type' => Controls_Manager::COLOR,
+                    'default' => '#61ce70',
+                    'selectors' => [
+                        '{{WRAPPER}} .eael-post-elements-readmore-btn' => 'color: {{VALUE}};',
+                    ],
+                ]
+            );
 
-                $this->end_controls_tab();
+            $this->add_group_control(
+                Group_Control_Background::get_type(),
+                [
+                    'name' => 'read_more_btn_background',
+                    'label' => __('Background', 'essential-addons-for-elementor-lite'),
+                    'types' => ['classic', 'gradient'],
+                    'selector' => '{{WRAPPER}} .eael-post-elements-readmore-btn',
+                    'exclude' => [
+                        'image',
+                    ],
+                ]
+            );
 
-                $this->start_controls_tab(
-                    'read_more_button_style_hover',
-                    [
-                        'label' => __( 'Hover', 'essential-addons-for-elementor-lite'),
-                    ]
-                );
+            $this->add_group_control(
+                Group_Control_Border::get_type(),
+                [
+                    'name' => 'read_more_btn_border',
+                    'label' => __('Border', 'essential-addons-for-elementor-lite'),
+                    'selector' => '{{WRAPPER}} .eael-post-elements-readmore-btn',
+                ]
+            );
 
-                $this->add_control(
-                    'eael_post_read_more_btn_hover_color',
-                    [
-                        'label' => esc_html__('Text Color', 'essential-addons-for-elementor-lite'),
-                        'type' => Controls_Manager::COLOR,
-                        'selectors' => [
-                            '{{WRAPPER}} .eael-post-elements-readmore-btn:hover' => 'color: {{VALUE}};',
-                        ],
-                    ]
-                );
-    
-                $this->add_group_control(
-                    Group_Control_Background::get_type(),
-                    [
-                        'name' => 'read_more_btn_hover_background',
-                        'label' => __( 'Background', 'essential-addons-for-elementor-lite'),
-                        'types' => [ 'classic', 'gradient' ],
-                        'selector' => '{{WRAPPER}} .eael-post-elements-readmore-btn:hover',
-                        'exclude' => [
-                            'image'
-                        ],
-                    ]
-                );
-    
-                $this->add_group_control(
-                    Group_Control_Border::get_type(),
-                    [
-                        'name' => 'read_more_btn_hover_border',
-                        'label' => __( 'Border', 'essential-addons-for-elementor-lite'),
-                        'selector' => '{{WRAPPER}} .eael-post-elements-readmore-btn:hover',
-                    ]
-                );
-    
-                $this->add_responsive_control(
-                    'read_more_btn_border_hover_radius',
-                    [
-                        'label' => esc_html__('Border Radius', 'essential-addons-for-elementor-lite'),
-                        'type' => Controls_Manager::DIMENSIONS,
-                        'size_units' => ['px', 'em', '%'],
-                        'selectors' => [
-                            '{{WRAPPER}} .eael-post-elements-readmore-btn:hover' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
-                        ],
-                    ]
-                );
-                
-                $this->end_controls_tab();
+            $this->add_responsive_control(
+                'read_more_btn_border_radius',
+                [
+                    'label' => esc_html__('Border Radius', 'essential-addons-for-elementor-lite'),
+                    'type' => Controls_Manager::DIMENSIONS,
+                    'size_units' => ['px', 'em', '%'],
+                    'selectors' => [
+                        '{{WRAPPER}} .eael-post-elements-readmore-btn' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                    ],
+                ]
+            );
+
+            $this->end_controls_tab();
+
+            $this->start_controls_tab(
+                'read_more_button_style_hover',
+                [
+                    'label' => __('Hover', 'essential-addons-for-elementor-lite'),
+                ]
+            );
+
+            $this->add_control(
+                'eael_post_read_more_btn_hover_color',
+                [
+                    'label' => esc_html__('Text Color', 'essential-addons-for-elementor-lite'),
+                    'type' => Controls_Manager::COLOR,
+                    'selectors' => [
+                        '{{WRAPPER}} .eael-post-elements-readmore-btn:hover' => 'color: {{VALUE}};',
+                    ],
+                ]
+            );
+
+            $this->add_group_control(
+                Group_Control_Background::get_type(),
+                [
+                    'name' => 'read_more_btn_hover_background',
+                    'label' => __('Background', 'essential-addons-for-elementor-lite'),
+                    'types' => ['classic', 'gradient'],
+                    'selector' => '{{WRAPPER}} .eael-post-elements-readmore-btn:hover',
+                    'exclude' => [
+                        'image',
+                    ],
+                ]
+            );
+
+            $this->add_group_control(
+                Group_Control_Border::get_type(),
+                [
+                    'name' => 'read_more_btn_hover_border',
+                    'label' => __('Border', 'essential-addons-for-elementor-lite'),
+                    'selector' => '{{WRAPPER}} .eael-post-elements-readmore-btn:hover',
+                ]
+            );
+
+            $this->add_responsive_control(
+                'read_more_btn_border_hover_radius',
+                [
+                    'label' => esc_html__('Border Radius', 'essential-addons-for-elementor-lite'),
+                    'type' => Controls_Manager::DIMENSIONS,
+                    'size_units' => ['px', 'em', '%'],
+                    'selectors' => [
+                        '{{WRAPPER}} .eael-post-elements-readmore-btn:hover' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                    ],
+                ]
+            );
+
+            $this->end_controls_tab();
 
             $this->end_controls_tabs();
 
@@ -827,7 +1062,7 @@ trait Helper
                 'label' => __('Load More Button Style', 'essential-addons-for-elementor-lite'),
                 'tab' => Controls_Manager::TAB_STYLE,
                 'condition' => [
-                    'show_load_more' => ['yes', '1']
+                    'show_load_more' => ['yes', '1', 'true'],
                 ],
             ]
         );
@@ -1042,7 +1277,7 @@ trait Helper
     public function fix_old_query($settings)
     {
         $update_query = false;
-        
+
         foreach ($settings as $key => $value) {
             if (strpos($key, 'eaeposts_') !== false) {
                 $settings[str_replace('eaeposts_', '', $key)] = $value;
@@ -1052,7 +1287,7 @@ trait Helper
 
         if ($update_query) {
             global $wpdb;
-            
+
             $post_id = get_the_ID();
             $data = get_post_meta($post_id, '_elementor_data', true);
             $data = str_replace('eaeposts_', '', $data);
@@ -1089,7 +1324,7 @@ trait Helper
             'ignore_sticky_posts' => 1,
             'post_status' => 'publish',
             'posts_per_page' => $settings['posts_per_page'],
-            'offset' => $settings['offset']
+            'offset' => $settings['offset'],
         ];
 
         if ('by_id' === $settings['post_type']) {
@@ -1097,8 +1332,8 @@ trait Helper
             $args['post__in'] = empty($settings['posts_ids']) ? [0] : $settings['posts_ids'];
         } else {
             $args['post_type'] = $settings['post_type'];
-            
-            if( $args['post_type'] !== 'page' ) {
+
+            if ($args['post_type'] !== 'page') {
                 $args['tax_query'] = [];
                 $taxonomies = get_object_taxonomies($settings['post_type'], 'objects');
 
@@ -1425,7 +1660,7 @@ trait Helper
 
     /**
      * Get FluentForms List
-     * 
+     *
      * @return array
      */
     public static function eael_select_fluent_forms()
@@ -1433,16 +1668,16 @@ trait Helper
 
         $options = array();
 
-        if(defined('FLUENTFORM')) {
+        if (defined('FLUENTFORM')) {
             global $wpdb;
-            
-            $result = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}fluentform_forms" );
-            if($result) {
+
+            $result = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}fluentform_forms");
+            if ($result) {
                 $options[0] = esc_html__('Select a Fluent Form', 'essential-addons-for-elementor-lite');
-                foreach($result as $form) {
+                foreach ($result as $form) {
                     $options[$form->id] = $form->title;
                 }
-            }else {
+            } else {
                 $options[0] = esc_html__('Create a Form First', 'essential-addons-for-elementor-lite');
             }
         }
@@ -1510,18 +1745,63 @@ trait Helper
     /**
      * Get all Tags
      *
+     * @param  array  $args
+     *
      * @return array
      */
-    public function eael_get_tags()
+    public function eael_get_tags($args = array())
     {
-        $options = array();
-        $tags = get_tags();
+        $options = [];
+        $tags = get_tags($args);
+
+        if (is_wp_error($tags)) {
+            return [];
+        }
 
         foreach ($tags as $tag) {
             $options[$tag->term_id] = $tag->name;
         }
 
         return $options;
+    }
+
+    /**
+     * Get all taxonomies by post
+     *
+     * @param  array   $args
+     *
+     * @param  string  $output
+     * @param  string  $operator
+     *
+     * @return array
+     */
+    public function eael_get_taxonomies_by_post($args = [], $output = 'names', $operator = 'and')
+    {
+        global $wp_taxonomies;
+
+        $field = ('names' === $output) ? 'name' : false;
+
+        // Handle 'object_type' separately.
+        if (isset($args['object_type'])) {
+            $object_type = (array) $args['object_type'];
+            unset($args['object_type']);
+        }
+
+        $taxonomies = wp_filter_object_list($wp_taxonomies, $args, $operator);
+
+        if (isset($object_type)) {
+            foreach ($taxonomies as $tax => $tax_data) {
+                if (!array_intersect($object_type, $tax_data->object_type)) {
+                    unset($taxonomies[$tax]);
+                }
+            }
+        }
+
+        if ($field) {
+            $taxonomies = wp_list_pluck($taxonomies, $field);
+        }
+
+        return $taxonomies;
     }
 
     /**
@@ -1589,17 +1869,17 @@ trait Helper
         $class = '\\' . str_replace('\\\\', '\\', $_REQUEST['class']);
         $args['offset'] = (int) $args['offset'] + (((int) $_REQUEST['page'] - 1) * (int) $args['posts_per_page']);
 
-        if(isset($_REQUEST['taxonomy']) && $_REQUEST['taxonomy']['taxonomy'] != 'all') {
+        if (isset($_REQUEST['taxonomy']) && $_REQUEST['taxonomy']['taxonomy'] != 'all') {
             $args['tax_query'] = [
-                $_REQUEST['taxonomy']
+                $_REQUEST['taxonomy'],
             ];
         }
 
-        if($class == '\Essential_Addons_Elementor\Elements\Post_Grid') {
+        if ($class == '\Essential_Addons_Elementor\Elements\Post_Grid' && $settings['orderby'] === 'rand') {
             $args['post__not_in'] = array_unique($_REQUEST['post__not_in']);
         }
 
-        $html = $class::__render_template($args, $settings);
+        $html = $class::render_template_($args, $settings);
 
         echo $html;
         wp_die();
@@ -1717,7 +1997,7 @@ trait Helper
                         <p>' . substr(str_replace(@$item['entities']['urls'][0]['url'], '', $item['full_text']), 0, $settings['eael_twitter_feed_content_length']) . '...</p>';
 
             if ($settings['eael_twitter_feed_show_read_more'] == 'true') {
-                $html .= '<a href="//twitter.com/' . @$item['user']['screen_name'] . '/status/' . $item['id'] . '" target="_blank" class="read-more-link">Read More <i class="fas fa-angle-double-right"></i></a>';
+                $html .= '<a href="//twitter.com/' . @$item['user']['screen_name'] . '/status/' . $item['id_str'] . '" target="_blank" class="read-more-link">Read More <i class="fas fa-angle-double-right"></i></a>';
             }
             $html .= '</div>
                     ' . (isset($item['extended_entities']['media'][0]) && $settings['eael_twitter_feed_media'] == 'true' ? ($item['extended_entities']['media'][0]['type'] == 'photo' ? '<img src="' . $item['extended_entities']['media'][0]['media_url_https'] . '">' : '') : '') . '
@@ -1733,12 +2013,13 @@ trait Helper
      *
      * @since 3.4.0
      */
-    public function facebook_feed_render_items() {
+    public function facebook_feed_render_items()
+    {
         // check if ajax request
         if (isset($_REQUEST['action']) && $_REQUEST['action'] == 'facebook_feed_load_more') {
             // check ajax referer
             check_ajax_referer('essential-addons-elementor', 'security');
-            
+
             // init vars
             $page = $_REQUEST['page'];
             parse_str($_REQUEST['settings'], $settings);
@@ -1751,11 +2032,11 @@ trait Helper
         $html = '';
         $page_id = $settings['eael_facebook_feed_page_id'];
         $token = $settings['eael_facebook_feed_access_token'];
-        
-        if(empty($page_id) || empty($token)) {
+
+        if (empty($page_id) || empty($token)) {
             return;
         }
-        
+
         $key = 'eael_facebook_feed_' . substr(str_rot13(str_replace('.', '', $page_id . $token)), 32);
 
         if (get_transient($key) === false) {
@@ -1766,28 +2047,28 @@ trait Helper
         }
 
         $facebook_data = json_decode($facebook_data, true);
-        
+
         if (isset($facebook_data['data'])) {
             $facebook_data = $facebook_data['data'];
         } else {
             return;
         }
-        
+
         switch ($settings['eael_facebook_feed_sort_by']) {
             case 'least-recent':
-            $facebook_data = array_reverse($facebook_data);
-            break;
+                $facebook_data = array_reverse($facebook_data);
+                break;
         }
-        
+
         $items = array_splice($facebook_data, ($page * $settings['eael_facebook_feed_image_count']['size']), $settings['eael_facebook_feed_image_count']['size']);
 
-        foreach($items as $item) {
+        foreach ($items as $item) {
             $message = wp_trim_words((isset($item['message']) ? $item['message'] : (isset($item['story']) ? $item['story'] : '')), $settings['eael_facebook_feed_message_max_length']['size'], '...');
             $photo = (isset($item['full_picture']) ? $item['full_picture'] : '');
             $likes = (isset($item['reactions']) ? $item['reactions']['summary']['total_count'] : 0);
             $comments = (isset($item['comments']) ? $item['comments']['summary']['total_count'] : 0);
 
-            if($settings['eael_facebook_feed_layout'] == 'card') {
+            if ($settings['eael_facebook_feed_layout'] == 'card') {
                 $html .= '<div class="eael-facebook-feed-item">
                     <div class="eael-facebook-feed-item-inner">
                         <header class="eael-facebook-feed-item-header clearfix">
@@ -1796,81 +2077,81 @@ trait Helper
                                 <a href="https://www.facebook.com/' . $page_id . '" target="' . ($settings['eael_facebook_feed_link_target'] == 'yes' ? '_blank' : '_self') . '"><p class="eael-facebook-feed-username">' . $item['from']['name'] . '</p></a>
                             </div>';
 
-                            if ($settings['eael_facebook_feed_date']) {
-                                $html .= '<a href="' . $item['permalink_url'] . '" target="' . ($settings['eael_facebook_feed_link_target'] ? '_blank' : '_self') . '" class="eael-facebook-feed-post-time"><i class="far fa-clock" aria-hidden="true"></i> ' . date("d M Y", strtotime($item['created_time'])) . '</a>';
-                            }
-                        $html .= '</header>';
-                        
-                        if ($settings['eael_facebook_feed_message'] && !empty($message)) {
-                            $html .= '<div class="eael-facebook-feed-item-content">
-                                <p class="eael-facebook-feed-message">' . esc_html($message) . '</p>
-                            </div>';
-                        }
+                if ($settings['eael_facebook_feed_date']) {
+                    $html .= '<a href="' . $item['permalink_url'] . '" target="' . ($settings['eael_facebook_feed_link_target'] ? '_blank' : '_self') . '" class="eael-facebook-feed-post-time"><i class="far fa-clock" aria-hidden="true"></i> ' . date("d M Y", strtotime($item['created_time'])) . '</a>';
+                }
+                $html .= '</header>';
 
-                        if(!empty($photo) || isset($item['attachments']['data'])) {
-                            $html .= '<div class="eael-facebook-feed-preview-wrap">';
-                                if($item['status_type'] == 'shared_story') {
-                                    $html .= '<a href="' . $item['permalink_url'] . '" target="' . ($settings['eael_facebook_feed_link_target'] == 'yes' ? '_blank' : '_self') . '" class="eael-facebook-feed-preview-img">';
-                                        if($item['attachments']['data'][0]['media_type'] == 'video') {
-                                            $html .= '<img class="eael-facebook-feed-img" src="' . $photo . '">
-                                            <div class="eael-facebook-feed-preview-overlay"><i class="far fa-play-circle" aria-hidden="true"></i></div>';
-                                        } else {
-                                            $html .= '<img class="eael-facebook-feed-img" src="' . $photo . '">';
-                                        }
-                                    $html .= '</a>';
-    
-                                    $html .= '<div class="eael-facebook-feed-url-preview">
-                                        <p class="eael-facebook-feed-url-host">' . parse_url($item['attachments']['data'][0]['unshimmed_url'])['host'] . '</p>
-                                        <h2 class="eael-facebook-feed-url-title">' . $item['attachments']['data'][0]['title'] . '</h2>
-                                        <p class="eael-facebook-feed-url-description">' . @$item['attachments']['data'][0]['description'] . '</p>
+                if ($settings['eael_facebook_feed_message'] && !empty($message)) {
+                    $html .= '<div class="eael-facebook-feed-item-content">
+                                        <p class="eael-facebook-feed-message">' . esc_html($message) . '</p>
                                     </div>';
-                                } else if ($item['status_type'] == 'added_video') {
-                                    $html .= '<a href="' . $item['permalink_url'] . '" target="' . ($settings['eael_facebook_feed_link_target'] == 'yes' ? '_blank' : '_self') . '" class="eael-facebook-feed-preview-img">
-                                        <img class="eael-facebook-feed-img" src="' . $photo . '">
-                                        <div class="eael-facebook-feed-preview-overlay"><i class="far fa-play-circle" aria-hidden="true"></i></div>
-                                    </a>';
-                                } else {
-                                    $html .= '<a href="' . $item['permalink_url'] . '" target="' . ($settings['eael_facebook_feed_link_target'] == 'yes' ? '_blank' : '_self') . '" class="eael-facebook-feed-preview-img">
-                                        <img class="eael-facebook-feed-img" src="' . $photo . '">
-                                    </a>';
-                                }
-                            $html .= '</div>';
-                        }
+                }
 
-                        if ($settings['eael_facebook_feed_likes'] || $settings['eael_facebook_feed_comments']) {
-                            $html .= '<footer class="eael-facebook-feed-item-footer">
-                                <div class="clearfix">';
-                                    if ($settings['eael_facebook_feed_likes']) {
-                                        $html .= '<span class="eael-facebook-feed-post-likes"><i class="far fa-thumbs-up" aria-hidden="true"></i> ' . $likes . '</span>';
-                                    }
-                                    if ($settings['eael_facebook_feed_comments']) {
-                                        $html .= '<span class="eael-facebook-feed-post-comments"><i class="far fa-comments" aria-hidden="true"></i> ' . $comments . '</span>';
-                                    }
-                                $html .= '</div>
-                            </footer>';
+                if (!empty($photo) || isset($item['attachments']['data'])) {
+                    $html .= '<div class="eael-facebook-feed-preview-wrap">';
+                    if ($item['status_type'] == 'shared_story') {
+                        $html .= '<a href="' . $item['permalink_url'] . '" target="' . ($settings['eael_facebook_feed_link_target'] == 'yes' ? '_blank' : '_self') . '" class="eael-facebook-feed-preview-img">';
+                        if ($item['attachments']['data'][0]['media_type'] == 'video') {
+                            $html .= '<img class="eael-facebook-feed-img" src="' . $photo . '">
+                                                    <div class="eael-facebook-feed-preview-overlay"><i class="far fa-play-circle" aria-hidden="true"></i></div>';
+                        } else {
+                            $html .= '<img class="eael-facebook-feed-img" src="' . $photo . '">';
                         }
+                        $html .= '</a>';
+
+                        $html .= '<div class="eael-facebook-feed-url-preview">
+                                                <p class="eael-facebook-feed-url-host">' . parse_url($item['attachments']['data'][0]['unshimmed_url'])['host'] . '</p>
+                                                <h2 class="eael-facebook-feed-url-title">' . $item['attachments']['data'][0]['title'] . '</h2>
+                                                <p class="eael-facebook-feed-url-description">' . @$item['attachments']['data'][0]['description'] . '</p>
+                                            </div>';
+                    } else if ($item['status_type'] == 'added_video') {
+                        $html .= '<a href="' . $item['permalink_url'] . '" target="' . ($settings['eael_facebook_feed_link_target'] == 'yes' ? '_blank' : '_self') . '" class="eael-facebook-feed-preview-img">
+                                                <img class="eael-facebook-feed-img" src="' . $photo . '">
+                                                <div class="eael-facebook-feed-preview-overlay"><i class="far fa-play-circle" aria-hidden="true"></i></div>
+                                            </a>';
+                    } else {
+                        $html .= '<a href="' . $item['permalink_url'] . '" target="' . ($settings['eael_facebook_feed_link_target'] == 'yes' ? '_blank' : '_self') . '" class="eael-facebook-feed-preview-img">
+                                                <img class="eael-facebook-feed-img" src="' . $photo . '">
+                                            </a>';
+                    }
+                    $html .= '</div>';
+                }
+
+                if ($settings['eael_facebook_feed_likes'] || $settings['eael_facebook_feed_comments']) {
+                    $html .= '<footer class="eael-facebook-feed-item-footer">
+                                <div class="clearfix">';
+                    if ($settings['eael_facebook_feed_likes']) {
+                        $html .= '<span class="eael-facebook-feed-post-likes"><i class="far fa-thumbs-up" aria-hidden="true"></i> ' . $likes . '</span>';
+                    }
+                    if ($settings['eael_facebook_feed_comments']) {
+                        $html .= '<span class="eael-facebook-feed-post-comments"><i class="far fa-comments" aria-hidden="true"></i> ' . $comments . '</span>';
+                    }
                     $html .= '</div>
+                            </footer>';
+                }
+                $html .= '</div>
                 </div>';
             } else {
                 $html .= '<a href="' . $item['permalink_url'] . '" target="' . ($settings['eael_facebook_feed_link_target'] ? '_blank' : '_self') . '" class="eael-facebook-feed-item">
                     <div class="eael-facebook-feed-item-inner">
                         <img class="eael-facebook-feed-img" src="' . (empty($photo) ? EAEL_PLUGIN_URL . 'assets/front-end/img/flexia-preview.jpg' : $photo) . '">';
-                        
-                        if ($settings['eael_facebook_feed_likes'] || $settings['eael_facebook_feed_comments']) {
-                            $html .= '<div class="eael-facebook-feed-item-overlay">
-                                <div class="eael-facebook-feed-item-overlay-inner">
-                                    <div class="eael-facebook-feed-meta">';
-                                        if ($settings['eael_facebook_feed_likes']) {
-                                            $html .= '<span class="eael-facebook-feed-post-likes"><i class="far fa-thumbs-up" aria-hidden="true"></i> ' . $likes . '</span>';
-                                        }
-                                        if ($settings['eael_facebook_feed_comments']) {
-                                            $html .= '<span class="eael-facebook-feed-post-comments"><i class="far fa-comments" aria-hidden="true"></i> ' . $comments . '</span>';
-                                        }
-                                    $html .= '</div>
-                                </div>
-                            </div>';
-                        }
+
+                if ($settings['eael_facebook_feed_likes'] || $settings['eael_facebook_feed_comments']) {
+                    $html .= '<div class="eael-facebook-feed-item-overlay">
+                                        <div class="eael-facebook-feed-item-overlay-inner">
+                                            <div class="eael-facebook-feed-meta">';
+                    if ($settings['eael_facebook_feed_likes']) {
+                        $html .= '<span class="eael-facebook-feed-post-likes"><i class="far fa-thumbs-up" aria-hidden="true"></i> ' . $likes . '</span>';
+                    }
+                    if ($settings['eael_facebook_feed_comments']) {
+                        $html .= '<span class="eael-facebook-feed-post-comments"><i class="far fa-comments" aria-hidden="true"></i> ' . $comments . '</span>';
+                    }
                     $html .= '</div>
+                                        </div>
+                                    </div>';
+                }
+                $html .= '</div>
                 </a>';
             }
         }
@@ -1878,10 +2159,502 @@ trait Helper
         if (isset($_REQUEST['action']) && $_REQUEST['action'] == 'facebook_feed_load_more') {
             wp_send_json([
                 'num_pages' => ceil(count($facebook_data) / $settings['eael_facebook_feed_image_count']['size']),
-                'html' => $html
+                'html' => $html,
             ]);
         }
 
         return $html;
+    }
+
+    /**
+     * @param $page_obj
+     * @param $key
+     * @return string
+     */
+    public function eael_get_extension_settings($page_settings_model = [], $global_settings = [], $extension, $key)
+    {
+        if (isset($page_settings_model) && $page_settings_model->get_settings($extension) == 'yes') {
+            return $page_settings_model->get_settings($key);
+        } else if (isset($global_settings[$extension]['enabled'])) {
+            return isset($global_settings[$extension][$key]) ? $global_settings[$extension][$key] : '';
+        }
+
+        return '';
+    }
+
+    /**
+     * @param $post_css
+     * @param $elements
+     * @return string|void
+     */
+    public function eael_toc_global_css($page_settings_model, $global_settings)
+    {
+
+        $eael_toc = $global_settings['eael_ext_table_of_content'];
+        $eael_toc_width = isset($eael_toc['eael_ext_toc_width']['size'])?$eael_toc['eael_ext_toc_width']['size']:300;
+        $toc_list_color_active = $eael_toc['eael_ext_table_of_content_list_text_color_active'];
+        $toc_list_separator_style = $eael_toc['eael_ext_table_of_content_list_separator_style'];
+        $header_padding = $eael_toc['eael_ext_toc_header_padding'];
+        $body_padding = $eael_toc['eael_ext_toc_body_padding'];
+        $header_typography = $this->eael_get_typography_data('eael_ext_table_of_content_header_typography', $eael_toc);
+        $list_typography = $this->eael_get_typography_data('eael_ext_table_of_content_list_typography_normal', $eael_toc);
+        $box_shadow = $eael_toc['eael_ext_toc_table_box_shadow_box_shadow'];
+        $border_radius = $eael_toc['eael_ext_toc_box_border_radius']['size'];
+        $bullet_size = $eael_toc['eael_ext_toc_box_list_bullet_size']['size'];
+        $top_position = $eael_toc['eael_ext_toc_box_list_top_position']['size'];
+        $indicator_size = $eael_toc['eael_ext_toc_indicator_size']['size'];
+        $indicator_position = $eael_toc['eael_ext_toc_indicator_position']['size'];
+        $close_bt_box_shadow = $eael_toc['eael_ext_table_of_content_close_button_box_shadow'];
+        $toc_global_css = "
+            .eael-toc-global .eael-toc-header,
+            .eael-toc-global.collapsed .eael-toc-button
+            {
+                background-color:{$eael_toc['eael_ext_table_of_content_header_bg']};
+            }
+
+            .eael-toc-global {
+                width:{$eael_toc_width}px;
+                z-index:{$eael_toc['eael_ext_toc_sticky_z_index']['size']};
+            }
+
+            .eael-toc-global.eael-sticky {
+                top:{$eael_toc['eael_ext_toc_sticky_offset']['size']};
+            }
+            .eael-toc-global .eael-toc-header .eael-toc-title,
+            .eael-toc-global.collapsed .eael-toc-button
+            {
+                color:{$eael_toc['eael_ext_table_of_content_header_text_color']};
+                $header_typography
+            }
+            .eael-toc-global .eael-toc-header {
+                padding:{$header_padding['top']}px {$header_padding['right']}px {$header_padding['bottom']}px {$header_padding['left']}px;
+            }
+
+            .eael-toc-global .eael-toc-body {
+                padding:{$body_padding['top']}px {$body_padding['right']}px {$body_padding['bottom']}px {$body_padding['left']}px;
+            }
+
+            .eael-toc-global .eael-toc-close
+            {
+                font-size: {$eael_toc['eael_ext_table_of_content_close_button_icon_size']['size']}px !important;
+                height: {$eael_toc['eael_ext_table_of_content_close_button_size']['size']}px !important;
+                width: {$eael_toc['eael_ext_table_of_content_close_button_size']['size']}px !important;
+                line-height: {$eael_toc['eael_ext_table_of_content_close_button_line_height']['size']}px !important;
+                color:{$eael_toc['eael_ext_table_of_content_close_button_text_color']} !important;
+                background-color:{$eael_toc['eael_ext_table_of_content_close_button_bg']} !important;
+                border-radius: {$eael_toc['eael_ext_table_of_content_close_button_border_radius']['size']}px !important;
+                box-shadow:{$close_bt_box_shadow['horizontal']}px {$close_bt_box_shadow['vertical']}px {$close_bt_box_shadow['blur']}px {$close_bt_box_shadow['spread']}px {$close_bt_box_shadow['color']} !important;
+            }
+
+            .eael-toc-global.eael-toc:not(.collapsed)
+            {
+                box-shadow:{$box_shadow['horizontal']}px {$box_shadow['vertical']}px {$box_shadow['blur']}px {$box_shadow['spread']}px {$box_shadow['color']};
+            }
+
+            .eael-toc-global .eael-toc-body
+            {
+                background-color:{$eael_toc['eael_ext_table_of_content_body_bg']};
+            }
+
+            .eael-toc-global .eael-toc-body ul.eael-toc-list.eael-toc-bullet li:before
+            {
+                width:{$bullet_size}px;
+                height:{$bullet_size}px;
+                top:{$top_position}px;
+            }
+
+            .eael-toc-global .eael-toc-body .eael-toc-list li,
+            .eael-toc-global .eael-toc-body .eael-toc-list.eael-toc-number li:before,
+            .eael-toc-global .eael-toc-body .eael-toc-list li a
+            {
+                color:{$eael_toc['eael_ext_table_of_content_list_text_color']} !important;
+            }
+
+            .eael-toc-global .eael-toc-body .eael-toc-list.eael-toc-bullet li:before {
+                background-color:{$eael_toc['eael_ext_table_of_content_list_text_color']} !important;
+            }
+
+            .eael-toc-global .eael-toc-body .eael-toc-list li:hover,
+            .eael-toc-global .eael-toc-body .eael-toc-list.eael-toc-number li:hover:before,
+            .eael-toc-global .eael-toc-body .eael-toc-list li:hover > a
+            {
+                color:{$eael_toc['eael_ext_table_of_list_hover_color']} !important;
+            }
+
+            .eael-toc-global .eael-toc-body .eael-toc-list li:hover > a:before {
+                border-bottom-color:{$eael_toc['eael_ext_table_of_list_hover_color']} !important;
+            }
+
+            .eael-toc-global .eael-toc-body .eael-toc-list.eael-toc-bullet li:hover:before,
+            .eael-toc-global .eael-toc-body .eael-toc-list li:hover > a:after {
+                background-color:{$eael_toc['eael_ext_table_of_list_hover_color']} !important;
+            }
+
+            .eael-toc-global .eael-toc-body .eael-toc-list li.eael-highlight-active,
+            .eael-toc-global .eael-toc-body .eael-toc-list.eael-toc-number li.eael-highlight-active:before,
+            .eael-toc-global .eael-toc-body .eael-toc-list li.eael-highlight-active > a,
+            .eael-toc-global .eael-toc-body .eael-toc-list li.eael-highlight-parent,
+            .eael-toc-global .eael-toc-body .eael-toc-list.eael-toc-number li.eael-highlight-parent:before,
+            .eael-toc-global .eael-toc-body .eael-toc-list li.eael-highlight-parent > a
+            {
+                color:$toc_list_color_active !important;
+            }
+
+
+            .eael-toc-global .eael-toc-body .eael-toc-list li.eael-highlight-active > a:before
+            {
+                border-bottom-color:$toc_list_color_active !important;
+            }
+
+            .eael-toc-global .eael-toc-body .eael-toc-list.eael-toc-bullet li.eael-highlight-active:before,
+            .eael-toc-global .eael-toc-body .eael-toc-list li.eael-highlight-active > a:after,
+            .eael-toc-global .eael-toc-body .eael-toc-list.eael-toc-bullet li.eael-highlight-parent:before
+            {
+                background-color:$toc_list_color_active !important;
+            }
+
+            .eael-toc-global ul.eael-toc-list > li
+            {
+                color:{$eael_toc['eael_ext_table_of_content_list_separator_color']} !important;
+                $list_typography
+            }
+            .eael-toc.eael-toc-global .eael-toc-body ul.eael-toc-list li:before {
+                $list_typography
+            }
+
+            .eael-toc-global .eael-toc-body .eael-toc-list.eael-toc-list-bar li.eael-highlight-active > a:after {
+                height:{$indicator_size}px;
+            }
+
+            .eael-toc-global .eael-toc-body .eael-toc-list.eael-toc-list-arrow li.eael-highlight-active > a:before,
+            .eael-toc-global .eael-toc-body .eael-toc-list.eael-toc-list-bar li.eael-highlight-active > a:after {
+                margin-top:{$indicator_position}px;
+            }
+
+
+            .eael-toc:not(.eael-toc-right)
+            {
+                border-top-right-radius:{$border_radius}px;
+                border-bottom-right-radius:{$border_radius}px;
+            }
+
+            .eael-toc:not(.eael-toc-right) .eael-toc-header
+            {
+                border-top-right-radius:{$border_radius}px;
+            }
+
+            .eael-toc:not(.eael-toc-right) .eael-toc-body {
+                border-bottom-right-radius:{$border_radius}px;
+            }
+
+            .eael-toc.eael-toc-right {
+                border-top-left-radius:{$border_radius}px;
+                border-bottom-left-radius:{$border_radius}px;
+            }
+
+            .eael-toc.eael-toc-right .eael-toc-header {
+                border-top-left-radius:{$border_radius}px;
+            }
+
+            .eael-toc.eael-toc-right .eael-toc-body {
+                border-bottom-left-radius:{$border_radius}px;
+            }
+
+
+            #eael-toc.eael-toc-global ul.eael-toc-list > li
+            {
+                padding-top:{$eael_toc['eael_ext_toc_top_level_space']['size']}px;
+                padding-bottom:{$eael_toc['eael_ext_toc_top_level_space']['size']}px;
+            }
+
+            #eael-toc.eael-toc-global ul.eael-toc-list>li ul li
+            {
+                padding-top:{$eael_toc['eael_ext_toc_subitem_level_space']['size']}px;
+                padding-bottom:{$eael_toc['eael_ext_toc_subitem_level_space']['size']}px;
+            }
+        ";
+        if ($toc_list_separator_style != 'none') {
+            $toc_global_css .= "
+            .eael-toc-global ul.eael-toc-list > li
+            {border-top: 0.5px $toc_list_separator_style !important;}
+            .eael-toc ul.eael-toc-list>li:first-child
+            {border: none !important;}";
+        }
+
+        if (isset($eael_toc['eael_ext_toc_border_border'])) {
+            $border_width = $eael_toc['eael_ext_toc_border_width'];
+            $toc_global_css .= "
+            .eael-toc.eael-toc-global,.eael-toc-global button.eael-toc-button
+            {
+                border-style: {$eael_toc['eael_ext_toc_border_border']};
+                border-width: {$border_width['top']}px {$border_width['right']}px {$border_width['bottom']}px {$border_width['left']}px;
+                border-color: {$eael_toc['eael_ext_toc_border_color']};
+            }";
+        }
+
+        wp_register_style('eael-toc-global', false);
+        wp_enqueue_style('eael-toc-global');
+        wp_add_inline_style('eael-toc-global', $toc_global_css);
+    }
+
+    /**
+     * @param $id
+     * @param $global_data
+     * @return string
+     */
+    public function eael_get_typography_data($id, $global_data)
+    {
+        $typo_data = '';
+        $fields_keys = [
+            'font_family',
+            'font_weight',
+            'text_transform',
+            'font_style',
+            'text_decoration',
+            'font_size',
+            'letter_spacing',
+            'line_height',
+        ];
+        foreach ($fields_keys as $key => $field) {
+            $typo_attr = $global_data[$id . '_' . $field];
+            $attr = str_replace('_', '-', $field);
+            if (in_array($field, ['font_size', 'letter_spacing', 'line_height'])) {
+                if (!empty($typo_attr['size'])) {
+                    $typo_data .= "{$attr}:{$typo_attr['size']}{$typo_attr['unit']} !important;";
+                }
+            } elseif (!empty($typo_attr)) {
+                $typo_data .= ($attr == 'font-family') ? "{$attr}:{$typo_attr}, sans-serif;" : "{$attr}:{$typo_attr};";
+            }
+        }
+        return $typo_data;
+    }
+
+    public function eael_language_code_list()
+    {
+        return [
+            'af' => 'Afrikaans',
+            'sq' => 'Albanian',
+            'ar' => 'Arabic',
+            'eu' => 'Basque',
+            'bn' => 'Bengali',
+            'bs' => 'Bosnian',
+            'bg' => 'Bulgarian',
+            'ca' => 'Catalan',
+            'zh-cn' => 'Chinese',
+            'zh-tw' => 'Chinese-tw',
+            'hr' => 'Croatian',
+            'cs' => 'Czech',
+            'da' => 'Danish',
+            'nl' => 'Dutch',
+            'en' => 'English',
+            'et' => 'Estonian',
+            'fi' => 'Finnish',
+            'fr' => 'French',
+            'gl' => 'Galician',
+            'ka' => 'Georgian',
+            'de' => 'German',
+            'el' => 'Greek (Modern)',
+            'he' => 'Hebrew',
+            'hi' => 'Hindi',
+            'hu' => 'Hungarian',
+            'is' => 'Icelandic',
+            'io' => 'Ido',
+            'id' => 'Indonesian',
+            'it' => 'Italian',
+            'ja' => 'Japanese',
+            'kk' => 'Kazakh',
+            'ko' => 'Korean',
+            'lv' => 'Latvian',
+            'lb' => 'Letzeburgesch',
+            'lt' => 'Lithuanian',
+            'lu' => 'Luba-Katanga',
+            'mk' => 'Macedonian',
+            'mg' => 'Malagasy',
+            'ms' => 'Malay',
+            'ro' => 'Moldovan, Moldavian, Romanian',
+            'nb' => 'Norwegian Bokmål',
+            'nn' => 'Norwegian Nynorsk',
+            'fa' => 'Persian',
+            'pl' => 'Polish',
+            'pt' => 'Portuguese',
+            'ru' => 'Russian',
+            'sr' => 'Serbian',
+            'sk' => 'Slovak',
+            'sl' => 'Slovenian',
+            'es' => 'Spanish',
+            'sv' => 'Swedish',
+            'tr' => 'Turkish',
+            'uk' => 'Ukrainian',
+            'vi' => 'Vietnamese',
+        ];
+    }
+
+    /**
+     * @since  3.8.2
+     * @param $source
+     *
+     * @return array
+     */
+    public function eael_event_calendar_source($source)
+    {
+        if (apply_filters('eael/pro_enabled', false)) {
+            $source['eventon'] = __('EventON', 'essential-addons-for-elementor-lite');
+        } else {
+            $source['eventon'] = __('EventON (Pro) ', 'essential-addons-for-elementor-lite');
+        }
+
+        return $source;
+    }
+
+    public function eael_list_ninja_tables()
+    {
+        $tables = get_posts([
+            'post_type' => 'ninja-table',
+            'post_status' => 'publish',
+            'posts_per_page' => '-1',
+        ]);
+
+        if (!empty($tables)) {
+            return wp_list_pluck($tables, 'post_title', 'ID');
+        }
+
+        return [];
+    }
+
+    public function advanced_data_table_source_control($wb)
+    {
+        if (apply_filters('eael/active_plugins', 'ninja-tables/ninja-tables.php')) {
+            $wb->add_control(
+                'ea_adv_data_table_source_ninja_table_id',
+                [
+                    'label' => esc_html__('Table ID', 'essential-addons-for-elementor-lite'),
+                    'type' => Controls_Manager::SELECT,
+                    'options' => $this->eael_list_ninja_tables(),
+                    'condition' => [
+                        'ea_adv_data_table_source' => 'ninja',
+                    ],
+                ]
+            );
+        } else {
+            $wb->add_control(
+                'ea_adv_data_table_ninja_required',
+                [
+                    'type' => Controls_Manager::RAW_HTML,
+                    'raw' => __('<strong>Ninja Tables</strong> is not installed/activated on your site. Please install and activate <a href="plugin-install.php?s=Ninja+Tables&tab=search&type=term" target="_blank">Ninja Tables</a> first.', 'essential-addons-for-elementor-lite'),
+                    'content_classes' => 'eael-warning',
+                    'condition' => [
+                        'ea_adv_data_table_source' => 'ninja',
+                    ],
+                ]
+            );
+        }
+    }
+
+    public function advanced_data_table_ninja_integration($settings)
+    {
+        if (empty($settings['ea_adv_data_table_source_ninja_table_id'])) {
+            return;
+        }
+
+        $html = '';
+        $table_settings = ninja_table_get_table_settings($settings['ea_adv_data_table_source_ninja_table_id']);
+        $table_headers = ninja_table_get_table_columns($settings['ea_adv_data_table_source_ninja_table_id']);
+        $table_rows = ninjaTablesGetTablesDataByID($settings['ea_adv_data_table_source_ninja_table_id']);
+
+        if (!empty($table_rows)) {
+            if (!isset($table_settings['hide_header_row']) || $table_settings['hide_header_row'] != true) {
+                $html .= '<thead><tr>';
+                foreach ($table_headers as $key => $th) {
+                    $style = isset($settings['ea_adv_data_table_dynamic_th_width']) && isset($settings['ea_adv_data_table_dynamic_th_width'][$key]) ? ' style="width:' . $settings['ea_adv_data_table_dynamic_th_width'][$key] . '"' : '';
+                    $html .= '<th' . $style . '>' . $th['name'] . '</th>';
+                }
+                $html .= '</tr></thead>';
+            }
+
+            $html .= '<tbody>';
+            foreach ($table_rows as $key => $tr) {
+                $html .= '<tr>';
+                foreach ($table_headers as $th) {
+                    if (!isset($th['data_type'])) {
+                        $th['data_type'] = '';
+                    }
+
+                    if ($th['data_type'] == 'image') {
+                        $html .= '<td>' . (isset($tr[$th['key']]['image_thumb']) ? '<a href="' . $tr[$th['key']]['image_full'] . '"><img src="' . $tr[$th['key']]['image_thumb'] . '"></a>' : '') . '</td>';
+                    } elseif ($th['data_type'] == 'selection') {
+                        $html .= '<td>' . (!empty($tr[$th['key']]) ? implode((array) $tr[$th['key']], ', ') : '') . '</td>';
+                    } elseif ($th['data_type'] == 'button') {
+                        $html .= '<td>' . (!empty($tr[$th['key']]) ? '<a href="' . $tr[$th['key']] . '" class="button" target="' . $th['link_target'] . '">' . $th['button_text'] . '</a>' : '') . '</td>';
+                    } else {
+                        $html .= '<td>' . (!empty($tr[$th['key']]) ? $tr[$th['key']] : '') . '</td>';
+                    }
+                }
+                $html .= '</tr>';
+            }
+            $html .= '</tbody>';
+        }
+
+        return $html;
+    }
+
+    protected static function get_terms_as_list($term_type = 'category', $length = 1)
+    {
+
+        if ($term_type === 'category') {
+            $terms = get_the_category();
+        }
+
+        if ($term_type === 'tags') {
+            $terms = get_the_tags();
+        }
+
+        if (empty($terms)) {
+            return;
+        }
+
+        $html = '<ul class="post-carousel-categories">';
+        $count = 0;
+        foreach ($terms as $term) {
+            if ($count === $length) {break;}
+            $link = ($term_type === 'category') ? get_category_link($term->term_id) : get_tag_link($term->term_id);
+            $html .= '<li>';
+            $html .= '<a href="' . esc_url($link) . '">';
+            $html .= $term->name;
+            $html .= '</a>';
+            $html .= '</li>';
+            $count++;
+        }
+        $html .= '</ul>';
+
+        return $html;
+
+    }
+
+    /**
+     * Woo Checkout
+     */
+    public function woo_checkout_update_order_review(){
+        $setting = $_POST['orderReviewData'];
+        ob_start();
+        Woo_Checkout::checkout_order_review_default($setting);
+        $woo_checkout_update_order_review = ob_get_clean();
+
+        wp_send_json(
+            array(
+                'order_review' =>  $woo_checkout_update_order_review
+            )
+        );
+    }
+
+    /** Filter to add plugins to the TOC list.
+     *
+     * @since  3.9.3
+     * @param array TOC plugins.
+     *
+     * @return mixed
+     */
+    public function eael_toc_rank_math_support( $toc_plugins ){
+        $toc_plugins['essential-addons-for-elementor-lite/essential_adons_elementor.php'] = __('Essential Addons for Elementor', 'essential-addons-for-elementor-lite');
+        return $toc_plugins;
     }
 }

@@ -47,8 +47,8 @@ $listAreaStatus = $data['plugin_settings']['assets_list_layout_areas_status'];
                 <strong>&#10141; Total enqueued files (including core files): <?php echo (int)$data['total_styles'] + (int)$data['total_scripts']; ?></strong>
             </div>
             <div class="col-right">
-                <a href="#" id="wpacu-assets-contract-all" class="wpacu-wp-button wpacu-wp-button-secondary">Contract All Areas</a>&nbsp;
-                <a href="#" id="wpacu-assets-expand-all" class="wpacu-wp-button wpacu-wp-button-secondary">Expand All Areas</a>
+                <a href="#" id="wpacu-assets-contract-all" class="wpacu-wp-button wpacu-wp-button-secondary">Contract All Groups</a>&nbsp;
+                <a href="#" id="wpacu-assets-expand-all" class="wpacu-wp-button wpacu-wp-button-secondary">Expand All Groups</a>
             </div>
             <div class="wpacu-clearfix"></div>
         </div>
@@ -245,7 +245,7 @@ $listAreaStatus = $data['plugin_settings']['assets_list_layout_areas_status'];
 		                }
 	                } else {
                         // There are no loaded CSS/JS
-                        $showOxygenMsg = $locationMain === 'themes' && in_array('oxygen/functions.php', apply_filters('active_plugins', get_option('active_plugins')));
+                        $showOxygenMsg = $locationMain === 'themes' && in_array('oxygen/functions.php', apply_filters('active_plugins', get_option('active_plugins', array())));
 
                         if ($showOxygenMsg) {
                         ?>
@@ -271,6 +271,13 @@ $listAreaStatus = $data['plugin_settings']['assets_list_layout_areas_status'];
 
                 echo $locationMainOutput;
             }
+        }
+
+        if ( isset( $data['all']['hardcoded'] ) && ! empty( $data['all']['hardcoded'] ) ) {
+            include_once __DIR__ . '/_assets-hardcoded-list.php';
+        } elseif ($data['is_frontend_view']) {
+            // The following string will be replaced within a "wp_loaded" action hook
+            echo '{wpacu_assets_collapsible_wrap_hardcoded_list}';
         }
     }
 /*

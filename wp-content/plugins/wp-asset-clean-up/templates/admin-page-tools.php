@@ -15,6 +15,7 @@ do_action('wpacu_admin_notices');
         <a href="<?php echo admin_url('admin.php?page=wpassetcleanup_tools&wpacu_for=reset'); ?>" class="nav-tab <?php if ($data['for'] === 'reset') { ?>nav-tab-active<?php } ?>"><?php _e('Reset', 'wp-asset-clean-up'); ?></a>
         <a href="<?php echo admin_url('admin.php?page=wpassetcleanup_tools&wpacu_for=system_info'); ?>" class="nav-tab <?php if ($data['for'] === 'system_info') { ?>nav-tab-active<?php } ?>"><?php _e('System Info', 'wp-asset-clean-up'); ?></a>
         <a href="<?php echo admin_url('admin.php?page=wpassetcleanup_tools&wpacu_for=storage'); ?>" class="nav-tab <?php if ($data['for'] === 'storage') { ?>nav-tab-active<?php } ?>"><?php _e('Storage Info', 'wp-asset-clean-up'); ?></a>
+        <a href="<?php echo admin_url('admin.php?page=wpassetcleanup_tools&wpacu_for=debug'); ?>" class="nav-tab <?php if ($data['for'] === 'debug') { ?>nav-tab-active<?php } ?>"><?php _e('Debugging', 'wp-asset-clean-up'); ?></a>
         <a href="<?php echo admin_url('admin.php?page=wpassetcleanup_tools&wpacu_for=import_export'); ?>" class="nav-tab <?php if ($data['for'] === 'import_export') { ?>nav-tab-active<?php } ?>"><?php _e('Import &amp; Export', 'wp-asset-clean-up'); ?></a>
     </nav>
 
@@ -30,9 +31,15 @@ do_action('wpacu_admin_notices');
                     <option data-id="wpacu-warning-reset-everything" value="reset_everything"><?php _e('Reset everything: "Settings", All Unloads (bulk &amp; per page) &amp; Load Exceptions', 'wp-asset-clean-up'); ?></option>
                 </select>
 
-                <div id="wpacu-license-data-remove-area">
-                    <label for="wpacu-remove-license-data">
-                       <input id="wpacu-remove-license-data" type="checkbox" name="wpacu-remove-license-data" value="1" /> <?php _e('Also remove license data in case the premium version was active at any point', 'wp-asset-clean-up'); ?>
+				<div id="wpacu-license-data-remove-area">
+					<label for="wpacu-remove-license-data">
+						<input id="wpacu-remove-license-data" type="checkbox" name="wpacu-remove-license-data" value="1" /> <?php _e('Also remove any license data left from the Pro version if you ever used it (if you switched from Pro to Lite to make tests, but want to switch back to Pro, then do not choose this option)', 'wp-asset-clean-up'); ?>
+					</label>
+				</div>
+
+                <div id="wpacu-cache-assets-remove-area">
+                    <label for="wpacu-remove-cache-assets">
+                        <input id="wpacu-remove-cache-assets" type="checkbox" name="wpacu-remove-cache-assets" value="1" /> <?php echo sprintf(__('Also remove any cached CSS/JS files from %s', 'wp-asset-clean-up'), '<code>/'.basename(WP_CONTENT_DIR) . \WpAssetCleanUp\OptimiseAssets\OptimizeCommon::getRelPathPluginCacheDir().'</code>'); ?> (please be careful as there might be cached pages - e.g. people previewing your page via Google Cache - still making reference to the CSS/JS files, you can leave it unchecked if you are not about it)
                     </label>
                 </div>
 
@@ -96,6 +103,20 @@ do_action('wpacu_admin_notices');
 	        $currentStorageDirRel        = \WpAssetCleanUp\OptimiseAssets\OptimizeCommon::getRelPathPluginCacheDir();
 	        $currentStorageDirFull       = WP_CONTENT_DIR . $currentStorageDirRel;
 	        $currentStorageDirIsWritable = is_writable($currentStorageDirFull);
+
+	        if (! $currentStorageDirIsWritable) {
+		        ?>
+                <div class="wpacu-warning" style="width: 98%;">
+                    <p style="margin: 0;">
+                        <span style="color: #cc0000;" class="dashicons dashicons-warning"></span>
+				        <?php echo sprintf(
+					        __('The system detected the storage directory as non-writable, thus the minify &amp; combine CSS/JS files feature will not work. Please %smake it writable%s or raise a ticket with your hosting company about this matter.', 'wp-asset-clean-up'),
+					        '<a href="https://wordpress.org/support/article/changing-file-permissions/">',
+					        '</a>'
+				        ); ?>
+                    </p>
+                </div>
+	        <?php }
 	        ?>
             <p>
 		        <?php _e('Current storage directory', 'wp-asset-clean-up'); ?>: <code><?php echo WP_CONTENT_DIR; ?><strong><?php echo $currentStorageDirRel; ?></strong></code>
@@ -129,19 +150,40 @@ do_action('wpacu_admin_notices');
                     '<em>'.WP_CONTENT_DIR.'/</em>'
                 ); ?></p>
             <?php
-	        if (! $currentStorageDirIsWritable) {
-		        ?>
-                <div class="wpacu-warning" style="width: 98%;">
-                    <p style="margin: 0;">
-                        <span style="color: #cc0000;" class="dashicons dashicons-warning"></span>
-                        <?php echo sprintf(
-                            __('The system detected the directory as non-writable, thus the minify &amp; combine CSS/JS files feature will not work. Please %smake it writable%s or raise a ticket with your hosting company about this matter.', 'wp-asset-clean-up'),
-                            '<a href="https://wordpress.org/support/article/changing-file-permissions/">',
-                            '</a>'
-                        ); ?>
-                    </p>
-                </div>
-	        <?php }
+        }
+
+        if ($data['for'] === 'debug') {
+	        $logPHPErrorsLocationFileSize = false;
+
+            $isLogPHPErrors       = $data['error_log']['log_status'];
+	        $logPHPErrorsLocation = $data['error_log']['log_file'];
+
+	        if ($logPHPErrorsLocation !== 'none_set' && is_file($logPHPErrorsLocation)) {
+		        $logPHPErrorsLocationFileSize = filesize($logPHPErrorsLocation);
+		        $logPHPErrorsLocationFileSizeFormatted = \WpAssetCleanUp\Misc::formatBytes($logPHPErrorsLocationFileSize);
+            }
+            ?>
+            <form method="post" action="">
+                <p>In case you experience timeout errors, blank screens, 500 internal server errors and so on, it's a good idea to check the PHP error logs (they are usually activated in your PHP.ini configuration) for more information about the reason behind any issues you might have. The error log file (if any set), it meant to record PHP errors (either from Asset CleanUp or any other active plugin/theme, etc.).</p>
+                <ul>
+                    <li>Log PHP Errors Status: <strong><?php echo $isLogPHPErrors ? 'On' : 'Off'; ?></strong></li>
+                    <li>Log PHP Errors Location: <code><?php echo $logPHPErrorsLocation; ?></code> <?php if($logPHPErrorsLocationFileSize) { ?> / <?php _e('File Size', 'wp-asset-clean-up'); ?>: <?php echo $logPHPErrorsLocationFileSizeFormatted; ?> &nbsp; <input style="vertical-align: middle;" type="submit" class="button button-primary" value="Download Error Log File" /><?php } ?></li>
+                </ul>
+                <input type="hidden" name="wpacu-get-error-log" value="1" />
+            </form>
+            <hr />
+            <div>There are situations when you might want to access a certain page as if <?php echo WPACU_PLUGIN_TITLE; ?> is deactivated or you wish to access the page with only a part of the plugin's settings (without going through the standard deactivation and re-activation process which takes time). To do that, you can use the following query strings:</div>
+            <style type="text/css">
+                ul.wpacu-debug-list-params li {
+                    margin-bottom: 15px;
+                }
+            </style>
+            <ul class="wpacu-debug-list-params">
+                <li><a href="<?php echo site_url().'/?wpacu_debug'; ?>"><code><?php echo site_url(); ?><strong>/?wpacu_debug</strong></code></a> - If you are logged-in, it will print a form at the bottom of the requested page with options to view the page with certain options deactivated (e.g. do not apply any JavaScript unloading), as well as print information about all the unloaded assets.</li>
+                <li><a href="<?php echo site_url().'/?wpacu_no_load'; ?>"><code><?php echo site_url(); ?><strong>/?wpacu_no_load</strong></code></a> - On any page request if you apply this parameter, it will be like <?php echo WPACU_PLUGIN_TITLE; ?> is deactivated. The plugin's menu from the top admin bar (if shown), will also get hidden.</li>
+                <li><a href="<?php echo site_url().'/?wpacu_clean_load'; ?>"><code><?php echo site_url(); ?><strong>/?wpacu_clean_load</strong></code></a> - This parameter is useful if you are checking a website that has lots of CSS/JS unloaded and combined by <?php echo WPACU_PLUGIN_TITLE; ?> or other performance plugin, but you want to view the page as if no optimization was applied (e.g. 20 CSS files were combined into one, but you want to see each one in the HTML source code, for debugging purposes). The difference between this option and "wpacu_no_load" is that it also attempts to prevent any optimization made by other performance plugins, not just from <?php echo WPACU_PLUGIN_TITLE; ?></li>
+            </ul>
+            <?php
         }
 
         if ($data['for'] === 'import_export') {
@@ -159,7 +201,7 @@ do_action('wpacu_admin_notices');
                                 <span style="padding-top: 1px;"
                                       class="dashicons dashicons-upload"></span>
 					        <?php esc_attr_e('Import', 'wp-asset-clean-up'); ?>
-                            <img class="wpacu-spinner" src="<?php site_url(); ?>/wp-includes/images/wpspin-2x.gif" alt="" />
+                            <img class="wpacu-spinner" src="<?php echo includes_url('images/wpspin-2x.gif'); ?>" alt="" />
                         </button> &nbsp;<small>* only .json extension allowed</small>
                     </p>
 			        <?php wp_nonce_field('wpacu_do_import', 'wpacu_do_import_nonce'); ?>

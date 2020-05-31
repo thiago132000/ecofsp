@@ -129,7 +129,7 @@ $goBackToCurrentUrl = '&_wp_http_referer=' . urlencode( wp_unslash( $_SERVER['RE
                     // [wpacu_lite]
                     if ($wpacuIsPluginsManagerPageLink) {
 		                    ?>
-                            <span class="extra-info assets-unloaded-false"><span class="dashicons dashicons-lock"></span> New Premium Feature</span>
+                            <span class="extra-info assets-unloaded-false"><span class="dashicons dashicons-lock"></span> Premium Feature</span>
 		                    <?php
                     }
                     // [/wpacu_lite]

@@ -2,10 +2,10 @@
 Contributors: arjunthakur, efficientninja
 Tags: duplicate post, duplicate page, clone page, clone post, duplicate custom posts, clone custom post, wordpress page duplicator, wordpress post duplicator, page duplicate, clone page and post,  wp post clone.
 Requires at least: 3.5
-Tested up to: 5.3.2
+Tested up to: 5.4
 Requires PHP: 5.2.4
-Stable tag: 2.5.6
-Version: 2.5.6
+Stable tag: 2.5.8
+Version: 2.5.8
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 

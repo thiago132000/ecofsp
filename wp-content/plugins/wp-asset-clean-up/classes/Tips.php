@@ -33,6 +33,16 @@ HTML;
 This CSS file is related to "Contact Form 7" and if you don't load any form on this page (e.g. you use it only on pages such as Contact, Make a booking etc.), then you can safely unload it (e.g. side-wide and make exceptions on the few pages you use it).
 HTML;
 
+		$this->list['css']['duplicate-post'] = <<<HTML
+This CSS file is meant to style the "Duplicate Post" plugin's menu within the top admin bar and it's loading when the user (with the right privileges) is logged-in. It's NOT meant to load for the guests (non logged-in visitors). You can leave it loaded.
+HTML;
+
+		$this->list['css']['dashicons'] = <<<HTML
+To avoid breaking admin bar's styling which relies on the Wordpress Dashicons, any unload rule set for this handle will be ignored IF the user is logged-in and the admin bar is showing up.
+HTML;
+
+
+
 		// JavaScript list
 		$this->list['js']['wp-embed'] = <<<HTML
 To completely disable oEmbeds, you can use "Disable oEmbed (Embeds) Site-Wide" from plugin's "Settings" -&gt; "Site-Wide Common Unloads". It will also prevent this file from loading in the first place and hide it from this location.

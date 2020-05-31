@@ -31,10 +31,21 @@ include_once '_top-area.php';
                 </thead>
                 <?php
                 foreach ($data['handles']['styles'] as $handle => $handleData) {
-                    ?>
-                    <tr class="wpacu_global_rule_row wpacu_bulk_change_row">
+	                // [wpacu_lite]
+	                // Traces from the PRO version in case a downgrade to LITE was made
+	                $hasProTraces = (strpos($handle, 'wpacu_hardcoded_') !== false);
+	                $trStyle = $hasProTraces ? 'opacity: 0.5;' : '';
+	                // [/wpacu_lite]
+	                ?>
+                    <tr class="wpacu_global_rule_row wpacu_bulk_change_row" style="<?php echo $trStyle; ?>">
                         <td>
-                            <?php \WpAssetCleanUp\Overview::renderHandleTd($handle, 'styles', $data); ?>
+                            <?php
+                            \WpAssetCleanUp\Overview::renderHandleTd($handle, 'styles', $data);
+
+                            if ($hasProTraces) {
+	                            echo ' &#10230; Inactive rule left from the PRO version';
+                            }
+                            ?>
                         </td>
                         <td>
                             <?php
@@ -86,10 +97,21 @@ include_once '_top-area.php';
                 </thead>
 			    <?php
 			    foreach ($data['handles']['scripts'] as $handle => $handleData) {
+				    // [wpacu_lite]
+				    // Traces from the PRO version in case a downgrade to LITE was made
+                    $hasProTraces = (strpos($handle, 'wpacu_hardcoded_') !== false);
+				    $trStyle = $hasProTraces ? 'opacity: 0.5;' : '';
+				    // [/wpacu_lite]
 				    ?>
-                    <tr class="wpacu_global_rule_row wpacu_bulk_change_row">
+                    <tr class="wpacu_global_rule_row wpacu_bulk_change_row" style="<?php echo $trStyle; ?>">
                         <td>
-						    <?php \WpAssetCleanUp\Overview::renderHandleTd($handle, 'scripts', $data); ?>
+						    <?php
+                            \WpAssetCleanUp\Overview::renderHandleTd($handle, 'scripts', $data);
+
+                            if ($hasProTraces) {
+                                echo ' &#10230; Inactive rule left from the PRO version';
+                            }
+						    ?>
                         </td>
                         <td>
 	                        <?php

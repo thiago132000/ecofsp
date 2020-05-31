@@ -23,17 +23,39 @@ class Content_Ticker extends Widget_Base
 
     public function get_title()
     {
-        return esc_html__('EA Content Ticker', 'essential-addons-for-elementor-lite');
+        return esc_html__('Content Ticker', 'essential-addons-for-elementor-lite');
     }
 
     public function get_icon()
     {
-        return 'eicon-call-to-action';
+        return 'eaicon-content-ticker';
     }
 
     public function get_categories()
     {
         return ['essential-addons-elementor'];
+    }
+
+    public function get_keywords()
+    {
+        return [
+            'ticker',
+            'ea ticker',
+            'ea content ticker',
+            'news headline',
+            'news ticker',
+            'text rotate',
+            'text animation',
+            'text swing',
+            'text slide',
+            'ea',
+            'essential addons'
+        ];
+    }
+
+    public function get_custom_help_url()
+    {
+        return 'https://essential-addons.com/elementor/docs/content-ticker/';
     }
 
     protected function _register_controls()
@@ -766,7 +788,7 @@ class Content_Ticker extends Widget_Base
                 <div ' . $this->get_render_attribute_string('content-ticker') . '>
                     <div class="swiper-wrapper">';
                         if ('dynamic' === $settings['eael_ticker_type']) {
-                            echo self::__render_template($args, null);
+                            echo self::render_template_($args, null);
                         }
 
                         do_action('render_content_ticker_custom_content', $settings);

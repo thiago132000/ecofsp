@@ -1,7 +1,6 @@
 <?php
 namespace WpAssetCleanUp;
 
-use WpAssetCleanUp\OptimiseAssets\OptimizeCommon;
 use WpAssetCleanUp\OptimiseAssets\OptimizeCss;
 use WpAssetCleanUp\OptimiseAssets\OptimizeJs;
 
@@ -30,7 +29,9 @@ class Settings
         'frontend_show',
         'frontend_show_exceptions',
 
+		// Hide plugin's menus to make the top admin bar / left sidebar within the Dashboard cleaner (if the plugin is not used much)
 		'hide_from_admin_bar',
+		'hide_from_side_bar', // Since v1.1.7.1 (Pro)
 
 		// The way the CSS/JS list is showing (various ways depending on the preference)
 		'assets_list_layout',
@@ -55,7 +56,6 @@ class Settings
 		'combine_loaded_css_for_admin_only', // Since v1.1.1.4 (Pro) & v1.3.1.1 (Lite)
 
         // [wpacu_pro]
-        'combine_loaded_css_append_handle_extra', // Adds any associated inline STYLE tags content to the combined files
         'defer_css_loaded_body',
         // [/wpacu_pro]
 
@@ -85,10 +85,6 @@ class Settings
         'combine_loaded_js_for_admin_only',
         'combine_loaded_js_defer_body', // Applies defer="defer" to the combined file(s) within BODY tag
 
-        // [wpacu_pro]
-        'combine_loaded_js_append_handle_extra', // Adds any CDATA and other associated inline SCRIPT tags content to the combined files
-        // [/wpacu_pro]
-
 		// Minify each loaded CSS (remaining ones after unloading the useless ones)
 		'minify_loaded_css',
 		'minify_loaded_css_inline',
@@ -105,12 +101,12 @@ class Settings
 
         'disable_emojis',
 		'disable_oembed',
-		'disable_dashicons_for_guests',
 
 		// Stored in 'wpassetcleanup_global_unload' option
-		'disable_wp_block_library',
-        'disable_jquery_migrate',
-        'disable_comment_reply',
+		'disable_dashicons_for_guests', // CSS
+		'disable_wp_block_library', // CSS
+        'disable_jquery_migrate', // JS
+        'disable_comment_reply', // JS
 
 		// <head> CleanUp
 		'remove_rsd_link',
@@ -233,12 +229,7 @@ class Settings
             // [/wpacu_pro]
 
 	        'combine_loaded_css_exceptions' => '/plugins/wd-instagram-feed/(.*?).css',
-            'combine_loaded_css_append_handle_extra' => '1',
-
 	        'combine_loaded_js_exceptions'  => '/plugins/wd-instagram-feed/(.*?).js',
-	        // [wpacu_pro]
-	        'combine_loaded_js_append_handle_extra' => '1',
-	        // [/wpacu_pro]
 
 	        // [wpacu_pro]
             'defer_css_loaded_body' => 'moved',
@@ -252,7 +243,9 @@ class Settings
 	        // Starting from v1.2.8.6 (lite), WordPress core files are hidden in the assets list as a default setting
 	        'hide_core_files' => '1',
 
-            'clear_cached_files_after' => '10'
+            'fetch_cached_files_details_from' => 'disk', // Do not add more rows to the database by default (options table can become quite large)
+
+            'clear_cached_files_after' => '7'
         );
     }
 
@@ -266,7 +259,14 @@ class Settings
 
         if (Misc::getVar('get', 'page') === WPACU_PLUGIN_ID . '_settings') {
 	        add_action('wpacu_admin_notices', array($this, 'notices'));
+
+	        if (function_exists('curl_init')) {
+		        // Check if the website supports HTTP/2 protocol and based on that advise the admin that combining CSS/JS is likely unnecessary
+		        add_action( 'admin_footer', array($this, 'ajaxCheckHttp2ProtocolSupportJsCode') );
+	        }
         }
+
+	    add_action( 'wp_ajax_' . WPACU_PLUGIN_ID . '_check_http2_protocol_support', array( $this, 'ajaxCheckHttp2ProtocolSupport' ) );
     }
 
 	/**
@@ -333,10 +333,17 @@ class Settings
 
         $globalUnloadList = Main::instance()->getGlobalUnload();
 
+        // [CSS]
+	    if (in_array('dashicons', $globalUnloadList['styles'])) {
+		    $data['disable_dashicons_for_guests'] = 1;
+	    }
+
         if (in_array('wp-block-library', $globalUnloadList['styles'])) {
             $data['disable_wp_block_library'] = 1;
         }
+	    // [/CSS]
 
+        // [JS]
         if (in_array('jquery-migrate', $globalUnloadList['scripts'])) {
             $data['disable_jquery_migrate'] = 1;
         }
@@ -344,6 +351,7 @@ class Settings
 	    if (in_array('comment-reply', $globalUnloadList['scripts'])) {
 		    $data['disable_comment_reply'] = 1;
 	    }
+	    // [/JS]
 
 	    $data['is_optimize_css_enabled_by_other_party'] = OptimizeCss::isOptimizeCssEnabledByOtherParty();
 	    $data['is_optimize_js_enabled_by_other_party']  = OptimizeJs::isOptimizeJsEnabledByOtherParty();
@@ -448,7 +456,7 @@ class Settings
     {
 	    $settings = $this->getAll();
 	    $settings[$key] = $value;
-	    $this->update($settings, false, false);
+	    $this->update($settings, false);
     }
 
 	/**
@@ -458,7 +466,7 @@ class Settings
 	{
 		$settings = $this->getAll();
 		$settings[$key] = '';
-		$this->update($settings, false, false);
+		$this->update($settings, false);
 	}
 
 	/**
@@ -506,9 +514,8 @@ class Settings
 	/**
 	 * @param $settings
 	 * @param bool $redirectAfterUpdate
-	 * @param bool $clearCache
 	 */
-	public function update($settings, $redirectAfterUpdate = true, $clearCache = true)
+	public function update($settings, $redirectAfterUpdate = true)
     {
 	    $settingsNotNull = array();
 
@@ -536,12 +543,14 @@ class Settings
 	    // The following are only triggered IF the user submitted the form from "Settings" area
         if (Misc::getVar('post', 'wpacu_settings_nonce')) {
 	        // "Site-Wide Common Unloads" tab
-	        $disableGutenbergCssBlockLibrary = isset($_POST[WPACU_PLUGIN_ID . '_global_unloads']['disable_wp_block_library']);
-	        $disableJQueryMigrate = isset($_POST[WPACU_PLUGIN_ID . '_global_unloads']['disable_jquery_migrate']);
-	        $disableCommentReply  = isset($_POST[WPACU_PLUGIN_ID . '_global_unloads']['disable_comment_reply']);
+	        $disableGutenbergCssBlockLibrary = isset( $_POST[ WPACU_PLUGIN_ID . '_global_unloads' ]['disable_wp_block_library'] );
+	        $disableJQueryMigrate            = isset( $_POST[ WPACU_PLUGIN_ID . '_global_unloads' ]['disable_jquery_migrate'] );
+	        $disableCommentReply             = isset( $_POST[ WPACU_PLUGIN_ID . '_global_unloads' ]['disable_comment_reply'] );
+	        $disableDashiconsForGuests       = isset( $_POST[ WPACU_PLUGIN_ID . '_global_unloads' ]['disable_dashicons_for_guests'] );
 
 	        $this->updateSiteWideRuleForCommonAssets(array(
                 'wp_block_library' => $disableGutenbergCssBlockLibrary,
+		        'dashicons'        => $disableDashiconsForGuests,
 		        'jquery_migrate'   => $disableJQueryMigrate,
 		        'comment_reply'    => $disableCommentReply
 	        ));
@@ -549,14 +558,21 @@ class Settings
 	        // Some validation
 	        $settings['local_fonts_preload_files'] = strip_tags($settings['local_fonts_preload_files']);
 	        $settings['google_fonts_preload_files'] = strip_tags($settings['google_fonts_preload_files']);
+
+	        // Apply 'Ignore dependency rule and keep the "children" loaded' for "dashicons" handle if Ninja Forms is active
+	        // because "nf-display" handle depends on the Dashicons and it could break the forms' styling
+	        if ($disableDashiconsForGuests && Misc::isPluginActive('ninja-forms/ninja-forms.php')) {
+		        $mainVarToUse = array();
+		        $mainVarToUse['wpacu_ignore_child']['styles']['dashicons'] = 1;
+				Update::updateIgnoreChild($mainVarToUse);
+	        }
         }
 
 	    Misc::addUpdateOption(WPACU_PLUGIN_ID . '_settings', json_encode(Misc::filterList($settings)));
 
-        if ($clearCache) {
-	        // After settings are saved, clear all cache to re-built the CSS/JS based on the new settings
-	        OptimizeCommon::clearAllCache();
-        }
+        // New Plugin Update (since 6 April 2020): the cache is cleared after page load via AJAX
+	    // This is done in case the cache directory is large and more time is required to clear it
+	    // This offers the admin a better user experience (no one likes to wait too much until a page is reloaded, which sometimes could cause confusion)
 
 	    if ($redirectAfterUpdate) {
 		    $this->redirectAfterUpdate();
@@ -571,14 +587,25 @@ class Settings
 	    $wpacuUpdate = new Update;
 
 	    $disableGutenbergCssBlockLibrary = $unloadsList['wp_block_library'];
-	    $disableJQueryMigrate = $unloadsList['jquery_migrate'];
-	    $disableCommentReply  = $unloadsList['comment_reply'];
+	    $disableJQueryMigrate            = $unloadsList['jquery_migrate'];
+	    $disableCommentReply             = $unloadsList['comment_reply'];
+	    $disableDashiconsForGuests       = $unloadsList['dashicons'];
 
 	    /*
 	     * Add element(s) to the global unload rules
 	     */
-	    if ($disableGutenbergCssBlockLibrary) {
-		    $wpacuUpdate->saveToEverywhereUnloads(array('wp-block-library'));
+	    if ($disableGutenbergCssBlockLibrary || $disableDashiconsForGuests) {
+		    $unloadList = array();
+
+		    if ($disableGutenbergCssBlockLibrary) {
+			    $unloadList[] = 'wp-block-library';
+		    }
+
+		    if ($disableDashiconsForGuests) {
+			    $unloadList[] = 'dashicons';
+		    }
+
+		    $wpacuUpdate->saveToEverywhereUnloads($unloadList);
         }
 
 	    if ($disableJQueryMigrate || $disableCommentReply) {
@@ -600,10 +627,23 @@ class Settings
 	    /*
 		 * Remove element(s) from the global unload rules
 		 */
-	    if (! $disableGutenbergCssBlockLibrary) {
-		    $wpacuUpdate->removeEverywhereUnloads(array('wp-block-library' => 'remove'));
+
+	    // For Stylesheets (.CSS)
+	    if (! $disableGutenbergCssBlockLibrary || ! $disableDashiconsForGuests) {
+		    $removeFromUnloadList = array();
+
+		    if (! $disableGutenbergCssBlockLibrary) {
+			    $removeFromUnloadList['wp-block-library'] = 'remove';
+            }
+
+		    if (! $disableDashiconsForGuests) {
+			    $removeFromUnloadList['dashicons'] = 'remove';
+		    }
+
+		    $wpacuUpdate->removeEverywhereUnloads($removeFromUnloadList);
 	    }
 
+	    // For JavaScript (.JS)
 	    if (! $disableJQueryMigrate || ! $disableCommentReply) {
 		    $removeFromUnloadList = array();
 
@@ -643,5 +683,59 @@ class Settings
 
 	    wp_redirect(add_query_arg($wpacuQueryString, admin_url('admin.php')));
 	    exit();
+    }
+
+	/**
+	 *
+	 */
+	public function ajaxCheckHttp2ProtocolSupport()
+    {
+	    if (! isset($_POST['action']) || ! Menu::userCanManageAssets()) {
+		    return;
+	    }
+
+	    $ch = curl_init();
+
+	    curl_setopt_array($ch, array(
+		    CURLOPT_URL            => get_site_url(),
+		    CURLOPT_HEADER         => true,
+		    CURLOPT_NOBODY         => true,
+		    CURLOPT_RETURNTRANSFER => true,
+		    CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_2_0, // cURL will attempt to make an HTTP/2.0 request (can downgrade to HTTP/1.1)
+	    ));
+
+	    $response = curl_exec($ch);
+
+	    if ($response !== false && strpos($response, 'HTTP/2') === 0) {
+		    echo 1;
+	    } else {
+		    echo curl_error($ch); // something else happened causing the request to fail
+	    }
+
+	    curl_close($ch);
+
+	    exit();
+    }
+
+	/**
+	 *
+	 */
+	public function ajaxCheckHttp2ProtocolSupportJsCode()
+    {
+    	?>
+	    <script type="text/javascript">
+		    jQuery(document).ready(function($) {
+                $.post('<?php echo admin_url('admin-ajax.php'); ?>', {
+                    'action': '<?php echo WPACU_PLUGIN_ID; ?>_check_http2_protocol_support'
+                }, function (result) {
+                    if (result === '1') {
+                        $('.wpacu_http2_protocol_is_supported').removeClass('wpacu_hide');
+                    } else {
+                        $('.wpacu_verify_http2_protocol').removeClass('wpacu_hide');
+                    }
+                });
+		    });
+	    </script>
+	    <?php
     }
 }

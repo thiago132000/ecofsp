@@ -350,16 +350,25 @@ class Ch_Th_Gen_Functions {
 		$txt .= esc_html__('All functions of this file will be loaded before of parent theme functions.', 'child-theme-generator') . "\n";
 		$txt .= esc_html__('Learn more at ', 'child-theme-generator') . 'https://codex.wordpress.org/Child_Themes.' . "\n\n";
 		$txt .= esc_html__('Note: this function loads the parent stylesheet before, then child theme stylesheet', 'child-theme-generator') . "\n";
-		$txt .= esc_html__('(leave it in place unless you know what you are doing.)', 'child-theme-generator') . "\n*/\n\n";
-		$txt .= "function " .  $fn_slug .  "_enqueue_child_styles() {\n";
-		$txt .= '$parent_style' . " = 'parent-style'; \n";
-		$txt .= "	wp_enqueue_style(" . '$parent_style' . ", get_template_directory_uri() . '/style.css' );\n";
-		$txt .= "	wp_enqueue_style( \n";
-		$txt .= "		'child-style', \n";
-		$txt .= "		get_stylesheet_directory_uri() . '/style.css',\n"; 
-		$txt .= "		array( " . '$parent_style' . " ),\n";
-		$txt .= "		wp_get_theme()->get('Version') );\n";
-		$txt .= "	}\n";
+		$txt .= esc_html__('(leave it in place unless you know what you are doing.)', 'child-theme-generator') . "\n*/\n";
+		$txt .= "
+if ( ! function_exists( 'suffice_child_enqueue_child_styles' ) ) {
+	function " .  $fn_slug .  "_enqueue_child_styles() {
+	    // loading parent style
+	    wp_register_style(
+	      'parente2-style',
+	      get_template_directory_uri() . '/style.css'
+	    );
+
+	    wp_enqueue_style( 'parente2-style' );
+	    // loading child style
+	    wp_register_style(
+	      'childe2-style',
+	      get_stylesheet_directory_uri() . '/style.css'
+	    );
+	    wp_enqueue_style( 'childe2-style');
+	 }
+}\n";
 		$txt .= "add_action( 'wp_enqueue_scripts', '" . $fn_slug .  "_enqueue_child_styles' );\n\n";
 		$txt .= "/*";
 		$txt .= esc_html__('Write here your own functions', 'child-theme-generator') . " */\n";

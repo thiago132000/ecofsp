@@ -12,7 +12,6 @@ use \Elementor\Group_Control_Image_Size as Group_Control_Image_Size;
 use \Elementor\Group_Control_Typography as Group_Control_Typography;
 use \Elementor\Utils as Utils;
 use \Elementor\Widget_Base as Widget_Base;
-use \Essential_Addons_Elementor\Classes\Bootstrap;
 
 class Testimonial extends Widget_Base {
 
@@ -21,16 +20,41 @@ class Testimonial extends Widget_Base {
 	}
 
 	public function get_title() {
-		return esc_html__( 'EA Testimonial', 'essential-addons-for-elementor-lite');
+		return esc_html__( 'Testimonial', 'essential-addons-for-elementor-lite');
 	}
 
 	public function get_icon() {
-		return 'eicon-testimonial';
+		return 'eaicon-testimonial';
 	}
 
    	public function get_categories() {
 		return [ 'essential-addons-elementor' ];
 	}
+    
+	public function get_keywords()
+	{
+        return [
+			'testimonial',
+			'ea testimonial',
+			'ea testimonials',
+			'testimony',
+			'review',
+			'endorsement',
+			'recommendation',
+			'reference',
+			'appreciation',
+			'feedback',
+			'star rating',
+			'social proof',
+			'ea',
+			'essential addons'
+		];
+    }
+
+	public function get_custom_help_url()
+	{
+        return 'https://essential-addons.com/elementor/docs/testimonials/';
+    }
 
 	public function get_style_depends()
     {

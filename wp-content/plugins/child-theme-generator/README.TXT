@@ -3,8 +3,8 @@ Contributors: Seraph63
 Tags: child theme, design, themes
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=UNQC9QFV64XH6
 Requires at least: 4.6
-Tested up to: 5.3
-Stable tag: 2.2.5
+Tested up to: 5.4
+Stable tag: 2.2.6
 License: GNU General Public License v2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 

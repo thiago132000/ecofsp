@@ -112,6 +112,12 @@ $elements = [
                 'demo_link' => 'https://essential-addons.com/elementor/sticky-video/',
                 'doc_link' => 'https://essential-addons.com/elementor/docs/sticky-video/',
             ],
+            [
+                'key'   => 'event-calendar',
+                'title' => __( 'Event Calendar', 'essential-addons-elementor' ),
+                'demo_link' => 'https://essential-addons.com/elementor/event-calendar/',
+                'doc_link' => 'https://essential-addons.com/elementor/docs/event-calendar/',
+            ],
         ]
     ],
     'dynamic-content-elements'  => [
@@ -148,12 +154,6 @@ $elements = [
                 'doc_link' => 'https://essential-addons.com/elementor/docs/content-ticker/',
             ],
             [
-                'key'    => 'product-grid',
-                'title'  => __( 'Product Grid', 'essential-addons-for-elementor-lite'),
-                'demo_link' => 'https://essential-addons.com/elementor/woo-product-grid/',
-                'doc_link' => 'https://essential-addons.com/elementor/docs/woocommerce-product-grid/',
-            ],
-            [
                 'key'   => 'adv-google-map',
                 'title' => __( 'Advanced Google Map', 'essential-addons-for-elementor-lite'),
                 'demo_link' => 'https://essential-addons.com/elementor/advanced-google-map/',
@@ -179,13 +179,6 @@ $elements = [
                 'title'  => __( 'Smart Post List', 'essential-addons-for-elementor-lite'),
                 'demo_link' => 'https://essential-addons.com/elementor/post-list/',
                 'doc_link' => 'https://essential-addons.com/elementor/docs/smart-post-list/',
-                'is_pro' => true
-            ],
-            [
-                'key'    => 'woo-collections',
-                'title'  => __( 'Woo Product Collections', 'essential-addons-for-elementor-lite'),
-                'demo_link' => 'https://essential-addons.com/elementor/woocommerce-product-collections/',
-                'doc_link' => 'https://essential-addons.com/elementor/docs/ea-woo-product-collections/',
                 'is_pro' => true
             ],
             [
@@ -390,7 +383,19 @@ $elements = [
                 'key'   => 'fluentform',
                 'title' => __( 'FluentForm', 'essential-addons-for-elementor-lite'),
                 'demo_link' => 'https://essential-addons.com/elementor/fluentform/',
-                'doc_link' => 'https://essential-addons.com/elementor/docs/fluentform/',
+                'doc_link' => 'https://essential-addons.com/elementor/docs/fluent-form/',
+            ],
+            [
+                'key'   => 'formstack',
+                'title' => __( 'Formstack', 'essential-addons-for-elementor-lite'),
+                'demo_link' => 'https://essential-addons.com/elementor/formstack/',
+                'doc_link' => 'https://essential-addons.com/elementor/docs/formstack/',
+            ],
+            [
+                'key'   => 'typeform',
+                'title' => __( 'Typeform', 'essential-addons-for-elementor-lite'),
+                'demo_link' => 'https://essential-addons.com/elementor/typeform/',
+                'doc_link' => 'https://essential-addons.com/elementor/docs/typeform/',
             ],
             [
                 'key'    => 'mailchimp',
@@ -466,6 +471,30 @@ $elements = [
                 'doc_link' => 'https://essential-addons.com/elementor/docs/betterdocs-search-form/'
             ]
         ]
+    ],
+    'woocommerce-elements'   => [
+        'title' => __( 'WooCommerce Elements', 'essential-addons-for-elementor-lite'),
+        'elements'  => [
+            [
+                'key'    => 'product-grid',
+                'title'  => __( 'Product Grid', 'essential-addons-for-elementor-lite'),
+                'demo_link' => 'https://essential-addons.com/elementor/woo-product-grid/',
+                'doc_link' => 'https://essential-addons.com/elementor/docs/woocommerce-product-grid/',
+            ],
+            [
+                'key'    => 'woo-collections',
+                'title'  => __( 'Woo Product Collections', 'essential-addons-for-elementor-lite'),
+                'demo_link' => 'https://essential-addons.com/elementor/woocommerce-product-collections/',
+                'doc_link' => 'https://essential-addons.com/elementor/docs/ea-woo-product-collections/',
+                'is_pro' => true
+            ],
+            [
+                'key'   => 'woo-checkout',
+                'title' => __( 'Woo Checkout', 'essential-addons-for-elementor-lite'),
+                'demo_link' => 'https://essential-addons.com/elementor/woo-checkout/',
+                'doc_link' => 'https://essential-addons.com/elementor/docs/woo-checkout/'
+            ]
+        ]
     ]
 ];
 
@@ -506,7 +535,12 @@ $elements = apply_filters( 'add_eael_elementor_addons', $elements );
                                         } elseif($item['key'] === 'adv-google-map' && $this->pro_enabled) {
                                             echo '<span style="font-size: 12px; font-style:italic;"><a href="#" class="eael-admin-settings-popup" data-title="Google Map API Key" data-placeholder="Set API Key" data-target="#google-map-api">'.__('Settings', 'essential-addons-for-elementor-lite').'</a></span>
                                             <input type="hidden" name="google-map-api" id="google-map-api" class="google-map-api" value="' . get_option('eael_save_google_map_api') . '">';
+                                        } elseif($item['key'] === 'typeform') {
+                                            echo '<span style="font-size: 12px; font-style:italic;"><a href="#" class="eael-admin-settings-popup" data-title="Typeform Personal Token" data-placeholder="Set Personal Token" data-doc="#typeform-doc" data-target="#typeform-personal-token">'.__('Settings', 'essential-addons-for-elementor-lite').'</a></span>
+                                            <a style="display: none" id="typeform-doc" target="_blank" href="https://developer.typeform.com/get-started/personal-access-token/">'.__('How to generate personal token', 'essential-addons-for-elementor-lite').'</a>
+                                            <input type="hidden" name="typeform-personal-token" id="typeform-personal-token" class="typeform-personal-token" value="' . get_option('eael_save_typeform_personal_token') . '">';
                                         }
+
                                     ?>
                                 </p>
                                 <a  class="eael-element-info-link" href="<?php echo ($item['demo_link']);?>" target="_blank">

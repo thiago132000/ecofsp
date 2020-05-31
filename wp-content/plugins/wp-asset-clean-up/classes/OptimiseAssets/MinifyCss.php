@@ -5,7 +5,6 @@ use WpAssetCleanUp\CleanUp;
 use WpAssetCleanUp\Main;
 use WpAssetCleanUp\Menu;
 use WpAssetCleanUp\MetaBoxes;
-use MatthiasMullie\Minify;
 
 /**
  * Class MinifyCss
@@ -15,13 +14,48 @@ class MinifyCss
 {
 	/**
 	 * @param $cssContent
+	 * @param bool $forInlineStyle
 	 *
-	 * @return string|string[]|null
+	 * @return string
 	 */
-	public static function applyMinification($cssContent)
+	public static function applyMinification($cssContent, $forInlineStyle = false)
 	{
-		$minifier = new Minify\CSS($cssContent);
-			return trim($minifier->minify());
+		if (class_exists('\MatthiasMullie\Minify\CSS')) {
+				$sha1OriginalContent = sha1($cssContent);
+
+				// Let's check if the content is already minified
+				// Save resources as the minify process can take time if the content is very large
+				if (OptimizeCommon::originalContentIsAlreadyMarkedAsMinified($sha1OriginalContent, 'styles')) {
+					return $cssContent;
+				}
+
+				// Minify it
+				$alreadyMinified = false; // default
+
+				$minifier = new \MatthiasMullie\Minify\CSS( $cssContent );
+
+				if ( $forInlineStyle ) {
+					// If the minification is applied for inlined CSS (within STYLE)
+					// Leave the background URLs unchanged as it sometimes lead to issues
+					$minifier->setImportExtensions( array() );
+				}
+
+				$minifiedContent = trim( $minifier->minify() );
+
+				if ($minifiedContent === $cssContent) {
+					$alreadyMinified = true;
+				}
+
+				// If the resulting content is the same, mark it as minified to avoid the minify process next time
+				if ($alreadyMinified) {
+					OptimizeCommon::originalContentMarkAsAlreadyMinified( $sha1OriginalContent, 'styles' );
+				}
+
+				return $minifiedContent;
+			}
+
+			return $cssContent;
+
 		}
 
 	/**
@@ -99,40 +133,127 @@ class MinifyCss
 			return $htmlSource; // no STYLE tags
 		}
 
-		$domTag = new \DOMDocument();
-		libxml_use_internal_errors(true);
-		$domTag->loadHTML($htmlSource);
-
-		$styleTagsObj = $domTag->getElementsByTagName( 'style' );
-
-		if ($styleTagsObj === null) {
-			return $htmlSource;
-		}
-
 		$skipTagsContaining = array(
+			'data-wpacu-skip',
 			'astra-theme-css-inline-css',
 			'astra-edd-inline-css',
 			'et-builder-module-design-cached-inline-styles',
 			'fusion-stylesheet-inline-css',
+			'woocommerce-general-inline-css',
+			'woocommerce-inline-inline-css',
+			'data-wpacu-own-inline-style',
+			// Only shown to the admin, irrelevant for any optimization (save resources)
 			'data-wpacu-inline-css-file'
+			// already minified/optimized since the INLINE was generated from the cached file
 		);
 
-		foreach ($styleTagsObj as $styleTagObj) {
-			$originalTag = CleanUp::getOuterHTML($styleTagObj);
+		$fetchType = 'regex';
 
-			// No need to use extra resources as the tag is already minified
-			if (preg_match('('.implode('|', $skipTagsContaining).')', $originalTag)) {
-				continue;
+		if ($fetchType === 'dom') {
+			// DOMDocument extension has to be enabled, otherwise return the HTML source as was (no changes)
+			if (! (function_exists('libxml_use_internal_errors') && function_exists('libxml_clear_errors') && class_exists('\DOMDocument'))) {
+				return $htmlSource;
 			}
 
-			$originalTagContents = (isset($styleTagObj->nodeValue) && trim($styleTagObj->nodeValue) !== '') ? $styleTagObj->nodeValue : false;
+			$domTag = OptimizeCommon::getDomLoadedTag($htmlSource, 'minifyInlineStyleTags');
 
-			if ($originalTagContents) {
-				$newTagContents = self::applyMinification($originalTagContents);
+			$styleTagsObj = $domTag->getElementsByTagName( 'style' );
 
-				$htmlSource = str_ireplace('>'.$originalTagContents.'</style', '>'.$newTagContents.'</style', $htmlSource);
+			if ( $styleTagsObj === null ) {
+				return $htmlSource;
+			}
 
-				libxml_clear_errors();
+			foreach ( $styleTagsObj as $styleTagObj ) {
+				$originalTag = CleanUp::getOuterHTML( $styleTagObj );
+
+				// No need to use extra resources as the tag is already minified
+				if ( preg_match( '(' . implode( '|', $skipTagsContaining ) . ')', $originalTag ) ) {
+					continue;
+				}
+
+				$originalTagContents = ( isset( $styleTagObj->nodeValue ) && trim( $styleTagObj->nodeValue ) !== '' ) ? $styleTagObj->nodeValue : false;
+
+				if ( $originalTagContents ) {
+					$newTagContents = OptimizeCss::maybeAlterContentForInlineStyleTag( $originalTagContents, true, array( 'just_minify' ) );
+
+					// Only comments or no content added to the inline STYLE tag? Strip it completely to reduce the number of DOM elements
+					if ( $newTagContents === '/**/' || ! $newTagContents ) {
+						$htmlSource = str_ireplace( '>' . $originalTagContents . '</style', '></style', $htmlSource );
+
+						preg_match( '#<style.*?>#si', $originalTag, $matchFromStyle );
+
+						if ( isset( $matchFromStyle[0] ) && $styleTagWithoutContent = $matchFromStyle[0] ) {
+							$styleTagWithoutContentAlt = str_replace( '"', '\'', $styleTagWithoutContent );
+							$htmlSource                = str_ireplace( array(
+								$styleTagWithoutContent . '</style>',
+								$styleTagWithoutContentAlt . '</style>'
+							), '', $htmlSource );
+						}
+					} else {
+						// It has content; do the replacement
+						$htmlSource = str_ireplace(
+							'>' . $originalTagContents . '</style>',
+							'>' . $newTagContents . '</style>',
+							$htmlSource
+						);
+					}
+					libxml_clear_errors();
+				}
+			}
+		} elseif ($fetchType === 'regex') {
+			preg_match_all( '@(<style[^>]*?>).*?</style>@si', $htmlSource, $matchesStyleTags, PREG_SET_ORDER );
+
+			if ( $matchesStyleTags === null ) {
+				return $htmlSource;
+			}
+
+			foreach ($matchesStyleTags as $matchedStyle) {
+				if ( ! (isset($matchedStyle[0]) && $matchedStyle[0]) ) {
+					continue;
+				}
+
+				$originalTag = $matchedStyle[0];
+
+				if (substr($originalTag, -strlen('></style>')) === strtolower('></style>')) {
+					// No empty STYLE tags
+					continue;
+				}
+
+				// No need to use extra resources as the tag is already minified
+				if ( preg_match( '(' . implode( '|', $skipTagsContaining ) . ')', $originalTag ) ) {
+					continue;
+				}
+
+				$tagOpen     = $matchedStyle[1];
+
+				$withTagOpenStripped = substr($originalTag, strlen($tagOpen));
+				$originalTagContents = substr($withTagOpenStripped, 0, -strlen('</style>'));
+
+				if ( $originalTagContents ) {
+					$newTagContents = OptimizeCss::maybeAlterContentForInlineStyleTag( $originalTagContents, true, array( 'just_minify' ) );
+
+					// Only comments or no content added to the inline STYLE tag? Strip it completely to reduce the number of DOM elements
+					if ( $newTagContents === '/**/' || ! $newTagContents ) {
+						$htmlSource = str_replace( '>' . $originalTagContents . '</', '></', $htmlSource );
+
+						preg_match( '#<style.*?>#si', $originalTag, $matchFromStyle );
+
+						if ( isset( $matchFromStyle[0] ) && $styleTagWithoutContent = $matchFromStyle[0] ) {
+							$styleTagWithoutContentAlt = str_ireplace( '"', '\'', $styleTagWithoutContent );
+							$htmlSource                = str_ireplace( array(
+								$styleTagWithoutContent . '</style>',
+								$styleTagWithoutContentAlt . '</style>'
+							), '', $htmlSource );
+						}
+					} else {
+						// It has content; do the replacement
+						$htmlSource = str_replace(
+							'>' . $originalTagContents . '</style>',
+							'>' . $newTagContents . '</style>',
+							$htmlSource
+						);
+					}
+				}
 			}
 		}
 

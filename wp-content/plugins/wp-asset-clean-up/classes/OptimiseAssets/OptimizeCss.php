@@ -1,6 +1,7 @@
 <?php
 namespace WpAssetCleanUp\OptimiseAssets;
 
+use WpAssetCleanUp\ObjectCache;
 use WpAssetCleanUp\Plugin;
 use WpAssetCleanUp\Preloads;
 use WpAssetCleanUp\FileSystem;
@@ -21,17 +22,16 @@ class OptimizeCss
 	const MOVE_NOSCRIPT_TO_BODY_FOR_ASYNC_PRELOADS = '<span style="display: none;" data-name=wpacu-delimiter data-content="ASSET CLEANUP NOSCRIPT FOR ASYNC PRELOADS"></span>';
 
 	/**
-	 * @var float|int
-	 */
-	public static $cachedCssAssetsFileExpiresIn = 28800; // 8 hours in seconds (60 * 60 * 8)
-
-	/**
 	 *
 	 */
 	public function init()
 	{
 		add_action('init', array($this, 'triggersAfterInit'));
-		add_action('wp_footer', array($this, 'prepareOptimizeList'), PHP_INT_MAX);
+		add_action('wp_footer', static function() {
+			/* [wpacu_timing] */ Misc::scriptExecTimer( 'prepare_optimize_files_css' ); /* [/wpacu_timing] */
+			self::prepareOptimizeList();
+			/* [wpacu_timing] */ Misc::scriptExecTimer( 'prepare_optimize_files_css', 'end' ); /* [/wpacu_timing] */
+		}, PHP_INT_MAX);
 
 		add_action('wp_footer', static function() {
 			if ( Plugin::preventAnyChanges() || Main::isTestModeActive() ) {
@@ -100,7 +100,7 @@ class OptimizeCss
 	/**
 	 *
 	 */
-	public function prepareOptimizeList()
+	public static function prepareOptimizeList()
 	{
 		if ( ! self::isWorthCheckingForOptimization() || Plugin::preventAnyChanges() ) {
 			return;
@@ -108,7 +108,7 @@ class OptimizeCss
 
 		global $wp_styles;
 
-		$allStylesHandles = wp_cache_get('wpacu_all_styles_handles');
+		$allStylesHandles = ObjectCache::wpacu_cache_get('wpacu_all_styles_handles');
 		if (empty($allStylesHandles)) {
 			return;
 		}
@@ -120,17 +120,23 @@ class OptimizeCss
 		// Collect all enqueued clean (no query strings) HREFs to later compare them against any hardcoded CSS
 		$allEnqueuedCleanLinkHrefs = array();
 
-		foreach ($wpStylesDone as $styleHandle) {
+		foreach ($wpStylesDone as $index => $styleHandle) {
 			if (isset(Main::instance()->wpAllStyles['registered'][$styleHandle]->src) && ($src = Main::instance()->wpAllStyles['registered'][$styleHandle]->src)) {
 				$localAssetPath = OptimizeCommon::getLocalAssetPath($src, 'css');
 
-				if (! $localAssetPath || ! file_exists($localAssetPath)) {
+				if (! $localAssetPath || ! is_file($localAssetPath)) {
 					continue; // not a local file
 				}
 
 				ob_start();
 				$wp_styles->do_item($styleHandle);
 				$linkSourceTag = trim(ob_get_clean());
+
+				// Check if the CSS has any 'data-wpacu-skip' attribute; if it does, do not alter it
+				if (preg_match('#data-wpacu-skip([=>/ ])#i', $linkSourceTag)) {
+					unset($wpStylesDone[$index]);
+					continue;
+				}
 
 				$cleanLinkHrefFromTagArray = OptimizeCommon::getLocalCleanSourceFromTag($linkSourceTag, 'href');
 
@@ -143,18 +149,19 @@ class OptimizeCss
 		$cssOptimizeList = array();
 
 		foreach ($wpStylesDone as $handle) {
-			if (! isset($wpStylesRegistered[$handle])) {
+			if (! isset($wpStylesRegistered[$handle]->src)) {
 				continue;
 			}
 
 			$value = $wpStylesRegistered[$handle];
 
 			$localAssetPath = OptimizeCommon::getLocalAssetPath($value->src, 'css');
-			if (! $localAssetPath || ! file_exists($localAssetPath)) {
+			if (! $localAssetPath || ! is_file($localAssetPath)) {
 				continue; // not a local file
 			}
 
 			$optimizeValues = self::maybeOptimizeIt($value);
+			ObjectCache::wpacu_cache_set('wpacu_maybe_optimize_it_css_'.$handle, $optimizeValues);
 
 			if (! empty($optimizeValues)) {
 				$cssOptimizeList[] = $optimizeValues;
@@ -165,8 +172,8 @@ class OptimizeCss
 			return;
 		}
 
-		wp_cache_add('wpacu_css_enqueued_hrefs', $allEnqueuedCleanLinkHrefs);
-		wp_cache_add('wpacu_css_optimize_list', $cssOptimizeList);
+		ObjectCache::wpacu_cache_add('wpacu_css_enqueued_hrefs', $allEnqueuedCleanLinkHrefs);
+		ObjectCache::wpacu_cache_add('wpacu_css_optimize_list', $cssOptimizeList);
 		// [End] Collect for caching
 	}
 
@@ -177,6 +184,10 @@ class OptimizeCss
 	 */
 	public static function maybeOptimizeIt($value)
 	{
+		if ($optimizeValues = ObjectCache::wpacu_cache_get('wpacu_maybe_optimize_it_css_'.$value->handle)) {
+			return $optimizeValues;
+		}
+
 		global $wp_version;
 
 		$src = isset($value->src) ? $value->src : false;
@@ -193,13 +204,20 @@ class OptimizeCss
 			$doFileMinify = false;
 		}
 
-		$fileVer = $dbVer = (isset($value->ver) && $value->ver) ? $value->ver : $wp_version;
+		$dbVer = (isset($value->ver) && $value->ver) ? $value->ver : $wp_version;
 
 		$handleDbStr = md5($value->handle);
 
 		$transientName = 'wpacu_css_optimize_'.$handleDbStr;
 
-		if (Main::instance()->settings['fetch_cached_files_details_from'] === 'db_disk') {
+		$skipCache = false;
+
+		if (isset($_GET['wpacu_no_cache'])) {
+			$skipCache = true;
+		}
+
+	    if (! $skipCache) {
+		    if (Main::instance()->settings['fetch_cached_files_details_from'] === 'db_disk') {
 				    if ( ! isset( $GLOBALS['wpacu_from_location_inc'] ) ) {
 					    $GLOBALS['wpacu_from_location_inc'] = 1;
 				    }
@@ -220,14 +238,15 @@ class OptimizeCss
 					$localPathToCssOptimized = str_replace( '//', '/', ABSPATH . $savedValuesArray['optimize_uri'] );
 
 					// Read the file from its caching (that makes the processing faster)
-					if ( isset( $savedValuesArray['source_uri'] ) && file_exists( $localPathToCssOptimized ) ) {
+					if ( isset( $savedValuesArray['source_uri'] ) && is_file( $localPathToCssOptimized ) ) {
 						if (Main::instance()->settings['fetch_cached_files_details_from'] === 'db_disk') {
 							$GLOBALS['wpacu_from_location_inc']++;
 						}
 						return array(
 							$savedValuesArray['source_uri'],
 							$savedValuesArray['optimize_uri'],
-							$value->src
+							$value->src,
+							$value->handle
 						);
 					}
 
@@ -235,6 +254,8 @@ class OptimizeCss
 					OptimizeCommon::deleteTransient($transientName);
 				}
 			}
+	    }
+
 		// Check if it starts without "/" or a protocol; e.g. "wp-content/theme/style.css"
 		if (strpos($src, '/') !== 0 &&
 		    strpos($src, '//') !== 0 &&
@@ -253,7 +274,7 @@ class OptimizeCss
 
 		if (Main::instance()->settings['cache_dynamic_loaded_css'] &&
 		    $value->handle === 'sccss_style' &&
-		    in_array('simple-custom-css/simple-custom-css.php', apply_filters('active_plugins', get_option('active_plugins')))
+		    in_array('simple-custom-css/simple-custom-css.php', apply_filters('active_plugins', get_option('active_plugins', array())))
 		) {
 			$pathToAssetDir = '';
 			$sourceBeforeOptimization = $value->src;
@@ -277,7 +298,7 @@ class OptimizeCss
 			 */
 			$localAssetPath = OptimizeCommon::getLocalAssetPath($src, 'css');
 
-			if (! file_exists($localAssetPath)) {
+			if (! is_file($localAssetPath)) {
 				return array();
 			}
 
@@ -290,42 +311,67 @@ class OptimizeCss
 			$sourceBeforeOptimization = str_replace(ABSPATH, '/', $localAssetPath);
 		}
 
+		$cssContent = trim($cssContent);
+
 		/*
 		 * [START] CSS Content Optimization
 		*/
-			// If there are no changes from this point, do not optimize (keep the file where it is)
-			$cssContentBefore = $cssContent;
+		// If there are no changes from this point, do not optimize (keep the file where it is)
+		$cssContentBefore = $cssContent;
 
-			if (Main::instance()->settings['google_fonts_display']) {
+		if ($cssContent) { // only proceed with extra alterations if there is some content there (save resources)
+			if ( Main::instance()->settings['google_fonts_display'] ) {
 				// Any "font-display" enabled in "Settings" - "Google Fonts"?
-				$cssContent = FontsGoogle::alterGoogleFontUrlFromCssContent($cssContent);
+				$cssContent = FontsGoogle::alterGoogleFontUrlFromCssContent( $cssContent );
 			}
 
 			// Move any @imports to top; This also strips any @imports to Google Fonts if the option is chosen
-			$cssContent = self::importsUpdate($cssContent);
+			$cssContent = self::importsUpdate( $cssContent );
+		}
 
-			if ($doFileMinify) {
-				// Minify this file?
-				$cssContent = MinifyCss::applyMinification($cssContent) ?: $cssContent;
+		// If it stays like this, it means there is content there, even if only comments
+		$cssContentBecomesEmptyAfterMin = false;
+
+		if ($doFileMinify && $cssContent) { // only bother to minify it if it has any content, save resources
+			// Minify this file?
+			$cssContentBeforeMin = trim($cssContent);
+			$cssContentAfterMin  = MinifyCss::applyMinification($cssContent);
+
+			$cssContent = $cssContentAfterMin;
+
+			if ($cssContentBeforeMin && $cssContentAfterMin === '') {
+				// It had content, but became empty after minification, most likely it had only comments (e.g. a default child theme's style)
+				$cssContentBecomesEmptyAfterMin = true;
 			}
+		}
 
-			if (Main::instance()->settings['google_fonts_remove']) {
-				$cssContent = FontsGoogleRemove::cleanFontFaceReferences($cssContent);
+		if ($cssContentBecomesEmptyAfterMin || $cssContent === '') {
+			$cssContent = '/**/';
+		} else {
+			if ( Main::instance()->settings['google_fonts_remove'] ) {
+				$cssContent = FontsGoogleRemove::cleanFontFaceReferences( $cssContent );
 			}
 
 			// No changes were made, thus, there's no point in changing the original file location
-			if ($isCssFile && trim($cssContentBefore) === trim($cssContent)) {
+			if ( $isCssFile && ! $cssContentBecomesEmptyAfterMin && trim( $cssContentBefore ) === trim( $cssContent ) ) {
 				// There's no point in changing the original CSS (static) file location
 				return false;
 			}
 
-			$cssContent = self::maybeFixCssContent($cssContent, $pathToAssetDir . '/'); // Path
+			// Does it have a source map? Strip it
+			if (strpos($cssContent, 'sourceMappingURL') !== false) {
+				$cssContent = OptimizeCommon::stripSourceMap($cssContent);
+			}
+
+			$cssContent = self::maybeFixCssContent( $cssContent, $pathToAssetDir . '/' ); // Path
+		}
 		/*
          * [END] CSS Content Optimization
 		*/
 
 		// Relative path to the new file
 		// Save it to /wp-content/cache/css/{OptimizeCommon::$optimizedSingleFilesDir}/
+		/*
 		if ($fileVer !== $wp_version) {
 			if (is_array($fileVer)) {
 				// Convert to string if it's an array (rare cases)
@@ -334,24 +380,26 @@ class OptimizeCss
 			$fileVer = trim(str_replace(' ', '_', preg_replace('/\s+/', ' ', $fileVer)));
 			$fileVer = (strlen($fileVer) > 50) ? substr(md5($fileVer), 0, 20) : $fileVer; // don't end up with too long filenames
 		}
+		*/
+		$fileVer = sha1($cssContent);
 
 		$newFilePathUri  = self::getRelPathCssCacheDir() . OptimizeCommon::$optimizedSingleFilesDir . '/' . $value->handle . '-v' . $fileVer;
+		$newFilePathUri .= '.css';
 
-		if (isset($localAssetPath)) { // could be from "/?custom-css=" so a check is needed
-			$sha1File = @sha1_file($localAssetPath);
-
-			if ($sha1File) {
-				$newFilePathUri .= '-' . $sha1File;
-			}
+		if ($cssContent === '') {
+			$cssContent = '/**/';
 		}
 
-		$newFilePathUri .= '.css';
+		if ($cssContent === '/**/') {
+			// Leave a signature that the file is empty, thus it would be faster to take further actions upon it later on, saving resources)
+			$newFilePathUri = str_replace('.css', '-wpacu-empty-file.css', $newFilePathUri);
+		}
 
 		$newLocalPath    = WP_CONTENT_DIR . $newFilePathUri; // Ful Local path
 		$newLocalPathUrl = WP_CONTENT_URL . $newFilePathUri; // Full URL path
 
-		if ($cssContent) {
-			$cssContent = '/*! ' . $sourceBeforeOptimization . ' */' . $cssContent;
+		if ($cssContent && $cssContent !== '/**/') {
+			$cssContent = '/*!' . $sourceBeforeOptimization . '*/' . $cssContent;
 		}
 
 		$saveFile = FileSystem::file_put_contents($newLocalPath, $cssContent);
@@ -373,7 +421,8 @@ class OptimizeCss
 		return array(
 			OptimizeCommon::getSourceRelPath($src), // Original SRC (Relative path)
 			OptimizeCommon::getSourceRelPath($newLocalPathUrl), // New SRC (Relative path)
-			$value->src // SRC (as it is)
+			$value->src, // SRC (as it is)
+			$value->handle
 		);
 	}
 
@@ -399,31 +448,22 @@ class OptimizeCss
 			/* [wpacu_timing] */ Misc::scriptExecTimer($wpacuTimingName, 'end'); /* [/wpacu_timing] */
 		}
 
-		if (self::isInlineCssEnabled()) {
-			/* [wpacu_timing] */ $wpacuTimingName = 'alter_html_source_for_inline_css'; Misc::scriptExecTimer($wpacuTimingName); /* [/wpacu_timing] */
-			$htmlSource = self::doInline($htmlSource);
-			/* [wpacu_timing] */ Misc::scriptExecTimer($wpacuTimingName, 'end'); /* [/wpacu_timing] */
-		}
-
 		if (self::isWorthCheckingForOptimization()) {
 			/* [wpacu_timing] */ $wpacuTimingName = 'alter_html_source_original_to_optimized_css'; Misc::scriptExecTimer($wpacuTimingName); /* [/wpacu_timing] */
 			// 'wpacu_css_optimize_list' caching list is also checked; if it's empty, no optimization is made
 			$htmlSource = self::updateHtmlSourceOriginalToOptimizedCss($htmlSource);
 			/* [wpacu_timing] */ Misc::scriptExecTimer($wpacuTimingName, 'end'); /* [/wpacu_timing] */
-
-
-			// Are there any dynamic loaded CSS that were optimized? Check them too
-			if (self::isInlineCssEnabled() && Main::instance()->settings['cache_dynamic_loaded_css']) {
-				/* [wpacu_timing] */ $wpacuTimingName = 'alter_html_source_for_dynamic_loaded_css'; Misc::scriptExecTimer($wpacuTimingName); /* [/wpacu_timing] */
-				$htmlSource = self::doInline($htmlSource, 'cached');
-				/* [wpacu_timing] */ Misc::scriptExecTimer($wpacuTimingName, 'end'); /* [/wpacu_timing] */
-			}
 		}
 
 		if (! Main::instance()->preventAssetsSettings()) {
 			/* [wpacu_timing] */ $wpacuTimingName = 'alter_html_source_for_preload_css'; Misc::scriptExecTimer($wpacuTimingName); /* [/wpacu_timing] */
-			/* [wpacu_pro] */ $htmlSource = apply_filters('wpacu_optimize_css_html_source', $htmlSource); /* [/wpacu_pro] */
 			$htmlSource = Preloads::instance()->doChanges($htmlSource);
+			/* [wpacu_timing] */ Misc::scriptExecTimer($wpacuTimingName, 'end'); /* [/wpacu_timing] */
+		}
+
+		if (self::isInlineCssEnabled()) {
+			/* [wpacu_timing] */ $wpacuTimingName = 'alter_html_source_for_inline_css'; Misc::scriptExecTimer($wpacuTimingName); /* [/wpacu_timing] */
+			$htmlSource = self::doInline($htmlSource);
 			/* [wpacu_timing] */ Misc::scriptExecTimer($wpacuTimingName, 'end'); /* [/wpacu_timing] */
 		}
 
@@ -454,7 +494,7 @@ class OptimizeCss
 
 		// Final cleanups
 		$htmlSource = preg_replace('#<link(\s+|)data-wpacu-link-rel-href-before=(["\'])' . '(.*)' . '(\1)#Usmi', '<link ', $htmlSource);
-		$htmlSource = preg_replace('#<link(.*)data-wpacu-style-handle=\'(.*)\'#Umi', '<link \\1', $htmlSource);
+		//$htmlSource = preg_replace('#<link(.*)data-wpacu-style-handle=\'(.*)\'#Umi', '<link \\1', $htmlSource);
 
 		/* [wpacu_timing] */ $wpacuTimingName = 'alter_html_source_for_google_fonts_optimization_removal'; Misc::scriptExecTimer($wpacuTimingName); /* [/wpacu_timing] */
 		// Alter HTML Source for Google Fonts Optimization / Removal
@@ -466,7 +506,6 @@ class OptimizeCss
 		$htmlSource = apply_filters('wpacu_add_async_preloads_noscript', $htmlSource);
 		/* [wpacu_timing] */ Misc::scriptExecTimer($wpacuTimingName, 'end'); /* [/wpacu_timing] */
 
-		// Final timing (for the whole HTML source)
 		/* [wpacu_timing] */ Misc::scriptExecTimer('alter_html_source_for_optimize_css', 'end'); /* [/wpacu_timing] */
 
 		return $htmlSource;
@@ -488,7 +527,7 @@ class OptimizeCss
 	 */
 	public static function getFirstLinkTag($firstLinkHref, $htmlSource)
 	{
-		preg_match_all('#<link[^>]*stylesheet[^>]*(>)#Usmi', $htmlSource, $matches);
+		preg_match_all('#<link[^>]*stylesheet[^>]*(>)#Umi', $htmlSource, $matches);
 		foreach ($matches[0] as $matchTag) {
 			if (strpos($matchTag, $firstLinkHref) !== false) {
 				return trim($matchTag);
@@ -594,53 +633,70 @@ class OptimizeCss
 	 */
 	public static function updateHtmlSourceOriginalToOptimizedCss($htmlSource)
 	{
-		$cssOptimizeList = wp_cache_get('wpacu_css_optimize_list') ?: array();
-		$allEnqueuedCleanLinkHrefs = wp_cache_get('wpacu_css_enqueued_hrefs') ?: array();
+		$cssOptimizeList = ObjectCache::wpacu_cache_get('wpacu_css_optimize_list') ?: array();
+
+		if (empty($cssOptimizeList)) {
+			return $htmlSource;
+		}
+
+		$allEnqueuedCleanLinkHrefs = ObjectCache::wpacu_cache_get('wpacu_css_enqueued_hrefs') ?: array();
 
 		$cdnUrls = OptimizeCommon::getAnyCdnUrls();
 		$cdnUrlForCss = isset($cdnUrls['css']) ? $cdnUrls['css'] : false;
 
-		preg_match_all('#<link[^>]*(stylesheet|(as(\s+|)=(\s+|)(|"|\')style(|"|\')))[^>]*(>)#Umi', OptimizeCommon::cleanerHtmlSource($htmlSource), $matchesSourcesFromTags, PREG_SET_ORDER);
+		// Grabs both LINK "stylesheet" and those with as="style" which is for preloaded LINK tags
+		preg_match_all('#<link[^>]*(stylesheet|(as(\s+|)=(\s+|)(|"|\')style(|"|\')))[^>]*>#Umi', OptimizeCommon::cleanerHtmlSource( $htmlSource, array( 'for_fetching_link_tags' ) ), $matchesSourcesFromTags, PREG_SET_ORDER);
 
 		if (empty($matchesSourcesFromTags)) {
 			return $htmlSource;
 		}
 
+		$linkTagsToUpdate = array();
+
 		foreach ($matchesSourcesFromTags as $matches) {
 			$linkSourceTag = $matches[0];
 
-			if (strip_tags($linkSourceTag) !== '') {
+			if ($linkSourceTag === '' || strip_tags($linkSourceTag) !== '') {
 				// Hmm? Not a valid tag... Skip it...
 				continue;
 			}
 
-			// Is it a local CSS? Check if it's hardcoded (not enqueued the WordPress way)
-			if ($cleanLinkHrefFromTagArray = OptimizeCommon::getLocalCleanSourceFromTag($linkSourceTag, 'href')) {
-				$cleanLinkHrefFromTag = $cleanLinkHrefFromTagArray['source'];
-				$afterQuestionMark = $cleanLinkHrefFromTagArray['after_question_mark'];
-
-				if (! in_array($cleanLinkHrefFromTag, $allEnqueuedCleanLinkHrefs)) {
-					// Not in the final enqueued list? Most likely hardcoded (not added via wp_enqueue_scripts())
-					// Emulate the object value (as the enqueued styles)
-					$value = (object)array(
-						'handle' => md5($cleanLinkHrefFromTag),
-						'src'    => $cleanLinkHrefFromTag,
-						'ver'    => md5($afterQuestionMark)
-					);
-
-					$optimizeValues = self::maybeOptimizeIt($value);
-
-					if (! empty($optimizeValues)) {
-						$cssOptimizeList[] = $optimizeValues;
-					}
-				}
-			}
-
-			if (empty($cssOptimizeList)) {
+			// Check if the CSS has any 'data-wpacu-skip' attribute; if it does, do not alter it
+			if (preg_match('#data-wpacu-skip([=>/ ])#i', $linkSourceTag)) {
 				continue;
 			}
 
-			foreach ($cssOptimizeList as $listValues) {
+			$cleanLinkHrefFromTagArray = OptimizeCommon::getLocalCleanSourceFromTag($linkSourceTag, 'href');
+
+			// Skip external links, no point in carrying on
+			if (! $cleanLinkHrefFromTagArray || ! is_array($cleanLinkHrefFromTagArray)) {
+				continue;
+			}
+
+			// Is it a local CSS? Check if it's hardcoded (not enqueued the WordPress way)
+			$cleanLinkHrefFromTag = $cleanLinkHrefFromTagArray['source'];
+			$afterQuestionMark = $cleanLinkHrefFromTagArray['after_question_mark'];
+
+			if (! in_array($cleanLinkHrefFromTag, $allEnqueuedCleanLinkHrefs)) {
+				// Not in the final enqueued list? Most likely hardcoded (not added via wp_enqueue_scripts())
+				// Emulate the object value (as the enqueued styles)
+				$generatedHandle = md5($cleanLinkHrefFromTag);
+
+				$value = (object)array(
+					'handle' => $generatedHandle,
+					'src'    => $cleanLinkHrefFromTag,
+					'ver'    => md5($afterQuestionMark)
+				);
+
+				$optimizeValues = self::maybeOptimizeIt($value);
+				ObjectCache::wpacu_cache_set('wpacu_maybe_optimize_it_css_'.$generatedHandle, $optimizeValues);
+
+				if (! empty($optimizeValues)) {
+					$cssOptimizeList[] = $optimizeValues;
+				}
+			}
+
+			foreach ($cssOptimizeList as $cssItemIndex => $listValues) {
 				// Index 0: Source URL (relative)
 				// Index 1: New Optimized URL (relative)
 				// Index 2: Source URL (as it is)
@@ -649,7 +705,9 @@ class OptimizeCss
 
 				// If the minified files are deleted (e.g. /wp-content/cache/ is cleared)
 				// do not replace the CSS file path to avoid breaking the website
-				if (! file_exists(rtrim(ABSPATH, '/') . $listValues[1])) {
+				$localPathOptimizedFile = rtrim(ABSPATH, '/') . $listValues[1];
+
+				if (! is_file($localPathOptimizedFile)) {
 					continue;
 				}
 
@@ -681,13 +739,32 @@ class OptimizeCss
 				// If no CDN is set, it will return site_url() as a prefix
 				$optimizeUrl = OptimizeCommon::cdnToUrlFormat($cdnUrlForCss, 'raw') . $listValues[1]; // string
 
-				if ($linkSourceTag !== str_ireplace($sourceUrlList, $optimizeUrl, $linkSourceTag)) {
-					$newLinkSourceTag = self::updateOriginalToOptimizedTag($linkSourceTag, $sourceUrlList, $optimizeUrl);
-					$htmlSource       = str_replace($linkSourceTag, $newLinkSourceTag, $htmlSource);
-					break;
+				if ($linkSourceTag !== str_replace($sourceUrlList, $optimizeUrl, $linkSourceTag)) {
+					// Extra measure: Check the file size which should be 4 bytes, but add some margin error in case some environments will report less
+					$isEmptyOptimizedFile = (strpos($localPathOptimizedFile, '-wpacu-empty-file.css') !== false && filesize($localPathOptimizedFile) < 10);
+
+					// Strip it as its content (after optimization, for instance) is empty; no point in having extra HTTP requests
+					if ($isEmptyOptimizedFile) {
+						$htmlSourceBefore = $htmlSource;
+						$htmlSource       = str_replace($linkSourceTag, '', $htmlSource);
+						$htmlSourceAfter = $htmlSource;
+
+						if ( ( $htmlSourceAfter !== $htmlSourceBefore ) && $scriptExtraAfterHtml = self::generateInlineAssocHtmlForHandle( $listValues[3] ) ) {
+							$htmlSource = str_replace( $scriptExtraAfterHtml, '', $htmlSource );
+						}
+					} else {
+						// Do the replacement
+						$newLinkSourceTag = self::updateOriginalToOptimizedTag( $linkSourceTag, $sourceUrlList, $optimizeUrl );
+						$linkTagsToUpdate[$linkSourceTag] = $newLinkSourceTag;
+						}
+
+					unset($cssOptimizeList[$cssItemIndex]); // item from the array is not needed anymore
+					break; // there was a match, stop here
 				}
 			}
 		}
+
+		$htmlSource = strtr($htmlSource, $linkTagsToUpdate);
 
 		return $htmlSource;
 	}
@@ -710,11 +787,11 @@ class OptimizeCss
 		}
 
 		// Strip ?ver=
-		$newLinkSourceTag = str_replace('.css&#038;ver=', '.css?ver=', $newLinkSourceTag);
-		$toStrip = Misc::extractBetween($newLinkSourceTag, '?ver=', ' ');
+		$newLinkSourceTag = str_replace('.css&#038;ver', '.css?ver', $newLinkSourceTag);
+		$toStrip = Misc::extractBetween($newLinkSourceTag, '?ver', ' ');
 
 		if (in_array(substr($toStrip, -1), array('"', "'"))) {
-			$toStrip = '?ver='. trim(trim($toStrip, '"'), "'");
+			$toStrip = '?ver'. trim(trim($toStrip, '"'), "'");
 			$newLinkSourceTag = str_replace($toStrip, '', $newLinkSourceTag);
 		}
 
@@ -738,21 +815,23 @@ class OptimizeCss
 	}
 
 	/**
+	 * From LINK to STYLE tag: it processes the contents of the LINK stylesheet and replaces the tag with a STYLE tag having the content inlined
+	 *
 	 * @param $htmlSource
-	 * @param $fetch
 	 *
 	 * @return mixed
 	 */
-	public static function doInline($htmlSource, $fetch = 'all')
+	public static function doInline($htmlSource)
 	{
-		$minifyInlineTags = (! Main::instance()->preventAssetsSettings() && Main::instance()->settings['minify_loaded_css'] && Main::instance()->settings['minify_loaded_css_inline']);
 		$allPatterns = self::getAllInlineChosenPatterns();
 
-		if ($fetch === 'all') {
-			preg_match_all('#<link[^>]*stylesheet[^>]*(>)#Umi', $htmlSource, $matchesSourcesFromTags, PREG_SET_ORDER);
-		} elseif ($fetch === 'cached') {
-			preg_match_all('#<link[^>]*stylesheet[^>]*('.OptimizeCommon::getRelPathPluginCacheDir().').*(>)#Usmi', $htmlSource, $matchesSourcesFromTags, PREG_SET_ORDER);
-		}
+		// Skip any LINK tags within conditional comments (e.g. Internet Explorer ones)
+		preg_match_all(
+			'#<link[^>]*rel=([\'"])stylesheet([\'"])[^>]*href.*>#Usmi',
+			OptimizeCommon::cleanerHtmlSource( $htmlSource, array( 'strip_content_between_conditional_comments', 'for_fetching_link_tags' ) ),
+			$matchesSourcesFromTags,
+			PREG_SET_ORDER
+		);
 
 		// In case automatic inlining is used
 		$belowSizeInput = (int)Main::instance()->settings['inline_css_files_below_size_input'];
@@ -768,13 +847,21 @@ class OptimizeCss
 			foreach ($matchesSourcesFromTags as $matchList) {
 				$matchedTag = $matchList[0];
 
+				if ($matchedTag === '') {
+					continue;
+				}
+
+				// They were preloaded for a reason, leave them
+				if (strpos($matchedTag, 'data-wpacu-preload-it-async=') !== false || strpos($matchedTag, 'data-wpacu-to-be-preloaded-basic=') !== false) {
+					continue;
+				}
+
 				if (strip_tags($matchedTag) !== '') {
 					continue; // something is funny, don't mess with the HTML alteration, leave it as it was
 				}
 
 				// Condition #1: Only chosen (via textarea) CSS get inlined
-				$chosenInlineCssMatches = (! empty($allPatterns) &&
-				                 preg_match('/(' . implode('|', $allPatterns) . ')/i', $matchedTag));
+				$chosenInlineCssMatches = (! empty($allPatterns) && preg_match('/(' . implode('|', $allPatterns) . ')/i', $matchedTag));
 
 				// Is auto inline disabled and the chosen CSS does not match? Continue to the next LINK tag
 				if (! $chosenInlineCssMatches && ! self::isAutoInlineEnabled()) {
@@ -811,22 +898,142 @@ class OptimizeCss
 					$appendBeforeAnyRelPath . OptimizeCommon::getPathToAssetDir($linkHrefOriginal) . '/'
 				);
 
-				// Move any @imports to top; This also strips any @imports to Google Fonts if the option is chosen
-				$cssContent = self::importsUpdate($cssContent);
+				// The CSS file is read from its original plugin/theme/cache location
+				// If minify was enabled, then it's already minified, no point in re-minify it to save resources
+				// Changing paths (relative) to fonts, images, etc. are relevant in this case
+				$cssContent = self::maybeAlterContentForCssFile($cssContent, false);
 
-				if ($minifyInlineTags) {
-					$cssContent = MinifyCss::applyMinification($cssContent);
+				if ($cssContent && $cssContent !== '/**/') {
+					$htmlSource = str_replace(
+						$matchedTag,
+						'<style type=\'text/css\' '.$mediaAttr.' data-wpacu-inline-css-file=\'1\'>'."\n".$cssContent."\n".'</style>',
+						$htmlSource
+					);
+				} else {
+					// After CSS alteration (e.g. minify), there's no content left, most likely the CSS file contained only comments, elements without any syntax or empty spaces
+					// Strip the tag completely as there's no reason to print an empty SCRIPT tag to further add to the total DOM elements
+					$htmlSource = str_replace($matchedTag, '', $htmlSource);
 				}
-
-				if (Main::instance()->settings['google_fonts_remove']) {
-					$cssContent = FontsGoogleRemove::cleanFontFaceReferences($cssContent);
-				}
-
-				$htmlSource = str_replace($matchedTag, '<style type=\'text/css\' '.$mediaAttr.' data-wpacu-inline-css-file=\'1\'>'."\n".$cssContent."\n".'</style>', $htmlSource);
 			}
 		}
 
 		return $htmlSource;
+	}
+
+	/**
+	 * This applies to both inline and static JS files contents
+	 *
+	 * @param $cssContent
+	 * @param bool $doCssMinify (false by default as it could be already minified or non-minify type)
+	 * @param array $extraParams
+	 *
+	 * @return mixed|string|string[]|null
+	 */
+	public static function maybeAlterContentForCssFile($cssContent, $doCssMinify = false, $extraParams = array())
+	{
+		if (! trim($cssContent)) {
+			return $cssContent;
+		}
+
+		/* [START] Change CSS Content */
+		if ( $doCssMinify && in_array('just_minify', $extraParams) ) {
+			$cssContent = MinifyCss::applyMinification( $cssContent, $doCssMinify );
+		} else {
+			// Move any @imports to top; This also strips any @imports to Google Fonts if the option is chosen
+			$cssContent = self::importsUpdate( $cssContent );
+
+			if ( $doCssMinify ) {
+				$cssContent = MinifyCss::applyMinification( $cssContent, $doCssMinify );
+			}
+
+			if ( Main::instance()->settings['google_fonts_remove'] ) {
+				$cssContent = FontsGoogleRemove::cleanFontFaceReferences( $cssContent );
+			}
+
+			// Does it have a source map? Strip it
+			if (strpos($cssContent, 'sourceMappingURL') !== false) {
+				$cssContent = OptimizeCommon::stripSourceMap($cssContent);
+			}
+		}
+		/* [END] Change CSS Content */
+
+		return $cssContent;
+	}
+
+	/**
+	 * @param $cssContent
+	 * @param bool $doCssMinify
+	 * @param array $extraParams
+	 *
+	 * @return mixed|string
+	 */
+	public static function maybeAlterContentForInlineStyleTag($cssContent, $doCssMinify = false, $extraParams = array())
+	{
+		if (! trim($cssContent)) {
+			return $cssContent;
+		}
+
+		$useCacheForInlineStyle = true;
+
+		if (mb_strlen($cssContent) > 500000) { // Bigger then ~500KB? Skip alteration
+			return $cssContent;
+		}
+
+		if (mb_strlen($cssContent) < 40000) { // Smaller than than ~40KB? Do not cache it
+			$useCacheForInlineStyle = false;
+		}
+
+		// For debugging purposes
+		if (isset($_GET['wpacu_no_cache'])) { $useCacheForInlineStyle = false; }
+
+		if ($useCacheForInlineStyle) {
+			// Anything in the cache? Take it from there and don't spend resources with the minification
+			// (which in some environments uses the CPU, depending on the complexity of the JavaScript code) and any other alteration
+			$cssContentBeforeHash = sha1( $cssContent );
+
+			$pathToInlineCssOptimizedItem = WP_CONTENT_DIR . self::getRelPathCssCacheDir() . '/item/inline/' . $cssContentBeforeHash . '.css';
+
+			// Check if the file exists before moving forward
+			if ( is_file( $pathToInlineCssOptimizedItem ) ) {
+				$cachedCssFileExpiresIn = OptimizeCommon::$cachedAssetFileExpiresIn;
+
+				if ( filemtime( $pathToInlineCssOptimizedItem ) < ( time() - 1 * $cachedCssFileExpiresIn ) ) {
+					// Has the caching period expired? Remove the file as a new one has to be generated
+					@unlink( $pathToInlineCssOptimizedItem );
+				} else {
+					// Not expired / Return its content from the cache in a faster way
+					$inlineCssStorageItemJsonContent = trim( FileSystem::file_get_contents( $pathToInlineCssOptimizedItem ) );
+
+					if ( $inlineCssStorageItemJsonContent !== '' ) {
+						return $inlineCssStorageItemJsonContent;
+					}
+				}
+			}
+		}
+
+		/* [START] Change CSS Content */
+		if ( $doCssMinify && in_array('just_minify', $extraParams) ) {
+			$cssContent = MinifyCss::applyMinification( $cssContent, $useCacheForInlineStyle );
+		} else {
+			// Move any @imports to top; This also strips any @imports to Google Fonts if the option is chosen
+			$cssContent = self::importsUpdate( $cssContent );
+
+			if ( $doCssMinify ) {
+				$cssContent = MinifyCss::applyMinification( $cssContent, $useCacheForInlineStyle );
+			}
+
+			if ( Main::instance()->settings['google_fonts_remove'] ) {
+				$cssContent = FontsGoogleRemove::cleanFontFaceReferences( $cssContent );
+			}
+		}
+		/* [END] Change CSS Content */
+
+		if ($useCacheForInlineStyle && isset($pathToInlineCssOptimizedItem)) {
+			// Store the optimized content to the cached CSS file which would be read quicker
+			FileSystem::file_put_contents( $pathToInlineCssOptimizedItem, $cssContent );
+		}
+
+		return $cssContent;
 	}
 
 	/**
@@ -1052,11 +1259,14 @@ class OptimizeCss
 
 		if (isset($ignoreChild['styles']) && ! empty($ignoreChild['styles'])) {
 			foreach (array_keys($ignoreChild['styles']) as $styleHandle) {
-				if (isset(Main::instance()->wpAllStyles['registered'][$styleHandle]->src, Main::instance()->ignoreChildren['styles'][$styleHandle.'_has_unload_rule']) && Main::instance()->wpAllStyles['registered'][$styleHandle]->src && Main::instance()->ignoreChildren['styles'][$styleHandle.'_has_unload_rule']) {
-					$inlineStyleAssociatedWithLinkTag = self::getInlineAssociatedWithLinkHandle($styleHandle, Main::instance()->wpAllStyles['registered'], 'handle');
+				// Always load the Dashicons if the top admin bar (toolbar) is shown
+				if ($styleHandle === 'dashicons' && is_admin_bar_showing()) {
+					continue;
+				}
 
-					if (isset($inlineStyleAssociatedWithLinkTag['after']) && $inlineStyleAssociatedWithLinkTag['after']) {
-						$htmlSource = str_replace($inlineStyleAssociatedWithLinkTag['after'], '', $htmlSource);
+				if (isset(Main::instance()->wpAllStyles['registered'][$styleHandle]->src, Main::instance()->ignoreChildren['styles'][$styleHandle.'_has_unload_rule']) && Main::instance()->wpAllStyles['registered'][$styleHandle]->src && Main::instance()->ignoreChildren['styles'][$styleHandle.'_has_unload_rule']) {
+					if ($scriptExtraAfterHtml = self::generateInlineAssocHtmlForHandle($styleHandle)) {
+						$htmlSource = str_replace($scriptExtraAfterHtml, '', $htmlSource);
 					}
 
 					$listWithMatches   = array();
@@ -1078,10 +1288,11 @@ class OptimizeCss
 	 * @param $styleTagOrHandle
 	 * @param $wpacuRegisteredStyles
 	 * @param $from
+	 * @param string $return ("value": CSS Inline Content / "html": CSS Inline Content surrounded by tags)
 	 *
 	 * @return array
 	 */
-	public static function getInlineAssociatedWithLinkHandle($styleTagOrHandle, $wpacuRegisteredStyles, $from = 'tag')
+	public static function getInlineAssociatedWithLinkHandle($styleTagOrHandle, $wpacuRegisteredStyles, $from = 'tag', $return = 'value')
 	{
 		$styleExtraAfter = '';
 
@@ -1092,7 +1303,7 @@ class OptimizeCss
 			$styleHandle = $styleTagOrHandle;
 		}
 
-		if ($styleHandle && isset($wpacuRegisteredStyles[$styleHandle]->extra)) {
+		if ($return === 'value' && $styleHandle && isset($wpacuRegisteredStyles[$styleHandle]->extra)) {
 			$styleExtraArray = $wpacuRegisteredStyles[$styleHandle]->extra;
 
 			if (isset($styleExtraArray['after']) && ! empty($styleExtraArray['after'])) {
@@ -1106,9 +1317,53 @@ class OptimizeCss
 
 				$styleExtraAfter .= '</style>';
 			}
+
+			return array('after' => $styleExtraAfter);
 		}
 
-		return array('after' => $styleExtraAfter);
+		if ( $return === 'html' && $styleHandle ) {
+			// 'after' is the only one for inline CSS; there's no 'data' or 'before' like in the inline JS
+			return array('after' => self::generateInlineAssocHtmlForHandle($styleHandle));
+		}
+
+		return array('after' => array());
+	}
+
+	/**
+	 * @param $handle
+	 * @param $inlineStyleContent
+	 *
+	 * @return string
+	 */
+	public static function generateInlineAssocHtmlForHandle($handle, $inlineStyleContent = '')
+	{
+		global $wp_styles;
+
+		$typeAttr = '';
+
+		if ( function_exists( 'is_admin' ) && ! is_admin()
+			&&
+			function_exists( 'current_theme_supports' ) && ! current_theme_supports( 'html5', 'style' )
+		) {
+			$typeAttr = " type='text/css'";
+		}
+
+		$output = '';
+
+		if ( $inlineStyleContent === '' ) {
+			$inlineStyleContent = $wp_styles->print_inline_style( $handle, false );
+		}
+
+		if ( $inlineStyleContent ) {
+			$output = sprintf(
+				"<style id='%s-inline-css'%s>\n%s\n</style>",
+				esc_attr( $handle ),
+				$typeAttr,
+				$inlineStyleContent
+			);
+		}
+
+		return $output;
 	}
 
 	/**

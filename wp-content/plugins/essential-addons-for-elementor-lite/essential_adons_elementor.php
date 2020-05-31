@@ -1,14 +1,15 @@
 <?php
 /**
  * Plugin Name: Essential Addons for Elementor
- * Description: The ultimate elements library for Elementor page builder plugin for WordPress.
+ * Description: The Essential plugin you install after Elementor! 70+ Premium elements, including WooCommerce, Event Calender, Data Table, Post Grid, Instagram Feed.
  * Plugin URI: https://essential-addons.com/elementor/
  * Author: WPDeveloper
- * Version: 3.7.2
+ * Version: 4.0.1
  * Author URI: https://wpdeveloper.net/
- *
  * Text Domain: essential-addons-for-elementor-lite
  * Domain Path: /languages
+ *
+ * WC tested up to: 4.1.0
  */
 
 if (!defined('ABSPATH')) {
@@ -20,13 +21,14 @@ if (!defined('ABSPATH')) {
  *
  * @since 3.0.0
  */
+define('EAEL_DEV_MODE', $_SERVER['REMOTE_ADDR'] == '127.0.0.1');
 define('EAEL_PLUGIN_FILE', __FILE__);
 define('EAEL_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('EAEL_PLUGIN_PATH', trailingslashit(plugin_dir_path(__FILE__)));
 define('EAEL_PLUGIN_URL', trailingslashit(plugins_url('/', __FILE__)));
-define('EAEL_PLUGIN_VERSION', '3.7.2');
-define('EAEL_ASSET_PATH', WP_CONTENT_DIR . '/uploads/essential-addons-elementor');
-define('EAEL_ASSET_URL', WP_CONTENT_URL . '/uploads/essential-addons-elementor');
+define('EAEL_PLUGIN_VERSION', '4.0.1');
+define('EAEL_ASSET_PATH', wp_upload_dir()['basedir'] . '/essential-addons-elementor');
+define('EAEL_ASSET_URL', wp_upload_dir()['baseurl'] . '/essential-addons-elementor');
 
 /**
  * Including composer autoloader globally.

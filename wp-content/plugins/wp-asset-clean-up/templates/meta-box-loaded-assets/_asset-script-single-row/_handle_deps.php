@@ -22,11 +22,14 @@ if (isset($data['row']['obj']->deps) && ! empty($data['row']['obj']->deps)) {
 	$depsOutput .= $dependsOnText.' ';
 
 	foreach ($data['row']['obj']->deps as $depHandle) {
+		$depHandleText = $depHandle;
+		$color = in_array($depHandle, $data['unloaded_js_handles']) ? '#cc0000' : 'green';
+
 		if ($depHandle === 'jquery' || strpos($depHandle, 'jquery-ui-') === 0) {
-			$depHandle .= '&nbsp;'.$jqueryIconHtmlDepends;
+			$depHandleText .= '&nbsp;'.$jqueryIconHtmlDepends;
 		}
 
-		$depsOutput .= '<span style="color: green; font-weight: 300;">'.$depHandle.'</span>, ';
+		$depsOutput .= '<a style="color:'.$color.';font-weight:300;" href="#wpacu_script_row_'.$depHandle.'"><span>'.$depHandleText.'</span></a>, ';
 	}
 
 	$depsOutput = rtrim($depsOutput, ', ');

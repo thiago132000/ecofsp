@@ -106,7 +106,7 @@ class MetaBoxes
 		if (! Main::instance()->settings['dashboard_show']) {
 			$isListFetchable = false;
 			$data['status'] = 2; // "Manage within Dashboard" is disabled in plugin's settings
-		} elseif ($postId < 1 || get_post_status($postId) !== 'publish') {
+		} elseif ($postId < 1 || ! in_array(get_post_status($postId), array('publish', 'private'))) {
 			$data['status'] = 3; // "draft", "auto-draft" post (it has to be published)
 			$isListFetchable = false;
 		}

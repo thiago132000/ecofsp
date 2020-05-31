@@ -67,3 +67,36 @@ function post_video() {
   register_post_type( 'video', $args );
 }
 
+add_action( 'init', 'podcasts_post_type' );
+function podcasts_post_type() {
+  $labels = array(
+     'name' => _x( 'Podcasts', 'post type general name' ),
+     'singular_name' => _x( 'podcast', 'post type singular name' )
+  );
+  $args = array(
+    'labels' => $labels,
+    'description' => 'podcasts',
+    'supports'    => array( 'title', 'editor', 'excerpt', 'author', 'thumbnail', 'revisions', 'page-attributes', ),
+    'public' => true
+  );
+  register_post_type( 'podcasts', $args );
+
+
+}
+
+function podcasts_taxonomy(){
+  register_taxonomy(
+  'categoria_podcasts',
+  'podcasts',
+  array(
+      'label' => __('Categorias dos podcasts'),
+      'show_ui' => true,
+      'show_admin_column' => true,
+      'query_var' => true,
+      'rewrite' => array('slug' => 'categoria_podcasts', 'with_front' => false),
+      'hierarchical' => true,
+      'exclude_from_search'   => false,
+      )
+  );
+}
+add_action('init', 'podcasts_taxonomy');

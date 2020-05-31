@@ -103,7 +103,7 @@ $availableForProMoveScriptsToBody = '<a class="go-pro-link-no-style" target="_bl
         <tr>
             <td colspan="2" style="padding: 0;">
                 <div style="line-height: 22px; background: #f8f8f8; border-left: 4px solid #008f9c; padding: 10px; margin: 0 0 15px;">
-                    <strong><?php _e('NOTE', 'wp-asset-clean-up'); ?>:</strong> <?php echo __('Concatenating assets is no longer a recommended practice in HTTP/2', 'wp-asset-clean-up'); ?>. &nbsp; <span style="color: #0073aa;" class="dashicons dashicons-info"></span> <a id="wpacu-http2-info-js-target" href="#wpacu-http2-info-js"><?php _e('Read more', 'wp-asset-clean-up'); ?></a> &nbsp;|&nbsp; <a target="_blank" href="https://tools.keycdn.com/http2-test"><?php _e('Verify if your server has HTTP/2 support', 'wp-asset-clean-up'); ?></a>
+                    <strong><?php _e('NOTE', 'wp-asset-clean-up'); ?>:</strong> <?php echo __('Concatenating assets is no longer a recommended practice in HTTP/2', 'wp-asset-clean-up'); ?>. &nbsp; <a id="wpacu-http2-info-js-target" href="#wpacu-http2-info-js"><?php _e('Read more', 'wp-asset-clean-up'); ?></a> &nbsp;/&nbsp; <a class="wpacu_hide wpacu_verify_http2_protocol" target="_blank" href="https://tools.keycdn.com/http2-test"><strong><?php _e('Verify if the website is delivered through the HTTP/2 network protocol', 'wp-asset-clean-up'); ?></strong></a> <span class="wpacu_hide wpacu_http2_protocol_is_supported" style="color: green; font-weight: 400;"><span class="dashicons dashicons-yes-alt"></span> Your website `<span style="font-weight: 500;"><?php echo get_site_url(); ?></span>` is delivered through the HTTP/2 network protocol.</span>
                 </div>
             </td>
         </tr>
@@ -153,16 +153,7 @@ $availableForProMoveScriptsToBody = '<a class="go-pro-link-no-style" target="_bl
                         </label>
                     </p>
 
-                    <div style="padding: 10px; background: #f2faf2;" class="wpacu-fancy-checkbox">
-						<?php echo $availableForProAppendInlineJs; ?>&nbsp;
-                        <input style="opacity: 0.4;" id="combine_loaded_js_append_handle_extra_checkbox"
-                            <?php echo (($data['combine_loaded_js_append_handle_extra'] == 1) ? 'checked="checked"' : ''); ?>
-                               type="checkbox"
-                               name="<?php echo WPACU_PLUGIN_ID . '_settings'; ?>[combine_loaded_js_append_handle_extra]"
-                               value="1" />
-                        <label for="combine_loaded_js_append_handle_extra_checkbox">Add inline tag contents associated with a script (handle) to the combined group of files before/after the main script's contents</label>
-                        <p style="margin-top: 10px;"><small>When a file is added to a combined group of files, the CDATA as well as any other inline content (e.g. added via <code style="font-size: inherit;">wp_add_inline_script()</code>) associated with it will also be added to the combined files. This reduces the number of DOM elements as well makes sure that, in case, the combined file is deferred, the code from the inline tags is triggered at the same time as the one from the file</small></p>
-                    </div>
+					<p style="margin-top: 10px;"><strong>Note:</strong> When a file is added to a combined group of files, the CDATA as well as any other inline content (e.g. added via <code style="font-size: inherit;">wp_add_inline_script()</code>) associated with it will also be added to the combined files. This reduces the number of DOM elements as well makes sure that, in case, the combined file is deferred, the code from the inline tags is triggered at the same time as the one from the file</p>
 
                     <p style="padding: 10px; background: #f2faf2;">
                         <label for="wpacu_combine_loaded_js_defer_body_checkbox">
@@ -261,7 +252,7 @@ $availableForProMoveScriptsToBody = '<a class="go-pro-link-no-style" target="_bl
 			    }
 			    ?>
 
-                <div id="wpacu_inline_js_files_info_area" style="opacity: 0.4;">
+                <div id="wpacu_inline_js_files_info_area" <?php if (empty($data['is_optimize_css_enabled_by_other_party']) && $data['inline_js_files'] == 1) { ?> style="opacity: 1;" <?php } else { ?>style="opacity: 0.4;"<?php } ?>>
                     <p class="wpacu-warning" style="margin: 10px 0; font-size: 13px; padding: 4px 9px;">
                         <small><strong style="color: orange;"><span class="dashicons dashicons-warning"></span></strong> Please be extra careful if you decide to use this feature as inlining JavaScript files can be trickier than inlining CSS ones due to the more complex syntax and various attributes that might set to the external JS file such as "async" and "defer" (files having this attribute will be called via <em>DOMContentLoaded</em> event).</small>
                     </p>
@@ -279,17 +270,15 @@ $availableForProMoveScriptsToBody = '<a class="go-pro-link-no-style" target="_bl
 
                     <div id="wpacu_inline_js_files_list_area">
                         <div style="margin: 12px 0 6px;"><?php _e('Alternatively or in addition to automatic inlining, you can place the relative path(s) or part of them to the files you wish to inline below:', 'wp-asset-clean-up'); ?> (<strong><?php _e('one per line', 'wp-asset-clean-up'); ?></strong>):</div>
+                        <p style="margin-top: 8px;"><span class="dashicons dashicons-warning" style="color: #ffc107;"></span> <strong>Note:</strong> Please input the sources to the original JavaScript files (one per line) like in the examples below, not to the cached/optimized ones (which are usually located in <em><?php echo str_replace(site_url(), '', WP_CONTENT_URL) . OptimizeCommon::getRelPathPluginCacheDir(); ?></em>)</p>
                         <label for="wpacu_inline_js_files_list">
                                     <textarea style="width: 100%;"
                                               rows="4"
                                               id="wpacu_inline_js_files_list"
                                               name="<?php echo WPACU_PLUGIN_ID . '_settings'; ?>[inline_js_files_list]"><?php echo $data['inline_js_files_list']; ?></textarea>
                         </label>
-
-                        <p><strong>Examples</strong> (you don't have to add the full URL, as it's recommended to use relative paths, especially if you use dev/staging environments or change the domain name of your website):</p>
+                        <p style="margin-bottom: 6px;"><strong>Examples</strong> (you don't have to add the full URL, as it's recommended to use relative paths, especially if you use dev/staging environments or change the domain name of your website):</p>
                         <code>/wp-content/plugins/plugin-title/scripts/small-file.js<br />/wp-content/themes/my-wp-theme-dir/js/small.js</code>
-
-                        <p style="margin-top: 18px;"><span class="dashicons dashicons-warning"></span> <strong>Note:</strong> Please input the sources to the original JavaScript files (one per line), not to any optimized ones (which are usually located in <em><?php echo str_replace(site_url(), '', WP_CONTENT_URL) . OptimizeCommon::getRelPathPluginCacheDir(); ?></em>)</p>
                     </div>
                 </div>
             </td>
@@ -326,6 +315,7 @@ $availableForProMoveScriptsToBody = '<a class="go-pro-link-no-style" target="_bl
             </td>
         </tr>
 
+        <!-- [wpacu_pro] -->
         <tr valign="top">
             <th scope="row" class="setting_title">
                 <label for="wpacu_move_scripts_to_body_enable"><?php _e('Move All <code>&lt;SCRIPT&gt;</code> tags From HEAD to BODY', 'wp-asset-clean-up'); ?> <?php echo $availableForProMoveScriptsToBody; ?></label>
@@ -363,6 +353,7 @@ $availableForProMoveScriptsToBody = '<a class="go-pro-link-no-style" target="_bl
                 </div>
             </td>
         </tr>
+        <!-- [/wpacu_pro] -->
 
         <tr valign="top">
             <th scope="row" class="setting_title">
@@ -452,8 +443,8 @@ $availableForProMoveScriptsToBody = '<a class="go-pro-link-no-style" target="_bl
             <code>&lt;script type="text/javascript" src="/wp-includes/js/jquery.js"&gt;&lt;/script&gt;</code><br />
             <code>&lt;script type="text/javascript" src="/wp-includes/js/jquery-migrate.min.js"&gt;&lt;/script&gt;</code><br />
             <code>&lt;script type="text/javascript"&gt;jQuery(document).ready(function($) { /* code here */ });&lt;/script&gt;</code><br />
-            <code>&lt;script type="text/javascript"&gt;$(document).ready(function() { /* another code here */ });&lt;/script&gt;</code>                    </p>
-
+            <code>&lt;script type="text/javascript"&gt;$(document).ready(function() { /* another code here */ });&lt;/script&gt;</code>
+        </p>
     </div>
 </div>
 
@@ -463,7 +454,7 @@ $availableForProMoveScriptsToBody = '<a class="go-pro-link-no-style" target="_bl
         <h2 style="margin-top: 5px;"><?php _e('Examples of SCRIPTS moved from HEAD to BODY', 'wp-asset-clean-up'); ?></h2>
 
         <span><strong>FROM</strong></span>
-        <pre style="margin-top: 4px; margin-bottom: 8px;">
+        <pre style="margin-top: 4px; margin-bottom: 8px; white-space: pre;">
 <code>&lt;head&gt;</code>
     <code>&lt;title&gt;Your page title here&lt;/title&gt;</code>
     <code>...</code>
@@ -479,7 +470,7 @@ $availableForProMoveScriptsToBody = '<a class="go-pro-link-no-style" target="_bl
         <div style="margin-top: -6px; margin-bottom: 14px;"><hr /></div>
 
         <span><strong>TO</strong></span>
-        <pre style="margin-top: 4px; margin-bottom: 0;">
+        <pre style="margin-top: 4px; margin-bottom: 0; white-space: pre;">
 <code>&lt;head&gt;</code>
     <code>&lt;title>Your page title here&lt;/title&gt;</code>
     <code>...</code>

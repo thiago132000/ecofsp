@@ -1,6 +1,8 @@
 <?php
 namespace WpAssetCleanUp;
 
+use WpAssetCleanUp\OptimiseAssets\OptimizeCommon;
+
 /**
  * Class Misc
  * contains various common functions that are used by the plugin
@@ -32,16 +34,6 @@ class Misc
 	public $activeCachePlugins = array();
 
     /**
-     * Misc constructor.
-     */
-    public function __construct()
-    {
-        if (isset($_REQUEST['wpacuNoAdminBar'])) {
-	        self::noAdminBarLoad();
-        }
-    }
-
-    /**
      * @var
      */
     public static $showOnFront;
@@ -52,7 +44,7 @@ class Misc
 	public function getActiveCachePlugins()
 	{
 		if (empty($this->activeCachePlugins)) {
-			$activePlugins = get_option( 'active_plugins' );
+			$activePlugins = get_option( 'active_plugins', array() );
 
 			foreach ( self::$potentialCachePlugins as $cachePlugin ) {
 				if ( in_array( $cachePlugin, $activePlugins ) ) {
@@ -240,12 +232,10 @@ class Misc
 	    }
 
 	    // Some WordPress themes such as "Extra" have their own custom value
-	    $return = ( ( (self::getShowOnFront() !== '') || (self::getShowOnFront() === 'layout') )
-	         &&
-		    ((is_home() || self::isBlogPage()) || self::isRootUrl())
+	    return ( ( ( self::getShowOnFront() !== '') || ( self::getShowOnFront() === 'layout') )
+	             &&
+	             ((is_home() || self::isBlogPage()) || self::isRootUrl())
 	    );
-
-	    return $return;
     }
 
 	/**
@@ -329,13 +319,57 @@ class Misc
 
 	    		$localPathToFile = ABSPATH . $path . $relSrc;
 
-	    		if (file_exists($localPathToFile)) {
+	    		if (is_file($localPathToFile)) {
 	    			return array('base_url' => $baseUrl, 'rel_src' => $path . $relSrc, 'file_exists' => 1);
 			    }
 		    }
 	    }
 
 	    return array();
+    }
+
+	/**
+	 * @param bool $clean
+	 *
+	 * @return mixed|string
+	 */
+	public static function getCurrentPageUrl($clean = true)
+    {
+	    $currentPageUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . parse_url(site_url(), PHP_URL_HOST) . $_SERVER['REQUEST_URI'];
+
+	    if ($clean && strpos($currentPageUrl, '?') !== false) {
+		    list($currentPageUrl) = explode('?', $currentPageUrl);
+	    }
+
+	    return $currentPageUrl;
+    }
+
+	/**
+	 * @param $src
+	 * @param $assetKey
+	 *
+	 * @return string|string[]
+	 */
+	public static function assetFromHrefToRelativeUri($src, $assetKey)
+    {
+	    // Make the "src" relative in case the information will be imported from Staging to Live, it won't show the handle's link referencing to the staging URL in the "Overview" page and other similar pages as it's confusing
+	    $localAssetPath = OptimizeCommon::getLocalAssetPath($src, (($assetKey === 'styles') ? 'css' : 'js'));
+
+	    $relSrc = $src;
+
+	    if ($localAssetPath) {
+		    $relSrc = str_replace(ABSPATH, '', $relSrc);
+	    }
+
+	    $relSrc = str_replace(site_url(), '', $relSrc);
+
+	    // Does it start with '//'? (protocol is missing) - the replacement above wasn't made
+	    if (strpos($relSrc, '//') === 0) {
+		    $siteUrlNoProtocol = str_replace(array('http:', 'https:'), '', site_url());
+		    $relSrc = str_replace($siteUrlNoProtocol, '', $relSrc);
+	    }
+
+	    return $relSrc;
     }
 
 	/**
@@ -358,14 +392,6 @@ class Misc
         return self::$showOnFront;
     }
 
-    /**
-     *
-     */
-    public static function noAdminBarLoad()
-    {
-        add_filter('show_admin_bar', '__return_false');
-    }
-
 	/**
 	 * @param $plugin
 	 *
@@ -373,7 +399,7 @@ class Misc
 	 */
 	public static function isPluginActive($plugin)
 	{
-    	return in_array($plugin, apply_filters('active_plugins', get_option('active_plugins')));
+    	return in_array($plugin, apply_filters('active_plugins', get_option('active_plugins', array())));
     }
 
 	/**
@@ -420,29 +446,35 @@ class Misc
 	 */
 	public static function getW3tcMasterConfig()
 	{
-		if (! wp_cache_get('wpacu_w3tc_master_config')) {
+		if (! ObjectCache::wpacu_cache_get('wpacu_w3tc_master_config')) {
 			$w3tcConfigMasterFile = WP_CONTENT_DIR . '/w3tc-config/master.php';
 			$w3tcMasterConfig = FileSystem::file_get_contents($w3tcConfigMasterFile);
-			wp_cache_set('wpacu_w3tc_master_config', trim($w3tcMasterConfig));
+			ObjectCache::wpacu_cache_set('wpacu_w3tc_master_config', trim($w3tcMasterConfig));
 		} else {
-			$w3tcMasterConfig = wp_cache_get('wpacu_w3tc_master_config');
+			$w3tcMasterConfig = ObjectCache::wpacu_cache_get('wpacu_w3tc_master_config');
 		}
 
 		return $w3tcMasterConfig;
 	}
 
 	/**
+	 * @param bool $forceReturn
 	 *
+	 * @return string
 	 */
-	public static function preloadAsyncCssFallbackOutput()
+	public static function preloadAsyncCssFallbackOutput($forceReturn = false)
 	{
-		if (defined('WPACU_PRELOAD_ASYNC_SCRIPT_SHOWN')) {
-			return ''; // already printed
+		// Unless it has to be returned (e.g. for debugging purposes), check it if it was returned before
+		// To avoid duplicated HTML code
+		if (! $forceReturn) {
+			if ( defined( 'WPACU_PRELOAD_ASYNC_SCRIPT_SHOWN' ) ) {
+				return '';
+			}
+
+			define( 'WPACU_PRELOAD_ASYNC_SCRIPT_SHOWN', 1 ); // mark it as already printed
 		}
 
-		define('WPACU_PRELOAD_ASYNC_SCRIPT_SHOWN', 1);
-
-		$output = <<<HTML
+		return <<<HTML
 <script id="wpacu-preload-async-css-fallback">
     /*! LoadCSS. [c]2017 Filament Group, Inc. MIT License */
     /* This file is meant as a standalone workflow for
@@ -453,7 +485,6 @@ class Misc
     !function(n){"use strict";n.wpacuLoadCSS||(n.wpacuLoadCSS=function(){});var o=wpacuLoadCSS.relpreload={};if(o.support=function(){var e;try{e=n.document.createElement("link").relList.supports("preload")}catch(t){e=!1}return function(){return e}}(),o.bindMediaToggle=function(t){var e=t.media||"all";function a(){t.addEventListener?t.removeEventListener("load",a):t.attachEvent&&t.detachEvent("onload",a),t.setAttribute("onload",null),t.media=e}t.addEventListener?t.addEventListener("load",a):t.attachEvent&&t.attachEvent("onload",a),setTimeout(function(){t.rel="stylesheet",t.media="only x"}),setTimeout(a,3e3)},o.poly=function(){if(!o.support())for(var t=n.document.getElementsByTagName("link"),e=0;e<t.length;e++){var a=t[e];"preload"!==a.rel||"style"!==a.getAttribute("as")||a.getAttribute("data-wpacuLoadCSS")||(a.setAttribute("data-wpacuLoadCSS",!0),o.bindMediaToggle(a))}},!o.support()){o.poly();var t=n.setInterval(o.poly,500);n.addEventListener?n.addEventListener("load",function(){o.poly(),n.clearInterval(t)}):n.attachEvent&&n.attachEvent("onload",function(){o.poly(),n.clearInterval(t)})}"undefined"!=typeof exports?exports.wpacuLoadCSS=wpacuLoadCSS:n.wpacuLoadCSS=wpacuLoadCSS}("undefined"!=typeof global?global:this);
 </script>
 HTML;
-		return $output;
 	}
 
 	/**
@@ -601,7 +632,7 @@ HTML;
 		$sqlQuery = <<<SQL
 SELECT pm.meta_value FROM `{$wpdb->prefix}postmeta` pm
 LEFT JOIN `{$wpdb->prefix}posts` p ON (p.ID = pm.post_id)
-WHERE p.post_status='publish' AND pm.meta_key='{$sqlPart}'
+WHERE (p.post_status='publish' OR p.post_status='private') AND pm.meta_key='{$sqlPart}'
 SQL;
 
 		$sqlResults = $wpdb->get_results($sqlQuery, ARRAY_A);
@@ -690,6 +721,64 @@ SQL;
 	}
 
 	/**
+	 * @param $src
+	 *
+	 * @return bool|mixed
+	 */
+	public static function maybeIsInactiveAsset($src)
+	{
+		// Quickest way
+		preg_match_all('#/wp-content/plugins/(.*?)/#', $src, $matches, PREG_PATTERN_ORDER);
+
+		if (isset($matches[1][0]) && $matches[1][0]) {
+			$pluginDirName = $matches[1][0];
+
+			$activePlugins = get_option( 'active_plugins', array() );
+			$activePluginsStr = implode(',', $activePlugins);
+
+			if (strpos($activePluginsStr, $pluginDirName.'/') === false) {
+				return $pluginDirName; // it belongs to an inactive plugin
+			}
+		}
+
+		$relPluginsUrl = str_replace(site_url(), '', plugins_url());
+
+		$srcAlt = $src;
+
+		if (strpos($srcAlt, '//') === 0) {
+			$srcAlt = str_replace(
+				str_replace(array('http://', 'https://'),'//', site_url()),
+				'',
+				$srcAlt
+			);
+		}
+
+		$relSrc = str_replace( site_url(), '', $srcAlt );
+
+		if (strpos($relSrc, '/wp-content/plugins') !== false) {
+			list (,$relSrc) = explode('/wp-content/plugins', $relSrc);
+		}
+
+		if (strpos($relSrc, $relPluginsUrl) !== false) {
+			// Determine the plugin behind the $src
+			$relSrc = trim(str_replace($relPluginsUrl, '', $relSrc), '/');
+
+			if (strpos($relSrc, '/') !== false) {
+				list ( $pluginDirName, ) = explode( '/', $relSrc );
+
+				$activePlugins = get_option( 'active_plugins', array() );
+				$activePluginsStr = implode(',', $activePlugins);
+
+				if (strpos($activePluginsStr, $pluginDirName.'/') === false) {
+					return $pluginDirName; // it belongs to an inactive plugin
+				}
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * @param bool $onlyTransient
 	 *
 	 * @return array|bool|mixed|object
@@ -711,7 +800,7 @@ SQL;
     		return array();
 	    }
 
-	    $allActivePlugins = get_option('active_plugins');
+	    $allActivePlugins = array_unique(get_option('active_plugins', array()));
 
 	    if (empty($allActivePlugins)) {
 	    	return array();
@@ -738,7 +827,7 @@ SQL;
 		    }
 
 	    	// no readme.txt file in the plugin's root folder? skip it
-			if (! file_exists(WP_PLUGIN_DIR.'/'.$pluginSlug.'/readme.txt')) {
+			if (! is_file(WP_PLUGIN_DIR.'/'.$pluginSlug.'/readme.txt')) {
 				continue;
 			}
 
@@ -818,7 +907,7 @@ SQL;
 
 	    $allActivePluginsIcons = self::fetchActiveFreePluginsIcons(true) ?: array();
 
-	    foreach (get_option('active_plugins') as $activePlugin) {
+	    foreach (array_unique(get_option('active_plugins', array())) as $activePlugin) {
 		    if (strpos($activePlugin, '/') !== false) {
 			    list ($pluginSlug) = explode('/', $activePlugin);
 
@@ -867,6 +956,11 @@ SQL;
 	 */
 	public static function triggerFrontendOptimization()
 	{
+		// Not when the CSS/JS is fetched
+		if (WPACU_GET_LOADED_ASSETS_ACTION === true) {
+			return false;
+		}
+
 		// "Elementor" Edit Mode
 		if (isset($_GET['elementor-preview']) && $_GET['elementor-preview']) {
 			return false;
@@ -913,6 +1007,10 @@ SQL;
 	 */
 	public static function formatBytes($size, $precision = 2)
 	{
+		if ((int)$size === 0) {
+			return '<span style="vertical-align: middle;" class="dashicons dashicons-warning"></span> '.__('The file appears to be empty', 'wp-asset-clean-up');
+		}
+
 		// In case a string is passed, make it to float
 		$size = (float)$size;
 
@@ -976,6 +1074,12 @@ SQL;
 				$array[$key] = self::arrayUnsetRecursive($array[$key]);
 			}
 
+			// Values such as '0' are not considered empty values
+			if (is_string($value) && trim($value) === '0') {
+				continue;
+			}
+
+			// Clear it if it's empty
 			if (empty($array[$key])) {
 				unset($array[$key]);
 			}
@@ -1001,16 +1105,10 @@ SQL;
 
 		if ($action === 'start') {
 			$startTime = (microtime(true) * 1000);
-
-			// Do not overwrite it if it's already there (e.g. in a function called several times)
-			if (wp_cache_get($wpacuStartTimeName, 'wpacu_exec_time')) {
-				return '';
-			}
-
-			wp_cache_set($wpacuStartTimeName, $startTime, 'wpacu_exec_time');
+			ObjectCache::wpacu_cache_set($wpacuStartTimeName, $startTime, 'wpacu_exec_time');
 		}
 
-		if ($action === 'end' && ($startTime = wp_cache_get($wpacuStartTimeName, 'wpacu_exec_time'))) {
+		if ($action === 'end' && ($startTime = ObjectCache::wpacu_cache_get($wpacuStartTimeName, 'wpacu_exec_time'))) {
 			// End clock time in seconds
 			$endTime = (microtime(true) * 1000);
 			$scriptExecTime = ($endTime !== $startTime && $endTime > $startTime) ? ($endTime - $startTime) : 0;
@@ -1018,11 +1116,11 @@ SQL;
 			// Calculate script execution time
 			// Is there an existing exec time (e.g. from a function called several times)?
 			// Append it to the total execution time
-			if ($scriptExecTimeExisting = wp_cache_get($wpacuExecTimeName, 'wpacu_exec_time')) {
+			if ($scriptExecTimeExisting = ObjectCache::wpacu_cache_get($wpacuExecTimeName, 'wpacu_exec_time')) {
 				$scriptExecTime += $scriptExecTimeExisting;
 			}
 
-			wp_cache_set($wpacuExecTimeName, $scriptExecTime, 'wpacu_exec_time');
+			ObjectCache::wpacu_cache_set($wpacuExecTimeName, $scriptExecTime, 'wpacu_exec_time');
 			return $scriptExecTime;
 		}
 
@@ -1036,10 +1134,10 @@ SQL;
 	 */
 	public static function getTimingValues($wpacuCacheKey)
 	{
-		$wpacuExecTiming = wp_cache_get( $wpacuCacheKey, 'wpacu_exec_time' ) ?: 0;
+		$wpacuExecTiming = ObjectCache::wpacu_cache_get( $wpacuCacheKey, 'wpacu_exec_time' ) ?: 0;
 
 		$wpacuTimingFormatMs = str_replace('.00', '', number_format($wpacuExecTiming, 2));
-		$wpacuTimingFormatS  = str_replace('.00', '', number_format(($wpacuExecTiming / 1000), 3));
+		$wpacuTimingFormatS  = str_replace(array('.00', ','), '', number_format(($wpacuExecTiming / 1000), 3));
 
 		return array('ms' => $wpacuTimingFormatMs, 's' => $wpacuTimingFormatS);
 	}

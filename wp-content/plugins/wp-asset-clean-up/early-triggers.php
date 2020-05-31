@@ -5,7 +5,17 @@ if (! defined('ABSPATH')) {
 }
 
 if (array_key_exists('wpacu_clean_load', $_GET)) {
-	$_GET['ao_noptimize'] = 1;
+	// Autoptimize
+	$_GET['ao_noptimize'] = $_REQUEST['ao_noptimize'] = '1';
+
+	// LiteSpeed Cache
+	if ( ! defined( 'LITESPEED_DISABLE_ALL' ) ) {
+		define('LITESPEED_DISABLE_ALL', true);
+	}
+
+	add_action( 'litespeed_disable_all', static function($reason) {
+		do_action( 'litespeed_debug', '[API] Disabled_all due to: A clean load of the page was requested via '. WPACU_PLUGIN_TITLE );
+	} );
 }
 
 if (! function_exists('assetCleanUpHasNoLoadMatches')) {
@@ -198,6 +208,21 @@ if (! function_exists('assetCleanUpNoLoad')) {
 			return true;
 		}
 
+		// "Pro" (theme.co) (iFrame)
+		if (isset($_POST['_cs_nonce'], $_POST['cs_preview_state']) && $_POST['_cs_nonce'] && $_POST['cs_preview_state']) {
+			return true;
+		}
+
+		// "Page Builder: Live Composer" plugin
+		if (defined('DS_LIVE_COMPOSER_ACTIVE') && DS_LIVE_COMPOSER_ACTIVE) {
+			return true;
+		}
+
+		// "WP Page Builder" plugin (By Themeum.com)
+		if (isset($_GET['load_for']) && $_GET['load_for'] === 'wppb_editor_iframe') {
+			return true;
+		}
+
 		// Perfmatters: Script Manager
 		if (isset($_GET['perfmatters'])) {
 			return true;
@@ -256,22 +281,22 @@ if (! function_exists('assetCleanUpNoLoad')) {
 		}
 
 		// Stop triggering Asset CleanUp (completely) on specific front-end pages
-		// Do the trigger here (as early as possible)
+		// Do the trigger here and if necessary exit as early as possible to save resources via "registered_taxonomy" action hook)
 		if (assetCleanUpHasNoLoadMatches()) {
 			// Only use exit() when "wpassetcleanup_load" is used
 			if (isset($_REQUEST['wpassetcleanup_load']) && $_REQUEST['wpassetcleanup_load']) {
-				include_once(ABSPATH . 'wp-includes/pluggable.php');
-
-				if (current_user_can('manage_options')) {
-					$msg = sprintf(
-						__(
-							'This page\'s URL is matched by one of the RegEx rules you have in <em>"Settings"</em> -&gt; <em>"Plugin Usage Preferences"</em> -&gt; <em>"Do not load the plugin on certain pages"</em>, thus %s is not loaded on that page and no CSS/JS are to be managed. If you wish to view the CSS/JS manager, please remove the matching RegEx rule and the list of CSS/JS will be fetched.',
-							'wp-asset-clean-up'
-						),
-						WPACU_PLUGIN_TITLE
-					);
-					exit( $msg );
-				}
+				add_action('registered_taxonomy', function() {
+					if ( current_user_can( 'manage_options' ) ) {
+						$msg = sprintf(
+							__(
+								'This page\'s URL is matched by one of the RegEx rules you have in <em>"Settings"</em> -&gt; <em>"Plugin Usage Preferences"</em> -&gt; <em>"Do not load the plugin on certain pages"</em>, thus %s is not loaded on that page and no CSS/JS are to be managed. If you wish to view the CSS/JS manager, please remove the matching RegEx rule and the list of CSS/JS will be fetched.',
+								'wp-asset-clean-up'
+							),
+							WPACU_PLUGIN_TITLE
+						);
+						exit( $msg );
+					}
+				});
 			}
 
 			return true;
@@ -285,3 +310,27 @@ if (! function_exists('assetCleanUpNoLoad')) {
 if (! defined('JSON_ERROR_NONE')) {
 	define('JSON_ERROR_NONE', 0);
 }
+
+// Make sure the plugin doesn't load when the editor of either "X" theme or "Pro" website creator (theme.co) is ON
+add_action('init', static function() {
+	if (is_admin()) {
+		return; // Not relevant for the Dashboard view, stop here!
+	}
+
+	if (class_exists('\WpAssetCleanUp\Menu') && \WpAssetCleanUp\Menu::userCanManageAssets() && method_exists('Cornerstone_Common', 'get_app_slug') && in_array(get_stylesheet(), array('x', 'pro'))) {
+		$customAppSlug = get_stylesheet(); // default one ('x' or 'pro')
+
+		// Is there any custom slug set in "/wp-admin/admin.php?page=cornerstone-settings"?
+		// "Settings" -> "Custom Path" (check it out below)
+		$cornerStoneSettings = get_option('cornerstone_settings');
+		if (isset($cornerStoneSettings['custom_app_slug']) && $cornerStoneSettings['custom_app_slug'] !== '') {
+			$customAppSlug = $cornerStoneSettings['custom_app_slug'];
+		}
+
+		$lengthToUse = strlen($customAppSlug) + 2; // add the slashes to the count
+
+		if (substr($_SERVER['REQUEST_URI'], -$lengthToUse) === '/'.$customAppSlug.'/') {
+			add_filter( 'wpacu_prevent_any_changes', '__return_true' );
+		}
+	}
+});

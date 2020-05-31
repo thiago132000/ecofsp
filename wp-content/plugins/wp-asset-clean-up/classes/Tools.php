@@ -2,6 +2,8 @@
 namespace WpAssetCleanUp;
 
 use WpAssetCleanUp\OptimiseAssets\OptimizeCommon;
+use WpAssetCleanUp\OptimiseAssets\OptimizeCss;
+use WpAssetCleanUp\OptimiseAssets\OptimizeJs;
 use WpAssetCleanUp\ThirdParty\Browser;
 
 /**
@@ -16,6 +18,11 @@ class Tools
 	public $wpacuFor = 'reset';
 
 	/**
+	 * @var array
+	 */
+	public $errorLogsData = array();
+
+	/**
 	 * @var
 	 */
 	public $resetChoice;
@@ -24,6 +31,11 @@ class Tools
 	 * @var bool
 	 */
 	public $licenseDataRemoved = false;
+
+	/**
+	 * @var bool
+	 */
+	public $cachedAssetsRemoved = false;
 
 	/**
 	 * @var array
@@ -36,6 +48,14 @@ class Tools
 	public function __construct()
 	{
 		$this->wpacuFor = Misc::getVar('request', 'wpacu_for', $this->wpacuFor);
+
+		if ($this->wpacuFor === 'debug') {
+			$isLogPHPErrors       = @ini_get( 'log_errors' );
+			$logPHPErrorsLocation = @ini_get( 'error_log' ) ?: 'none set';
+
+			$this->errorLogsData['log_status'] = $isLogPHPErrors;
+			$this->errorLogsData['log_file']   = $logPHPErrorsLocation;
+		}
 	}
 
 	/**
@@ -58,6 +78,10 @@ class Tools
 		if (Misc::getVar('post', 'wpacu-get-system-info')) {
 			$this->downloadSystemInfo();
 		}
+
+		if (Misc::getVar('post', 'wpacu-get-error-log') && is_file($this->errorLogsData['log_file'])) {
+		    self::downloadFile($this->errorLogsData['log_file']);
+        }
 
 		if (! empty($_POST) && $this->wpacuFor === 'import_export') {
 			$wpacuImportExport = new ImportExport();
@@ -94,8 +118,9 @@ class Tools
 					return;
 				}
 
-				$this->resetChoice        = isset($resetDoneInfoArray['reset_choice']) ? $resetDoneInfoArray['reset_choice'] : '';
-				$this->licenseDataRemoved = isset($resetDoneInfoArray['license_data_removed']) ? $resetDoneInfoArray['license_data_removed'] : '';
+				$this->resetChoice         = isset($resetDoneInfoArray['reset_choice']) ? $resetDoneInfoArray['reset_choice'] : '';
+				$this->licenseDataRemoved  = isset($resetDoneInfoArray['license_data_removed']) ? $resetDoneInfoArray['license_data_removed'] : '';
+				$this->cachedAssetsRemoved = isset($resetDoneInfoArray['cached_assets_removed']) ? $resetDoneInfoArray['cached_assets_removed'] : '';
 
 				delete_transient('wpacu_reset_done');
 
@@ -115,6 +140,10 @@ class Tools
 		if ($this->data['for'] === 'system_info') {
 		    $this->data['system_info'] = $this->getSystemInfo();
         }
+
+		if ($this->data['for'] === 'debug') {
+			$this->data['error_log'] = $this->errorLogsData;
+		}
 
 		Main::instance()->parseTemplate('admin-page-tools', $this->data, true);
 	}
@@ -365,7 +394,7 @@ class Tools
 
 	    $return .= 'Disable Emojis (site-wide)?                       '. (($settings['disable_emojis'] == 1) ? 'Yes' : 'No') . "\n";
         $return .= 'Disable oEmbed (Embeds) (site-wide)?              '. (($settings['disable_oembed'] == 1) ? 'Yes' : 'No') . "\n";
-	    $return .= 'Disable Dashicons For Guests (site-wide)?         '. (($settings['disable_dashicons_for_guests'] == 1) ? 'Yes' : 'No') . "\n";
+	    $return .= 'Disable Dashicons if Toolbar (top admin bar) is not showing (site-wide)?         '. (($settings['disable_dashicons_for_guests'] == 1) ? 'Yes' : 'No') . "\n";
 	    $return .= 'Disable Gutenberg CSS Block Editor (site-wide)?   '. (($settings['disable_wp_block_library'] == 1) ? 'Yes' : 'No') . "\n";
 	    $return .= 'Disable jQuery Migrate (site-wide)?               '. (($settings['disable_jquery_migrate'] == 1) ? 'Yes' : 'No') . "\n";
 	    $return .= 'Disable Comment Reply (site-wide)?                '. (($settings['disable_comment_reply'] == 1) ? 'Yes' : 'No') . "\n\n";
@@ -489,6 +518,27 @@ SQL;
         }
 
 	    return json_encode($arrayFromJson);
+    }
+
+	/**
+	 * e.g. error_log file for debugging purposes
+	 *
+	 * @param $localPathToFile
+	 */
+	public static function downloadFile($localPathToFile)
+    {
+	    if (! Menu::userCanManageAssets()) {
+		    exit();
+	    }
+
+	    $date = date('j-M-Y');
+	    $host = parse_url(site_url(), PHP_URL_HOST);
+
+	    header('Content-type: text/plain');
+	    header('Content-Disposition: attachment; filename="'.$host.'-website-errors-'.$date.'.log"');
+
+	    echo file_get_contents($localPathToFile);
+	    exit();
     }
 
 	/**
@@ -620,6 +670,24 @@ SQL;
 				$this->licenseDataRemoved = true;
 			}
 
+			// Remove all cached CSS/JS files?
+			if (Misc::getVar('post', 'wpacu-remove-cache-assets') !== '') {
+				$pathToCacheDirCss = WP_CONTENT_DIR . OptimizeCss::getRelPathCssCacheDir();
+				$pathToCacheDirJs  = WP_CONTENT_DIR . OptimizeJs::getRelPathJsCacheDir();
+
+				$allCssFiles = glob( $pathToCacheDirCss . '**/*.css' );
+				$allJsFiles  = glob( $pathToCacheDirJs . '**/*.js' );
+				$allCachedAssets = array_merge($allCssFiles, $allJsFiles);
+
+				if (! empty($allCachedAssets)) {
+				    foreach ($allCachedAssets as $cachedAssetFile) {
+				        @unlink($cachedAssetFile);
+                    }
+                }
+
+				$this->cachedAssetsRemoved = true;
+            }
+
 			// Remove Asset CleanUp (Pro)'s cache transients
             $this->clearAllCacheTransients();
 		}
@@ -634,8 +702,10 @@ SQL;
 
         set_transient('wpacu_reset_done',
             json_encode(array(
-                'reset_choice'         => $this->resetChoice,
-                'license_data_removed' => $this->licenseDataRemoved)
+	                'reset_choice'          => $this->resetChoice,
+	                'license_data_removed'  => $this->licenseDataRemoved,
+	                'cached_assets_removed' => $this->cachedAssetsRemoved
+	            )
             ),
             30
         );
@@ -691,7 +761,11 @@ SQL;
 			$msg = __('Everything was reset (including settings, individual &amp; bulk unloads, load exceptions) to the same point it was when you first activated the plugin.', 'wp-asset-clean-up');
 
 			if ($this->licenseDataRemoved) {
-				$msg .= '<span id="wpacu-license-data-removed-msg">'.__('Any license data was also removed, as you requested.', 'wp-asset-clean-up').'</span>';
+				$msg .= ' <span id="wpacu-license-data-removed-msg">'.__('The license information was also removed.', 'wp-asset-clean-up').'</span>';
+			}
+
+			if ($this->cachedAssetsRemoved) {
+				$msg .= ' <span id="wpacu-cached-assets-removed-msg">'.__('The cached CSS/JS files were also removed.', 'wp-asset-clean-up').'</span>';
 			}
 		}
 		?>

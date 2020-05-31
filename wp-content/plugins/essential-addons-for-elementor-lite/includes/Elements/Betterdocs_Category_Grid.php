@@ -36,7 +36,7 @@ class Betterdocs_Category_Grid extends Widget_Base
 
     public function get_icon()
     {
-        return 'eicon-document-file';
+        return 'eaicon-betterdocs-category-grid';
     }
 
     /**
@@ -50,8 +50,22 @@ class Betterdocs_Category_Grid extends Widget_Base
 	 * @return array Widget keywords.
 	 */
 	public function get_keywords() {
-		return [ 'better', 'doc', 'ea' ];
-	}
+		return [
+            'knowledgebase',
+            'knowledge base',
+            'documentation',
+            'Doc',
+            'kb',
+            'betterdocs',
+            'ea betterdocs',
+            'ea',
+            'essential addons'
+        ];
+    }
+
+    public function get_custom_help_url() {
+        return 'https://essential-addons.com/elementor/docs/betterdocs-category-grid/';
+    }
 
     protected function _register_controls()
     {
@@ -97,24 +111,6 @@ class Betterdocs_Category_Grid extends Widget_Base
                 [
                     'label' => esc_html__( 'Column', 'essential-addons-for-elementor-lite'),
                     'type' => Controls_Manager::HEADING,
-                ]
-            );
-
-            $this->add_responsive_control(
-                'column_space',
-                [
-                    'label' => __('Column Space', 'essential-addons-for-elementor-lite'),
-                    'type' => Controls_Manager::SLIDER,
-                    'size_units' => ['px', '%', 'em'],
-                    'range' => [
-                        '%' => [
-                            'max' => 100,
-                            'step' => 1,
-                        ],
-                    ],
-                    'selectors' => [
-                        '{{WRAPPER}} .betterdocs-categories-wrap .docs-single-cat-wrap' => 'margin: {{SIZE}}{{UNIT}};',
-                    ],
                 ]
             );
 
@@ -503,13 +499,35 @@ class Betterdocs_Category_Grid extends Widget_Base
         if( ! defined('BETTERDOCS_URL') ) return;
         $settings = $this->get_settings_for_display();
         $shortcode  = sprintf('[betterdocs_category_grid]', apply_filters('eael_betterdocs_category_grid_params', []));
-
         echo do_shortcode( shortcode_unautop( $shortcode ) );
+        $this->load_js_on_editor();
     }
 
-	public function render_plain_content() {
-		// In plain mode, render without shortcode
-		echo '[betterdocs_category_grid]';
-	}
+    protected function load_js_on_editor()
+    {
+        if (\Elementor\Plugin::instance()->editor->is_edit_mode()) {
+        ?>
+        	<script>
+                jQuery(document).ready(function($) {
+                    var $scope = $(".elementor-element-"+"<?php echo $this->get_id(); ?>"),
+                        masonryGrid = $(".betterdocs-categories-wrap.layout-masonry", $scope);
+                    if (masonryGrid.length) {
+                        var columnPerGrid = masonryGrid.attr('data-column'),
+                            masonryItem = $(".betterdocs-categories-wrap.layout-masonry .docs-single-cat-wrap"),
+                            doc_page_column_space = '<?php echo get_theme_mod('betterdocs_doc_page_column_space'); ?>',
+                            total_margin = columnPerGrid * doc_page_column_space;
+
+                        masonryItem.css("width", "calc((100% - "+total_margin+"px) / "+parseInt(columnPerGrid)+")");
+                        masonryGrid.masonry({
+                            itemSelector: ".docs-single-cat-wrap",
+                            percentPosition: true,
+                            gutter: doc_page_column_space
+                        });
+                    }
+                });
+            </script>
+            <?php
+        }
+    }
 
 }

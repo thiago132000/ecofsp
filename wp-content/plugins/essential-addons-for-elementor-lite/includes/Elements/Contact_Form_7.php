@@ -38,7 +38,7 @@ class Contact_Form_7 extends Widget_Base
      */
     public function get_title()
     {
-        return __('EA Contact Form 7', 'essential-addons-for-elementor-lite');
+        return __('Contact Form 7', 'essential-addons-for-elementor-lite');
     }
 
     /**
@@ -64,7 +64,28 @@ class Contact_Form_7 extends Widget_Base
      */
     public function get_icon()
     {
-        return 'fa fa-envelope-o';
+        return 'eaicon-contact-form-7';
+    }
+
+    public function get_keywords()
+    {
+        return [
+            'contact form',
+            'ea contact form',
+            'form styler',
+            'elementor form',
+            'feedback',
+            'cf7',
+            'ea cf7',
+            'ea contact form 7',
+            'ea',
+            'essential addons'
+        ];
+    }
+
+    public function get_custom_help_url()
+    {
+        return 'https://essential-addons.com/elementor/docs/contact-form-7/';
     }
 
     /**
@@ -283,7 +304,7 @@ class Contact_Form_7 extends Widget_Base
             Group_Control_Background::get_type(),
             [
                 'name' => 'eael_contact_form_background',
-                'label' => __('Background', 'plugin-domain'),
+                'label' => __('Background', 'essential-addons-for-elementor-lite'),
                 'types' => ['classic', 'gradient'],
                 'selector' => '{{WRAPPER}} .eael-contact-form',
             ]
@@ -536,7 +557,7 @@ class Contact_Form_7 extends Widget_Base
                 'type' => Controls_Manager::COLOR,
                 'default' => '',
                 'selectors' => [
-                    '{{WRAPPER}} .eael-contact-form-7 .wpcf7-form-control.wpcf7-text, {{WRAPPER}} .eael-contact-form-7 .wpcf7-form-control.wpcf7-date, {{WRAPPER}} .eael-contact-form-7 .wpcf7-form-control.wpcf7-textarea, {{WRAPPER}} .eael-contact-form-7 .wpcf7-form-control.wpcf7-select' => 'color: {{VALUE}}',
+                    '{{WRAPPER}} .eael-contact-form-7 .wpcf7-form-control.wpcf7-text, {{WRAPPER}} .eael-contact-form-7 .wpcf7-form-control.wpcf7-date, {{WRAPPER}} .eael-contact-form-7 .wpcf7-form-control.wpcf7-textarea, {{WRAPPER}} .eael-contact-form-7 .wpcf7-form-control.wpcf7-select, {{WRAPPER}} .eael-contact-form-7 .wpcf7-list-item-label' => 'color: {{VALUE}}',
                 ],
                 'separator' => 'before',
             ]
@@ -548,7 +569,7 @@ class Contact_Form_7 extends Widget_Base
                 'label' => __('Spacing', 'essential-addons-for-elementor-lite'),
                 'type' => Controls_Manager::SLIDER,
                 'default' => [
-                    'size' => '20',
+                    'size' => '0',
                     'unit' => 'px',
                 ],
                 'range' => [
@@ -752,6 +773,7 @@ class Contact_Form_7 extends Widget_Base
                 'type' => Controls_Manager::COLOR,
                 'selectors' => [
                     '{{WRAPPER}} .eael-contact-form-7 .wpcf7-form label' => 'color: {{VALUE}}',
+                    '{{WRAPPER}} .eael-contact-form-7 label' => 'color: {{VALUE}}'
                 ],
                 'condition' => [
                     'labels_switch' => 'yes',
@@ -1498,6 +1520,116 @@ class Contact_Form_7 extends Widget_Base
             ]
         );
 
+        $this->end_controls_section();
+
+        /**
+         * Style Tab: After Submit Feedback
+         */
+        $this->start_controls_section(
+            'section_after_submit_feedback_style',
+            [
+                'label' => __('After Submit Feedback', 'essential-addons-for-elementor-lite'),
+                'tab' => Controls_Manager::TAB_STYLE,
+            ]
+        );
+        
+        $this->add_group_control(
+            Group_Control_Typography::get_type(),
+            [
+                'name' => 'contact_form_after_submit_feedback_typography',
+                'label' => __('Typography', 'essential-addons-for-elementor-lite'),
+                'selector' => '{{WRAPPER}} .eael-contact-form-7 .wpcf7-mail-sent-ng, {{WRAPPER}} .eael-contact-form-7 .wpcf7-mail-sent-ok',
+                'separator' => 'before',
+            ]
+        );
+
+        $this->add_control(
+            'contact_form_after_submit_feedback_color',
+            [
+                'label' => __('Text Color', 'essential-addons-for-elementor-lite'),
+                'type' => Controls_Manager::COLOR,
+                'default' => '',
+                'selectors' => [
+                    '{{WRAPPER}} .eael-contact-form-7 .wpcf7-mail-sent-ng' => 'color: {{VALUE}}',
+                    '{{WRAPPER}} .eael-contact-form-7 .wpcf7-mail-sent-ok' => 'color: {{VALUE}}',
+                ],
+            ]
+        );
+
+        $this->add_group_control(
+            Group_Control_Background::get_type(),
+            [
+                'name' => 'contact_form_after_submit_feedback_background',
+                'label' => __('Background', 'essential-addons-for-elementor-lite'),
+                'types' => ['classic', 'gradient'],
+                'selector' => '{{WRAPPER}} .eael-contact-form-7 .wpcf7-mail-sent-ng, {{WRAPPER}} .eael-contact-form-7 .wpcf7-mail-sent-ok',
+                'separator' => 'before',
+            ]
+        );
+
+        $this->add_group_control(
+            Group_Control_Border::get_type(),
+            [
+                'name' => 'contact_form_after_submit_feedback_border',
+                'label' => __('Border', 'essential-addons-for-elementor-lite'),
+                'placeholder' => '1px',
+                'default' => '1px',
+                'selector' => '{{WRAPPER}} .eael-contact-form-7 .wpcf7-mail-sent-ng, {{WRAPPER}} .eael-contact-form-7 .wpcf7-mail-sent-ok',
+                'separator' => 'before',
+            ]
+        );
+
+        $this->add_responsive_control(
+            'contact_form_after_submit_feedback_border_radius',
+            [
+                'label' => esc_html__('Radius', 'essential-addons-for-elementor-lite'),
+                'type' => Controls_Manager::SLIDER,
+                'size_units' => ['px', 'em', '%'],
+                'range' => [
+                    'px' => [
+                        'min' => 10,
+                        'max' => 1500,
+                    ],
+                    'em' => [
+                        'min' => 1,
+                        'max' => 80,
+                    ],
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .eael-contact-form-7 .wpcf7-mail-sent-ng' => 'border-radius: {{SIZE}}{{UNIT}};',
+                    '{{WRAPPER}} .eael-contact-form-7 .wpcf7-mail-sent-ok' => 'border-radius: {{SIZE}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'contact_form_after_submit_feedback_border_margin',
+            [
+                'label' => esc_html__('Margin', 'essential-addons-for-elementor-lite'),
+                'type' => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', 'em', '%'],
+                'selectors' => [
+                    '{{WRAPPER}} .eael-contact-form-7 .wpcf7-mail-sent-ng' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                    '{{WRAPPER}} .eael-contact-form-7 .wpcf7-mail-sent-ok' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+                'separator' => 'before',
+            ]
+        );
+
+        $this->add_responsive_control(
+            'contact_form_after_submit_feedback_border_padding',
+            [
+                'label' => esc_html__('Padding', 'essential-addons-for-elementor-lite'),
+                'type' => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', 'em', '%'],
+                'selectors' => [
+                    '{{WRAPPER}} .eael-contact-form-7 .wpcf7-mail-sent-ng' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                    '{{WRAPPER}} .eael-contact-form-7 .wpcf7-mail-sent-ok' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+                'separator' => 'before',
+            ]
+        );
+        
         $this->end_controls_section();
 
     }

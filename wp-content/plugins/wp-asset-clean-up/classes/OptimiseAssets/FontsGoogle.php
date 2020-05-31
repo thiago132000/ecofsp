@@ -40,17 +40,22 @@ class FontsGoogle
 
 		add_action('wp_head',   array($this, 'preloadFontFiles'), 1);
 		add_action('wp_footer', static function() {
-			if ( Plugin::preventAnyChanges() || Main::isTestModeActive() ) {
+			if ( Plugin::preventAnyChanges() || Main::isTestModeActive() || Main::instance()->settings['google_fonts_remove'] ) {
 				return;
 			}
 
 			echo self::NOSCRIPT_WEB_FONT_LOADER;
 		}, PHP_INT_MAX);
 
+		add_filter('wpacu_html_source_after_optimization', static function($htmlSource) {
+			// Is the mark still there and wasn't replaced? Strip it
+			return str_replace(FontsGoogle::NOSCRIPT_WEB_FONT_LOADER, '', $htmlSource);
+		});
+
 		add_action('init', function() {
 			// don't apply any changes if not in the front-end view (e.g. Dashboard view)
 			// or test mode is enabled and a guest user is accessing the page
-			if ( Plugin::preventAnyChanges() || Main::isTestModeActive() ) {
+			if ( Plugin::preventAnyChanges() || Main::isTestModeActive() || Main::instance()->settings['google_fonts_remove'] ) {
 				return;
 			}
 
@@ -185,6 +190,11 @@ class FontsGoogle
 					continue;
 				}
 
+				// Check if the CSS has any 'data-wpacu-skip' attribute; if it does, do not continue and leave it as it is (non-combined)
+				if (preg_match('#data-wpacu-skip([=>/ ])#i', $linkTag)) {
+					continue;
+				}
+
 				preg_match_all('#href=(["\'])' . '(.*)' . '(["\'])#Usmi', $linkTag, $outputMatches);
 				$linkHrefOriginal = $finalLinkHref = trim($outputMatches[2][0], '"\'');
 
@@ -228,6 +238,8 @@ class FontsGoogle
 					}
 				}
 			}
+
+			$finalCombinableLinks = array_values($finalCombinableLinks);
 
 			// Only proceed with the optimization/combine if there's obviously at least 2 combinable URL requests to Google Fonts
 			// OR the loading type is different than render-blocking
@@ -312,6 +324,11 @@ class FontsGoogle
 		// Go through each STYLE tag
 		foreach ($styleMatches as $styleInlineArray) {
 			list($styleInlineTag, $styleInlineContent) = $styleInlineArray;
+
+			// Check if the STYLE tag has any 'data-wpacu-skip' attribute; if it does, do not continue
+			if (preg_match('#data-wpacu-skip([=>/ ])#i', $styleInlineTag)) {
+				continue;
+			}
 
 			// Is the content relevant?
 			if (! preg_match('/@import(\s+|)(url|\(|\'|")/i', $styleInlineContent)
@@ -600,18 +617,14 @@ HTML;
 
 					// Any types? e.g. 400, 400italic, bold, etc.
 					$hasTypes = false;
-					if (isset($fontValues['types']) && is_array($fontValues['types']) && ! empty($fontValues['types'])) {
-						$wfConfigGoogleFamily .= ':' . implode(',', $fontValues['types']);
+					if (isset($fontValues['types']) && $fontValues['types']) {
+						$wfConfigGoogleFamily .= ':'.$fontValues['types'];
 						$hasTypes = true;
 					}
 
 					if ($subSetsStr) {
-						// No type and has a subset? Add the default "regular" one
-						if (! $hasTypes) {
-							$wfConfigGoogleFamily .= ':regular';
-						}
-
-						$wfConfigGoogleFamily .= ':' . $subSetsStr;
+						// If there are types, continue to use the comma delimiter
+						$wfConfigGoogleFamily .= ($hasTypes ? ',' : ':') . $subSetsStr;
 					}
 
 					// Append extra parameters to the last family from the list

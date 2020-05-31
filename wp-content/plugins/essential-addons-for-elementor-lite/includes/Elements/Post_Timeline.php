@@ -23,17 +23,38 @@ class Post_Timeline extends Widget_Base
 
     public function get_title()
     {
-        return __('EA Post Timeline', 'essential-addons-for-elementor-lite');
+        return __('Post Timeline', 'essential-addons-for-elementor-lite');
     }
 
     public function get_icon()
     {
-        return 'eicon-post-list';
+        return 'eaicon-post-timeline';
     }
 
     public function get_categories()
     {
         return ['essential-addons-elementor'];
+    }
+    
+    public function get_keywords()
+    {
+        return [
+            'post',
+            'posts',
+            'timeline',
+            'ea post timeline',
+            'ea posts timeline',
+            'blog posts',
+            'content marketing',
+            'blogger',
+            'ea',
+            'essential addons'
+        ];
+    }
+
+    public function get_custom_help_url()
+    {
+        return 'https://essential-addons.com/elementor/docs/post-timeline/';
     }
 
     protected function _register_controls()
@@ -59,6 +80,21 @@ class Post_Timeline extends Widget_Base
         );
 
         $this->add_control(
+			'eael_timeline_display_overlay',
+			[
+				'label' => __( 'Show Overlay', 'essential-addons-for-elementor-lite' ),
+				'type' => Controls_Manager::SWITCHER,
+				'label_on' => __( 'Show', 'essential-addons-for-elementor-lite' ),
+				'label_off' => __( 'Hide', 'essential-addons-for-elementor-lite' ),
+				'return_value' => 'yes',
+                'default' => 'yes',
+                'selectors' => [
+                    '{{WRAPPER}} .eael-timeline-post-image' => 'opacity: .6',
+                ],
+			]
+		);
+
+        $this->add_control(
             'eael_timeline_overlay_color',
             [
                 'label' => __('Overlay Color', 'essential-addons-for-elementor-lite'),
@@ -68,7 +104,9 @@ class Post_Timeline extends Widget_Base
                 'selectors' => [
                     '{{WRAPPER}} .eael-timeline-post-inner' => 'background: {{VALUE}}',
                 ],
-
+                'condition' => [
+                    'eael_timeline_display_overlay' => 'yes',
+                ],
             ]
         );
 
@@ -319,7 +357,7 @@ class Post_Timeline extends Widget_Base
 
         echo '<div ' . $this->get_render_attribute_string('eael_post_timeline_wrapper') . '>
 		    <div ' . $this->get_render_attribute_string('eael_post_timeline') . '>
-				' . self::__render_template($args, $settings) . '
+				' . self::render_template_($args, $settings) . '
 		    </div>
 		</div>';
 

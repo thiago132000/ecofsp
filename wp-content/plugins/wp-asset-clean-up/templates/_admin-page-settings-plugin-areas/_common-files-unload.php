@@ -44,7 +44,7 @@ $styleTabContent = ($selectedTabArea === $tabIdArea) ? 'style="display: table-ce
             </th>
             <td>
                 <label class="wpacu_switch">
-                    <input id="wpacu_disable_oembed"
+                    <input id="wpacu_disable_wp_embed"
                            type="checkbox"
 					    <?php echo (($data['disable_oembed'] == 1) ? 'checked="checked"' : ''); ?>
                            name="<?php echo WPACU_PLUGIN_ID . '_settings'; ?>[disable_oembed]"

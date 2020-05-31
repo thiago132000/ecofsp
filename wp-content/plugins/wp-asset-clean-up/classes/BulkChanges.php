@@ -65,9 +65,7 @@ class BulkChanges
      */
     public function pageBulkUnloads()
     {
-	    if ($assetsInfo = get_transient(WPACU_PLUGIN_ID . '_assets_info')) {
-		    $this->data['assets_info'] = json_decode($assetsInfo, ARRAY_A);
-	    }
+	    $this->data['assets_info'] = Main::getHandlesInfo();
 	    $this->data['for'] = $this->wpacuFor;
 
         if ($this->wpacuFor === 'post_types') {

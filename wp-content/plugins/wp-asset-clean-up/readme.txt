@@ -3,8 +3,8 @@ Contributors: gabelivan
 Tags: minify css, minify javascript, defer css javascript, page speed, dequeue, performance
 Donate link: https://www.gabelivan.com/items/wp-asset-cleanup-pro/?utm_source=wp_org_lite&utm_medium=donate
 Requires at least: 4.5
-Tested up to: 5.3.2
-Stable tag: 1.3.5.5
+Tested up to: 5.4.1
+Stable tag: 1.3.6.3
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl.html
 
@@ -179,6 +179,89 @@ With the recently released "Test Mode" feature, you can safely unload assets on 
 4. Homepage CSS & JS Management (List sorted by location)
 
 == Changelog ==
+= 1.3.6.3 =
+* New Feature in the CSS/JS Manager: The handle rows can be contracted/expanded (their status is saved when the form is submitted); This is useful to make the whole area smaller (less scrolling) as there will likely be CSS/JS files that you know you will never edit for a long time (if ever) and it's better to have them contracted
+* New Option in "Settings" - "Plugin Usage Preferences": Hide Dashboard's "Asset CleanUp Pro" menu from the left sidebar in case you don't use the plugin too often or wish to have a cleaner sidebar (read more: https://assetcleanup.com/docs/?p=584)
+* Compatibility with Ronneby Theme: Alter the style/script tag later (e.g. by appending plugin markers) after plugins such as "Ronneby Core" alter it (in this case it prevents the URLs from the LINK tags to be stripped)
+* When listing dependencies in the CSS JS managing list (e.g. the "children" of a "parent"), show the unloaded ones in the red font; Dependency handles are linked as anchors for easier navigation between them
+* WP Rocket compatibility: Make sure HTML changes made by Asset CleanUp Pro are always applied (via "rocket_buffer" filter hook) before WP Rocket saves the HTML content to the cached file
+* Fix: After updating the the CSS/JS manager on any page, the page preloads for the guest visitors; Make sure the response from wp_remote_get() is always checked to avoid PHP errors logged to error_log (even though the errors are harmless for the front-end view, the error log files can get too big)
+* Fix (unstyled CSS/JS management area in front-end view): Make sure the plugin's own style is properly loaded asynchronously in Firefox in any situation
+
+= 1.3.6.2 =
+* Once a page is updated, the plugin preloads that page for both the admin and the guest visitor, making sure any new changes would take effect, saving the admin's time and making sure any first visitor coming to that page will access it faster (not having to wait for the caching to re-built)
+* If the attribute "data-wpacu-skip" is applied to any CSS/JS, then no alteration (e.g. no minify and no addition to any combine list) will be applied to that file (apart from the actual unload or attributes such as async/defer)
+* 'Remove All "generator" meta tags?' improvement: Higher accuracy in stripping META tag generators if the option is enabled in case some of their attributes have no quotes around them (rare cases)
+* If 'Remove "REST API" link tag?' is enabled, the /wp-json/ reference is also removed from the "Response headers" when accessing the page via remove_action()
+* Compatibility with extra page builders: "X" & "PRO" themes (Theme.co), "WP Page Builder" & "Page Builder: Live Composer" plugins: whenever their editor is ON, no unloads or any other changes to the HTML source (including minification) are performed to make sure the editor is loading its files and works smoothly
+* Compatibility with "Redis Object Cache" plugin: The global variable $wp_object_cache from the WordPress core is no longer used and it's replaced with a custom solution
+* Compatibility with "404page – your smart custom 404 error page" plugin and similar plugins that are making pages as 404 customizable ones
+* For debugging purposes, the admin can use /?wpacu_no_cache to view how the website would load without the CSS/JS cache applied (the files will still be referenced from the caching directory but they will be dynamically generated instead)
+* Sometimes, large inline STYLE/SCRIPT tags' content has to be minified; if it's between 40KB and 500 KB it will be cached; any tags' content over 500KB will not be minified as it would use too many resources; it's advisable to put very large tag content into a .js external file as it would affect the TTFB (time to the first byte) when the page is loaded
+* Any inline CSS/JS associated with a handle (generated via wp_add_inline_style() and wp_add_inline_script() respectively) are automatically added to the combined file
+* Combined CSS/JS files are all stored in /wp-content/cache/asset-cleanup/("css" or "js")/ to avoid duplicated files that used to be stored in "logged-in" directory which is no longer created; This reduces the total disk space especially when the same CSS/JS is created (sometimes these files are quite large) for both guests & logged-in users
+* If "Combine loaded CSS (Stylesheets) into fewer files" is enabled, the LINK tags that are preloaded (at least two of them) will also be combined, thus reducing the number of HTTP requests
+* The method loadHTML() from DOMDocument is processing tags faster as the initial HTML source passed to it as a parameter goes through several filters, making it much smaller which makes a different in page speed when it comes to large HTML sources
+* Prevent certain DOMDocument calls (which can be slow on large HTML documents) when they are not necessary (e.g. when preloading CSS stylesheets and the RegEx which is faster can do the same task with the same accuracy)
+* Strip LINK tags that are pointing to empty content (including any inline code associated with the enqueued style added via wp_add_inline_style() function) if "CSS Files Minification" is enabled, making sure any empty tags are also stripped when "Inline CSS Files" is enabled, this saving HTTP requests and having less DOM elements
+* In some cases, the PHP function strtr() has proven to be faster than str_replace() to make replacements, thus it has been applied to some methods that are dealing with the alteration of the HTML source
+* Notify the admin that unloading 'jquery-migrate' won't unload it's "child" as well, 'jquery' (as it's a special case)
+* Fix: In rare cases, URLs to the assets are starting with ../ (it's not the best practice as this would only work depending on the page's URL structure); Make sure the file's size is calculated correctly and the right URL for the file is checked in the background to determine if it returns a 200 OK response or not
+* Fix: Store the assets info (which are shown only within the Dashboard for reference purposes) with the relative location (UR) to the asset, in case the data is later imported from a Staging to Live environment, it won't show any Staging URLs on the Live website on pages such as "Overview", thus avoiding any confusion the admin might have
+* Fix: Make sure the time dequeueing CSS/JS is calculated correctly
+* Fix: If "Asynchronous via Web Font Loader (webfont.js)" was chosen for "Combine Multiple Requests Into Fewer Ones", the font weights weren't added to the final generated SCRIPT tag
+* Fix: Make sure when the handle information is saved, there are no PHP notice errors if the 'src' index is missing as some handles do not have an "src"
+
+= 1.3.6.1 =
+* Increased the speed of unloading (dequeueing) styles & scripts by ~40ms (caching is used to avoid calling the same PHP code during several action hooks)
+* Higher accuracy in stripping 'before' and 'after' associated inline SCRIPT after adding the content to the JS combined file
+* When combining JS content, make sure to extract the right relative path to make it combinable if a local file is loaded and it starts with // in the "src" attribute
+* Show confirmation message when unloading specific files that are very likely needed such as jQuery, Backbone & Underscore libraries
+* Alert the admin when there are unload rules from inactive plugins on pages such as "Bulk Changes" & "Overview"
+* Keep Dashicons loaded if the toolbar (top admin bar) is shown
+* Prevent front-end optimisation code from triggering while the CSS/JS is fetched, thus saving resources and improving the speed of retrieving the assets
+* Optimised the plugin to use less calls to MinifyCss & MinifyJs for hardcoded assets reducing considerably the resources used (sometimes timeout errors are generated in hosts with a lower resources allocated)
+* When a plugin page (e.g. "Settings") is visited within the Dashboard, trigger a maintenance script that will remove inactive handle data information (from handles without any rule attached to it, often from deleted plugins no longer used) from the "wpassetcleanup_global_data" option value (from `options` table), thus making it lighter
+* In many hosting environments, the total number of fields submitted is maximum 1000 (set by default in php.ini); The total number of fields that were sent have been reduced (e.g. hardcoded assets information) as they are only enabled via JavaScript whenever they are relevant to make sure there are less fields sent (to void partial submit and missing data as a result in case the admin has difficulties increase the default 1000 in php.ini)
+* Do not automatically store hardcoded assets info when the CSS/JS manager list is loaded; Instead, store it IF there's a rule attached to it in order to make the contents of the "wpassetcleanup_global_data" option smaller in size (for a lighter database & faster MySQL queries)
+* Clear plugin's cache via AJAX after "Settings" is updated within the Dashboard (this is more effective then clearing it when the page reloads as it could take some time to clear the cache if there are lots of files stored there)
+* Whenever Asset CleanUp's caching is cleared, the Autoptimize (if enabled) caching is also cleared via AJAX (in an asynchronous way) to avoid any broken CSS/JS (rare cases) even for short time
+* Trigger certain actions (to save database & disk space) when the plugin is deactivated: Clear all its transients from the database & Remove the caching directory if it doesn't have any more CSS/JS; If all the plugin's changes were cleared via "Tools" -> "Reset", then deactivating the plugin will completely clear any of its traces
+* The plugin's own files that are needed for the plugin's functionality (they are only loading for the logged-in admin), are loaded asynchronously (CSS) and deferred (JS) to ensure the admin doesn't load them as render-blocking especially when managing the pages in the front-end view
+* The combined CSS tags can now be altered for any reason via add_filter() through the 'wpacu_combined_css_tag' tag name, just like the combined JS tags are via 'wpacu_combined_js_tag'
+* While the CSS/JS assets are fetched prevent extra performance plugins from triggering their optimisation for CSS/JS/HTML as the action is irrelevant and uses resources during the fetching of the assets for the admin
+* Fix: Remove request to non-existent CSS file within the Dashboard that generated a 404 Not Found error in the browser's console (harmless, but confusing)
+
+= 1.3.6.0 =
+* Improved the speed of the generated & printed combined CSS/JS assets by ~30ms (depending on the hosting package and the PHP version used) when the HTML source is altered by avoiding extra useless verifications of the HTML output
+* When managing the assets, make sure to show "before" and "after" content (so the user is aware how is that inline tag generated) associated with a handle too (not just the "data" one added via wp_localize_script())
+* When managing the assets, make sure the checkboxes from the load exception area are always disabled if there's no unload rule set, thus avoiding any user error to mistakenly add useless load exceptions to an already loading asset, also avoiding any confusing and get a cleaner list in the "Overview" area
+* "Overview" page update: If there's any "Load it for the logged-in user" exception for a handle, show it
+* Fix: Avoid creating redundant CSS files when minify inlined tags is enabled, leading to a large number of files in the caching
+
+= 1.3.5.9 =
+* Removed unused files from "vendor" (Composer's directory) and updated the Minify CSS/JS library to the latest version, fixing errors for PHP 7.4+
+* Fix: In some cases, a 500 Internal Error was generated while fetching the assets list for management via the Dashboard view
+
+= 1.3.5.8 =
+* Caching: Expired CSS/JS files are cleared differently (in time after visiting various pages) to save resources and errors related to the PHP memory (e.g. shared hosting packages often have limitations in terms of the server's CPU & memory usage)
+* Allow CSS/JS management for privately published pages
+* Strip empty STYLE/SCRIPT tags if, after optimization, their content is empty (e.g. the CSS was minified as it had only comments in it)
+* Show if there are any hardcoded (non-enqueued) LINK/STYLE/SCRIPT tags in the list of CSS/JS list (management of these tags is available in the Pro version)
+* Make sure the combined CSS/JS file is valid before its tag is generated in the HTML output (in rare cases, the cached CSS/JS files get deleted either by mistake when developers are cleaning up the caching directory OR they weren't properly created in the first place)
+* Compatibility fix to avoid PHP warning error when "Smart Slider 3" & "WP Rocket" are used and the CSS/JS assets are fetched
+
+= 1.3.5.7 =
+* Make the admin aware in case a certain CSS/JS asset is loaded within Internet Explorer conditional comments (Read more: https://www.sitepoint.com/internet-explorer-conditional-comments/)
+* From now on, "disk" is the default method for storing the cached information of the assets
+* Fix: Make sure the path to /wp-includes/ (or other internal directories) is the right one when the blog URL is like mysite.com/blog/
+* Fix: Sometimes, warning errors were printed in the "Settings" page after an update (within the Dashboard): "Warning: array_search() expects parameter 2 to be array, null given"
+
+= 1.3.5.6 =
+* Added "Debugging" tab to "Tools" page, allowing the option to download the error log file & view other debugging options
+* Improvement: Sometimes, 200 OK (success) is returned, but due to an issue with the page, the assets list is not retrieved; Notify the admin about this
+* Fix: Sometimes, warnings (harmless, but obtrusive) were given when updating plugin's settings and previewing pages: "Warning: array_unique() expects parameter 1 to be array, null given"
+
 = 1.3.5.5 =
 * Updated Minify CSS library for PHP 7.4 support (avoid any PHP errors from "implode" function)
 * Improvement: "display=" is now also applied to Google Fonts loading via WebFontConfig within inline SCRIPT tags

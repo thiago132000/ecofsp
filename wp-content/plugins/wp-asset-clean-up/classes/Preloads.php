@@ -92,7 +92,7 @@ class Preloads
 	    $preloads = $this->getPreloads();
 
 	    if (isset($preloads['styles']) && ! empty($preloads['styles'])) {
-		    $htmlSource = self::appendPreloadsForStylesToHead($htmlSource);
+		    $htmlSource = self::appendPreloadsForStylesToHead($htmlSource, array_keys($preloads['styles']));
 	    }
 
 	    $htmlSource = str_replace(self::DEL_STYLES_PRELOADS, '', $htmlSource);
@@ -229,7 +229,8 @@ class Preloads
 		}
 
 		if (array_key_exists($handle, $this->preloads['styles']) && $this->preloads['styles'][$handle]) {
-			return str_replace('<link ', '<link data-wpacu-to-be-preloaded-basic=\'1\' ', $htmlTag);
+			ObjectCache::wpacu_cache_set($handle, 1, 'wpacu_basic_preload_handles');
+            return str_replace('<link ', '<link data-wpacu-to-be-preloaded-basic=\'1\' ', $htmlTag);
 		}
 
 		return $htmlTag;
@@ -269,25 +270,51 @@ class Preloads
 
 	/**
 	 * @param $htmlSource
+	 * @param $preloadedHandles
 	 *
 	 * @return mixed
 	 */
-	public static function appendPreloadsForStylesToHead($htmlSource)
+	public static function appendPreloadsForStylesToHead($htmlSource, $preloadedHandles)
 	{
-		// Highest accuracy via DOMDocument
-		if (function_exists('libxml_use_internal_errors') && function_exists('libxml_clear_errors') && class_exists('DOMDocument')) {
+		// Perhaps it's not applicable in the current page (no LINK tags are loaded that should be preloaded)
+		if (strpos($htmlSource, 'data-wpacu-to-be-preloaded-basic') === false) {
+			return $htmlSource;
+		}
+
+		// Use the RegEx as it's much faster and very accurate in this situation
+		// If there are issues, fallback to DOMDocument
+		$strContainsFormat = preg_quote('data-wpacu-to-be-preloaded-basic', '/');
+		preg_match_all('#<link[^>]'.$strContainsFormat.'[^>]*' . 'href=(\'|"|)(.*)(\\1?\s)' . '.*(>)#Usmi', $htmlSource, $matchesSourcesFromLinkTags, PREG_SET_ORDER);
+
+		$stickToRegEx = true; // default
+
+		foreach ($matchesSourcesFromLinkTags as $linkTagArray) {
+			$linkTag = $linkTagArray[0];
+
+			preg_match_all('#id=([\'"])(.*?)(\\1)#', $linkTag, $matchId);
+			$matchedCssId = isset($matchId[2][0]) ? $matchId[2][0] : '';
+			$matchedCssHandle = substr($matchedCssId, 0, -4);
+
+			if (! in_array($matchedCssHandle, $preloadedHandles)) {
+				$stickToRegEx = false;
+				break;
+			}
+		}
+
+		// Something might not be right with the RegEx; Fallback to DOMDocument, more accurate, but slower
+		if (! $stickToRegEx && function_exists('libxml_use_internal_errors') && function_exists('libxml_clear_errors') && class_exists('\DOMDocument')) {
 			$documentForCSS = new \DOMDocument();
 			libxml_use_internal_errors(true);
 
-			$documentForCSS->loadHTML($htmlSource);
+			$htmlSourceAlt = preg_replace( '@<(noscript|style|script)[^>]*?>.*?</\\1>@si', '', $htmlSource );
+			$documentForCSS->loadHTML($htmlSourceAlt);
+
             $linkTags = $documentForCSS->getElementsByTagName( 'link' );
 
-			$matchesSourcesFromLinkTags = array();
+			$matchesSourcesFromLinkTags = array(); // reset its value; new fetch method was used
 
 			foreach ( $linkTags as $tagObject ) {
-				if (! $tagObject->hasAttributes()) {
-					continue;
-				}
+				if (empty($tagObject->attributes)) { continue; }
 
 				$linkAttributes = array();
 
@@ -301,10 +328,7 @@ class Preloads
 			}
 
 			libxml_clear_errors();
-        } else { // RegEx Fallback
-            $strContainsFormat = preg_quote('data-wpacu-to-be-preloaded-basic=\'1\'', '/');
-            preg_match_all('#<link[^>]'.$strContainsFormat.'[^>]*' . 'href=([\'"])(.*)([\'"])' . '.*(>)#Usmi', $htmlSource, $matchesSourcesFromLinkTags, PREG_SET_ORDER);
-		}
+        }
 
 		foreach ($matchesSourcesFromLinkTags as $linkTagArray) {
 			$linkHref = isset($linkTagArray[2]) ? $linkTagArray[2] : false;

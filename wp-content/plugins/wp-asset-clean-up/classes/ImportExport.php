@@ -22,8 +22,13 @@ class ImportExport
 		// e.g. jQuery Migrate, Comment Reply
 		$globalUnloadList = Main::instance()->getGlobalUnload();
 
-		$settingsArray['disable_jquery_migrate'] = in_array('jquery-migrate', $globalUnloadList['scripts']);
-		$settingsArray['disable_comment_reply']  = in_array('comment-reply',  $globalUnloadList['scripts']);
+		// CSS
+		$settingsArray['disable_dashicons_for_guests'] = in_array( 'dashicons',        $globalUnloadList['styles'] );
+		$settingsArray['disable_wp_block_library']     = in_array( 'wp-block-library', $globalUnloadList['styles'] );
+
+		// JS
+		$settingsArray['disable_jquery_migrate']       = in_array( 'jquery-migrate',   $globalUnloadList['scripts'] );
+		$settingsArray['disable_comment_reply']        = in_array( 'comment-reply',    $globalUnloadList['scripts'] );
 
 		return json_encode($settingsArray);
 	}
@@ -156,7 +161,7 @@ SQL;
 		// Last important check
 		\check_admin_referer('wpacu_do_import', 'wpacu_do_import_nonce');
 
-		if (! file_exists($jsonTmpName)) {
+		if (! is_file($jsonTmpName)) {
 			return;
 		}
 
@@ -177,10 +182,26 @@ SQL;
 			$wpacuSettings = new Settings();
 
 			// "Site-wide Common Unloads" - apply settings
-			$disableJQueryMigrate = isset($valuesArray['settings']['disable_jquery_migrate']) ? $valuesArray['settings']['disable_jquery_migrate'] : false;
-			$disableCommentReply  = isset($valuesArray['settings']['disable_comment_reply'])  ? $valuesArray['settings']['disable_comment_reply'] : false;
 
-			$wpacuSettings->updateSiteWideRuleForCommonAssets(array('jquery_migrate' => $disableJQueryMigrate, 'comment_reply' => $disableCommentReply));
+			// JS
+			$disableJQueryMigrate            = isset( $valuesArray['settings']['disable_jquery_migrate'] ) ? $valuesArray['settings']['disable_jquery_migrate'] : false;
+			$disableCommentReply             = isset( $valuesArray['settings']['disable_comment_reply'] ) ? $valuesArray['settings']['disable_comment_reply'] : false;
+
+			// CSS
+			$disableGutenbergCssBlockLibrary = isset( $valuesArray['settings']['disable_wp_block_library'] ) ? $valuesArray['settings']['disable_wp_block_library'] : false;
+			$disableDashiconsForGuests       = isset( $valuesArray['settings']['disable_dashicons_for_guests'] ) ? $valuesArray['settings']['disable_dashicons_for_guests'] : false;
+
+			$wpacuSettings->updateSiteWideRuleForCommonAssets(
+				array(
+					// JS
+					'jquery_migrate'   => $disableJQueryMigrate,
+					'comment_reply'    => $disableCommentReply,
+
+					// CSS
+					'wp_block_library' => $disableGutenbergCssBlockLibrary,
+					'dashicons'        => $disableDashiconsForGuests,
+				)
+			);
 
 			Misc::addUpdateOption(WPACU_PLUGIN_ID . '_settings', json_encode($valuesArray['settings']));
 			$importedList[] = 'settings';
@@ -244,7 +265,7 @@ SQL;
 
 		if (! empty($importedList)) {
 			// After import was completed, clear all CSS/JS cache
-			OptimizeCommon::clearAllCache();
+			OptimizeCommon::clearCache();
 
 			set_transient('wpacu_import_done', json_encode($importedList), 30);
 

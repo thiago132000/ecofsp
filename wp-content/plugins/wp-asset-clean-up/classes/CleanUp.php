@@ -1,6 +1,8 @@
 <?php
 namespace WpAssetCleanUp;
 
+use WpAssetCleanUp\OptimiseAssets\OptimizeCommon;
+
 /**
  * Class CleanUp
  * @package WpAssetCleanUp
@@ -23,7 +25,7 @@ class CleanUp
 	 */
 	public function doClean()
 	{
-		if (Main::instance()->preventAssetsSettings()) {
+		if (Plugin::preventAnyChanges() || Main::instance()->preventAssetsSettings()) {
 			return;
 		}
 
@@ -45,6 +47,10 @@ class CleanUp
 		if ($settings['remove_rest_api_link'] == 1) {
 			// <link rel='https://api.w.org/' href='https://yourwebsite.com/wp-json/' />
 			remove_action('wp_head', 'rest_output_link_wp_head');
+
+			// Removes the following printed within "Response headers":
+			// <https://yourwebsite.com/wp-json/>; rel="https://api.w.org/"
+			remove_action( 'template_redirect', 'rest_output_link_header', 11 );
 		}
 
 		// Remove "Shortlink"?
@@ -54,8 +60,7 @@ class CleanUp
 
 			// link: <https://yourdomainname.com/wp-json/>; rel="https://api.w.org/", <https://yourdomainname.com/?p=[post_id_here]>; rel=shortlink
 			remove_action('template_redirect', 'wp_shortlink_header', 11);
-
-			}
+		}
 
 		// Remove "Post's Relational Links"?
 		if ($settings['remove_posts_rel_links'] == 1) {
@@ -143,105 +148,121 @@ class CleanUp
 	 */
 	public static function removeMetaGenerators($htmlSource)
 	{
-		if (stripos($htmlSource, '<meta') === false) {
-			return $htmlSource;
-		}
+		$fetchMethod = 'dom'; // 'regex' or 'dom'
 
-		// Use DOMDocument to alter the HTML Source and Remove the tags
-		$htmlSourceOriginal = $htmlSource;
+		if ($fetchMethod === 'regex') {
+			preg_match_all(
+				'/<meta.*name=(|\'|")generator(\\1).*content=(|\'|")(.*?)(|\'|").*?>/i',
+				$htmlSource,
+				$matchesSourcesFromTags,
+				PREG_SET_ORDER
+			);
 
-		if (function_exists('libxml_use_internal_errors')
-		    && function_exists('libxml_clear_errors')
-		    && class_exists('DOMDocument'))
-		{
-			$document = new \DOMDocument();
-			libxml_use_internal_errors(true);
+			preg_match_all(
+				'/<meta.*content=(|\'|")(.*?)(\\1).*name=(|\'|")generator(\\2).*?>/i',
+				$htmlSource,
+				$matchesSourcesFromTagsTwo,
+				PREG_SET_ORDER
+			);
 
-			$document->loadHTML($htmlSource);
+			$matchesSourcesFromTags = array_merge($matchesSourcesFromTags, $matchesSourcesFromTagsTwo);
 
-			$domUpdated = false;
-
-			foreach ($document->getElementsByTagName('meta') as $tagObject) {
-				$nameAttrValue = $tagObject->getAttribute('name');
-
-				if ($nameAttrValue === 'generator') {
-					$outerTag = $outerTagRegExp = trim(self::getOuterHTML($tagObject));
-
-					// As DOMDocument doesn't retrieve the exact string, some alterations to the RegEx have to be made
-					// Leave no room for errors as all sort of characters can be within the "content" attribute
-					$last2Chars = substr($outerTag, -2);
-
-					if ($last2Chars === '">' || $last2Chars === "'>") {
-						$tagWithoutLastChar = substr($outerTag, 0, -1);
-						$outerTagRegExp = preg_quote($tagWithoutLastChar, '/').'(.*?)>';
-					}
-
-					$outerTagRegExp = str_replace(
-						array('"', '&lt;', '&gt;'),
-						array('(["\'])', '(<|&lt;)', '(>|&gt;)'),
-						$outerTagRegExp
-					);
-
-					if (strpos($outerTagRegExp, '<meta') !== false) {
-						preg_match_all('#' . $outerTagRegExp . '#si', $htmlSource, $matches);
-
-						if (isset($matches[0][0]) && ! empty($matches[0][0]) && strip_tags($matches[0][0]) === '') {
-							$htmlSource = str_replace( $matches[0][0], '', $htmlSource );
-						}
-
-						if ($htmlSource !== $htmlSourceOriginal) {
-							$domUpdated = true;
-						}
-					}
-				}
-			}
-
-			libxml_clear_errors();
-
-			if ($domUpdated) {
+			if (empty($matchesSourcesFromTags)) {
 				return $htmlSource;
 			}
-		}
 
-		// DOMDocument is not enabled. Use the RegExp instead (not as smooth, but does its job)!
-		preg_match_all('#<meta[^>]*name(\s+|)=(\s+|)("|\')generator("|\').*("|\'|\/)(\s+|)>#Usmi', $htmlSource, $matches);
+			$metaTagsToStrip = array();
 
-		if (isset($matches[0]) && ! empty($matches[0])) {
-			foreach ($matches[0] as $metaTag) {
-				if (strip_tags($metaTag) === '') { // make sure the full tag was extracted
-					$htmlSource = str_replace($metaTag, '', $htmlSource);
+			foreach ($matchesSourcesFromTags as $matchesResults) {
+				if (isset($matchesResults[0]) && ($matchedTag = $matchesResults[0])) {
+					if (strip_tags($matchedTag) !== '') { // Needs to be a proper match (very rare cases, but it can happen)
+						continue;
+					}
+
+					$metaTagsToStrip[$matchedTag] = '';
 				}
+			}
+
+			$htmlSource = strtr($htmlSource, $metaTagsToStrip);
+		} elseif ($fetchMethod === 'dom') {
+			if ( function_exists( 'libxml_use_internal_errors' ) && function_exists( 'libxml_clear_errors' ) && class_exists( '\DOMDocument' ) ) {
+				if ($htmlSource === '') {
+					return $htmlSource;
+				}
+
+				$domTag = OptimizeCommon::getDomLoadedTag($htmlSource, 'removeMetaGenerators');
+
+				$metaTagsToStrip = array();
+
+				foreach ( $domTag->getElementsByTagName( 'meta' ) as $tagObject ) {
+					$nameAttrValue = $tagObject->getAttribute( 'name' );
+
+					if ( $nameAttrValue === 'generator' ) {
+						$outerTag = $outerTagRegExp = trim( self::getOuterHTML( $tagObject ) );
+
+						// As DOMDocument doesn't retrieve the exact string, some alterations to the RegEx have to be made
+						// Leave no room for errors as all sort of characters can be within the "content" attribute
+						$last2Chars = substr( $outerTag, - 2 );
+
+						if ( $last2Chars === '">' || $last2Chars === "'>" ) {
+							$tagWithoutLastChar = substr( $outerTag, 0, - 1 );
+							$outerTagRegExp     = preg_quote( $tagWithoutLastChar, '/' ) . '(.*?)>';
+						}
+
+						$outerTagRegExp = str_replace(
+							array( '"', '&lt;', '&gt;' ),
+							array( '("|\'|)', '(<|&lt;)', '(>|&gt;)' ),
+							$outerTagRegExp
+						);
+
+						if ( strpos( $outerTagRegExp, '<meta' ) !== false ) {
+							$outerTagRegExp = str_replace('#', '\#', $outerTagRegExp);
+							preg_match_all( '#' . $outerTagRegExp . '#si', $htmlSource, $matches );
+
+							if ( isset( $matches[0][0] ) && ! empty( $matches[0][0] ) && strip_tags( $matches[0][0] ) === '' ) {
+								$metaTagsToStrip[$matches[0][0]] = '';
+							}
+						}
+					}
+				}
+
+				$htmlSource = strtr($htmlSource, $metaTagsToStrip);
+
+				libxml_clear_errors();
 			}
 		}
 
+		/* [wpacu_timing] */
+		Misc::scriptExecTimer( 'alter_html_source_for_remove_meta_generators',
+			'end' ); /* [/wpacu_timing] */
 		return $htmlSource;
 	}
 
 	/**
 	 * @param $htmlSource
+	 * @param bool $ignoreExceptions
+	 * @param $for
 	 *
-	 * @return mixed
+	 * @return string|string[]
 	 */
-	public static function removeHtmlComments($htmlSource)
+	public static function removeHtmlComments($htmlSource, $ignoreExceptions = false)
 	{
 		// No comments? Do not continue
 		if (strpos($htmlSource, '<!--') === false) {
 			return $htmlSource;
 		}
 
-		if (! (function_exists('libxml_use_internal_errors')
-		       && function_exists('libxml_clear_errors')
-		       && class_exists('DOMDocument')))
-		{
+		if (! (function_exists('libxml_use_internal_errors') && function_exists('libxml_clear_errors') && class_exists('\DOMDocument'))) {
 			return $htmlSource;
 		}
 
-		$domComments = new \DOMDocument();
-		libxml_use_internal_errors(true);
+		$domTag = OptimizeCommon::getDomLoadedTag($htmlSource, 'removeHtmlComments');
 
-		$domComments->loadHTML($htmlSource);
+		if (! $domTag) {
+			return $htmlSource;
+		}
 
-		$xpathComments = new \DOMXPath($domComments);
+		$xpathComments = new \DOMXPath($domTag);
 		$comments = $xpathComments->query('//comment()');
 
 		libxml_clear_errors();
@@ -278,18 +299,21 @@ class CleanUp
 			}
 		}
 
+		$stripCommentsList = array();
+
 		foreach ($comments as $comment) {
-			$entireComment = self::getOuterHTML($comment);
+			$entireComment = '<!--' . $comment->nodeValue . '-->';
 
 			// Do not strip MSIE conditional comments
-			if (strpos($entireComment, '<!--<![endif]-->') !== false ||
-			    preg_match('#<!--\[if(.*?)]>(.*?)<!-->#si', $entireComment) ||
-			    preg_match('#<!--\[if(.*?)\[endif]-->#si', $entireComment)) {
+			if ( strpos( $entireComment, '<!--<![endif]-->' ) !== false ||
+			     preg_match( '#<!--\[if(.*?)]>(.*?)<!-->#si', $entireComment ) ||
+			     preg_match( '#<!--\[if(.*?)\[endif]-->#si', $entireComment ) ) {
 				continue;
 			}
 
 			// Any exceptions set in "Strip HTML comments?" textarea?
-			if (Main::instance()->settings['remove_html_comments_exceptions']) {
+			// $ignoreExceptions has to be set to false (as it is by default)
+			if (! $ignoreExceptions && Main::instance()->settings['remove_html_comments_exceptions']) {
 				$removeHtmlCommentsExceptions = trim(Main::instance()->settings['remove_html_comments_exceptions']);
 
 				if (strpos($removeHtmlCommentsExceptions, "\n") !== false) {
@@ -305,14 +329,15 @@ class CleanUp
 				}
 			}
 
-			$htmlSource = str_replace(
-				array(
-					$entireComment,
-					'<!--' . $comment->nodeValue . '-->'
-				),
-				'',
-				$htmlSource
-			);
+			if (strlen($entireComment) < 200) {
+				$stripCommentsList[ $entireComment ] = '';
+			} else {
+				$htmlSource = str_replace($entireComment, '', $htmlSource);
+			}
+		}
+
+		if (! empty($stripCommentsList)) {
+			$htmlSource = strtr( $htmlSource, $stripCommentsList );
 		}
 
 		if (! empty($commentsWithinQuotes)) {
@@ -332,7 +357,6 @@ class CleanUp
 	public static function getOuterHTML($e)
 	{
 		$doc = new \DOMDocument();
-
 		libxml_use_internal_errors( true );
 
 		$doc->appendChild($doc->importNode($e, true));
@@ -495,6 +519,13 @@ class CleanUp
 
 		// No Autoptimize
 		add_filter('autoptimize_filter_noptimize', '__return_false');
+
+		// Use less resources during CSS/JS fetching by preventing other plugins to interfere with the HTML output as it's completely unnecessary in this instance
+		if (Misc::isPluginActive('autoptimize/autoptimize.php')) {
+			foreach (array('autoptimize_html', 'autoptimize_css', 'autoptimize_js', 'autoptimize_cdn_url', 'autoptimize_optimize_logged') as $aoOption) {
+				add_filter('pre_option_'.$aoOption, static function($value) { return ''; });
+			}
+		}
 
 		// No Fast Velocity Minify
 		add_action('plugins_loaded', static function() {

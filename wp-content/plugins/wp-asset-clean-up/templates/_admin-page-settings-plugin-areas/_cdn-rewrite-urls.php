@@ -40,40 +40,38 @@ $styleTabContent = ($selectedTabArea === $tabIdArea) ? 'style="display: table-ce
 				$cdnRewriteAreaStyle = ($data['cdn_rewrite_enable'] == 1) ? 'opacity: 1;' : 'opacity: 0.4;';
 				?>
                 <div id="wpacu_cdn_rewrite_enable_area" style="<?php echo $cdnRewriteAreaStyle; ?>">
-                    <div id="wpacu_minify_css_exceptions_area">
-                        <div style="margin-top: 20px; margin-bottom: 0;"></div>
-                        <table>
-                            <tr>
-                                <td style="vertical-align: top;" valign="top">For Stylesheet (.css) Files:&nbsp;&nbsp;</td>
-                                <td style="padding-bottom: 10px;">
-                                    <label for="wpacu_cdn_rewrite_url_css"><input id="wpacu_cdn_rewrite_url_css"
-                                            name="<?php echo WPACU_PLUGIN_ID . '_settings'; ?>[cdn_rewrite_url_css]"
-                                            value="<?php echo $data['cdn_rewrite_url_css']; ?>"
-                                            style="width: 300px;" /><br />
-                                    </label>
+                    <div style="margin-top: 20px; margin-bottom: 0;"></div>
+                    <table>
+                        <tr>
+                            <td style="vertical-align: top;" valign="top">For Stylesheet (.css) Files:&nbsp;&nbsp;</td>
+                            <td style="padding-bottom: 10px;">
+                                <label for="wpacu_cdn_rewrite_url_css"><input id="wpacu_cdn_rewrite_url_css"
+                                        name="<?php echo WPACU_PLUGIN_ID . '_settings'; ?>[cdn_rewrite_url_css]"
+                                        value="<?php echo $data['cdn_rewrite_url_css']; ?>"
+                                        style="width: 300px;" /><br />
+                                </label>
 
-                                    <ul style="font-style: italic; line-height: 13px; font-size: 12px; margin-top: 5px; margin-bottom: 0;">
-                                        <li>e.g. //css-zone-name.kxcdn.com</li>
-                                        <li>zone-name.kxcdn.com etc.</li>
-                                    </ul>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style="vertical-align: top;" valign="top">For JavaScript (.js) Files:&nbsp;&nbsp;</td>
-                                <td style="padding-bottom: 3px;"><label for="wpacu_cdn_rewrite_url_js">
-                                        <input id="wpacu_cdn_rewrite_url_js"
-                                               name="<?php echo WPACU_PLUGIN_ID . '_settings'; ?>[cdn_rewrite_url_js]"
-                                               value="<?php echo $data['cdn_rewrite_url_js']; ?>"
-                                               style="width: 300px;" /><br />
-                                    </label>
-                                    <ul style="font-style: italic; line-height: 13px; font-size: 12px; margin-top: 5px;">
-                                        <li>e.g. //js-zone-name.kxcdn.com</li>
-                                        <li>zone-name.kxcdn.com etc.</li>
-                                    </ul>
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
+                                <ul style="font-style: italic; line-height: 13px; font-size: 12px; margin-top: 5px; margin-bottom: 0;">
+                                    <li>e.g. //css-zone-name.kxcdn.com</li>
+                                    <li>zone-name.kxcdn.com etc.</li>
+                                </ul>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="vertical-align: top;" valign="top">For JavaScript (.js) Files:&nbsp;&nbsp;</td>
+                            <td style="padding-bottom: 3px;"><label for="wpacu_cdn_rewrite_url_js">
+                                    <input id="wpacu_cdn_rewrite_url_js"
+                                           name="<?php echo WPACU_PLUGIN_ID . '_settings'; ?>[cdn_rewrite_url_js]"
+                                           value="<?php echo $data['cdn_rewrite_url_js']; ?>"
+                                           style="width: 300px;" /><br />
+                                </label>
+                                <ul style="font-style: italic; line-height: 13px; font-size: 12px; margin-top: 5px;">
+                                    <li>e.g. //js-zone-name.kxcdn.com</li>
+                                    <li>zone-name.kxcdn.com etc.</li>
+                                </ul>
+                            </td>
+                        </tr>
+                    </table>
                     <hr />
                     <p style="margin-top: 10px;"><strong>Note:</strong> Most of the time the CNAME / CDN URL is the same for both CSS &amp; JS files. You can use the same value in both fields.</p>
 

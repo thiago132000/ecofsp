@@ -21,17 +21,34 @@ class Image_Accordion extends Widget_Base
 
     public function get_title()
     {
-        return esc_html__('EA Image Accordion', 'essential-addons-for-elementor-lite');
+        return esc_html__('Image Accordion', 'essential-addons-for-elementor-lite');
     }
 
     public function get_icon()
     {
-        return 'eicon-call-to-action';
+        return 'eaicon-image-accrodion';
     }
 
     public function get_categories()
     {
         return ['essential-addons-elementor'];
+    }
+    
+    public function get_keywords() {
+        return [
+            'image',
+            'ea image accordion',
+            'image effect',
+            'hover effect',
+            'creative image',
+            'gallery',
+            'ea',
+            'essential addons'
+        ];
+    }
+
+    public function get_custom_help_url() {
+        return 'https://essential-addons.com/elementor/docs/image-accordion/';
     }
 
     protected function _register_controls()
@@ -57,6 +74,21 @@ class Image_Accordion extends Widget_Base
                     'on-hover' => esc_html__('On Hover', 'essential-addons-for-elementor-lite'),
                     'on-click' => esc_html__('On Click', 'essential-addons-for-elementor-lite'),
                 ],
+            ]
+        );
+
+        $this->add_control(
+            'eael_img_accordion_direction',
+            [
+                'label' => esc_html__('Direction', 'essential-addons-for-elementor-lite'),
+                'type' => Controls_Manager::SELECT,
+                'default' => 'on-hover',
+                'label_block' => false,
+                'options' => [
+                    'accordion-direction-horizontal' => esc_html__('Horizontal', 'essential-addons-for-elementor-lite'),
+                    'accordion-direction-vertical' => esc_html__('Vertical', 'essential-addons-for-elementor-lite')
+                ],
+                'default'   => 'accordion-direction-horizontal'
             ]
         );
 
@@ -318,14 +350,23 @@ class Image_Accordion extends Widget_Base
     {
         $settings = $this->get_settings_for_display();
 
-        $this->add_render_attribute('eael-image-accordion', 'class', 'eael-img-accordion');
+        $this->add_render_attribute(
+            'eael-image-accordion',
+            [
+                'class' => [
+                    'eael-img-accordion',
+                    $settings['eael_img_accordion_direction']
+                ]
+            ]
+        );
+
         $this->add_render_attribute('eael-image-accordion', 'data-img-accordion-id', esc_attr($this->get_id()));
-        $this->add_render_attribute('eael-image-accordion', 'data-img-accordion-type', $settings['eael_img_accordion_type']);
+        $this->add_render_attribute('eael-image-accordion', 'data-img-accordion-type', $settings['eael_img_accordion_type']);        
 
         if (!empty($settings['eael_img_accordions'])) {
             echo '<div ' . $this->get_render_attribute_string('eael-image-accordion') . ' id="eael-img-accordion-' . $this->get_id() . '">';
             foreach ($settings['eael_img_accordions'] as $img_accordion) {
-                $eael_accordion_link = $img_accordion['eael_accordion_title_link']['url'];
+                $eael_accordion_link = ('#' === $img_accordion['eael_accordion_title_link']['url']) ? '#/' : $img_accordion['eael_accordion_title_link']['url'];
                 $target = $img_accordion['eael_accordion_title_link']['is_external'] ? 'target="_blank"' : '';
                 $nofollow = $img_accordion['eael_accordion_title_link']['nofollow'] ? 'rel="nofollow"' : '';
 
@@ -341,7 +382,7 @@ class Image_Accordion extends Widget_Base
             echo '</div>';
 
             if ('on-hover' === $settings['eael_img_accordion_type']) {
-                echo '<style>
+                echo '<style typr="text/css">
                   #eael-img-accordion-' . $this->get_id() . ' a:hover {
                     flex: 3;
                   }
@@ -353,6 +394,7 @@ class Image_Accordion extends Widget_Base
                   }
                 </style>';
             }
+            
         }
     }
 }

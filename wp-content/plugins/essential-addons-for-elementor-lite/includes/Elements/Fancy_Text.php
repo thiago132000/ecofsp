@@ -12,7 +12,6 @@ use \Elementor\Group_Control_Typography as Group_Control_Typography;
 use \Elementor\Scheme_Typography as Scheme_Typography;
 use \Elementor\Widget_Base as Widget_Base;
 use \Elementor\Repeater;
-use \Essential_Addons_Elementor\Classes\Bootstrap;
 
 class Fancy_Text extends Widget_Base {
 
@@ -22,16 +21,36 @@ class Fancy_Text extends Widget_Base {
 	}
 
 	public function get_title() {
-		return esc_html__( 'EA Fancy Text', 'essential-addons-for-elementor-lite');
+		return esc_html__( 'Fancy Text', 'essential-addons-for-elementor-lite');
 	}
 
 	public function get_icon() {
-		return 'eicon-animation-text';
+		return 'eaicon-fancy-text';
 	}
 
     public function get_categories() {
 		return [ 'essential-addons-elementor' ];
 	}
+    
+    public function get_keywords() {
+        return [
+			'ea fancy text',
+			'ea typing text',
+			'animated headline',
+			'Headline',
+			'typewriter',
+			'text effect',
+			'text typing effect',
+			'text animation',
+			'animated heading',
+			'ea',
+			'essential addons'
+		];
+    }
+
+    public function get_custom_help_url() {
+        return 'https://essential-addons.com/elementor/docs/fancy-text/';
+    }
 
 	protected function _register_controls() {
 
@@ -80,10 +99,10 @@ class Fancy_Text extends Widget_Base {
 						'eael_fancy_text_strings_text_field' => __( 'First string', 'essential-addons-for-elementor-lite'),
 					],
 					[
-						'eael_fancy_text_strings_text_field' => __( 'Second tring', 'essential-addons-for-elementor-lite'),
+						'eael_fancy_text_strings_text_field' => __( 'Second string', 'essential-addons-for-elementor-lite'),
 					],
 					[
-						'eael_fancy_text_strings_text_field' => __( 'Third tring', 'essential-addons-for-elementor-lite'),
+						'eael_fancy_text_strings_text_field' => __( 'Third string', 'essential-addons-for-elementor-lite'),
 					]
 				],
 			]
@@ -446,7 +465,7 @@ class Fancy_Text extends Widget_Base {
 	}
 
 	public function fancy_text($settings) {
-		$fancy_text = array();
+		$fancy_text = array("");
 		foreach ( $settings as $item ) {
 			if ( ! empty( $item['eael_fancy_text_strings_text_field'] ) )  {
 				$fancy_text[] = $item['eael_fancy_text_strings_text_field'] ;
@@ -483,12 +502,16 @@ class Fancy_Text extends Widget_Base {
 		<?php endif; ?>
 
 		<?php if ( $settings['eael_fancy_text_transition_type']  != 'fancy' ) : ?>
-			<span id="eael-fancy-text-<?php echo esc_attr($this->get_id()); ?>" class="eael-fancy-text-strings"><?php
-				$eael_fancy_text_strings_list = "";
-				foreach ( $settings['eael_fancy_text_strings'] as $item ) {
-					$eael_fancy_text_strings_list .=  $item['eael_fancy_text_strings_text_field'] . ', ';
-				}
-				echo rtrim($eael_fancy_text_strings_list, ", "); ?>
+			<span id="eael-fancy-text-<?php echo esc_attr($this->get_id()); ?>" class="eael-fancy-text-strings">
+				<noscript>
+					<?php
+						$eael_fancy_text_strings_list = "";
+						foreach ( $settings['eael_fancy_text_strings'] as $item ) {
+							$eael_fancy_text_strings_list .=  $item['eael_fancy_text_strings_text_field'] . ', ';
+						}
+						echo rtrim($eael_fancy_text_strings_list, ", ");
+					?>
+				</noscript>
 			</span>
 		<?php endif; ?>
 

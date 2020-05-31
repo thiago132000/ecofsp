@@ -144,3 +144,93 @@ body.page-template-page-video{
         text-align: center;
     }
 }
+
+body.page-template-page-podcasts{
+    .podcast_list{
+        width: 68%;
+        float: left;
+    }
+    .entry-body{
+        width: calc(100% - 40px);
+        grid-template-columns: repeat(1,1fr);
+        grid-row-gap: 30px;
+        align-items: stretch;
+        .podcast_row{
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            .podcast_img{
+                margin-right: 20px;
+                max-width: 100%;
+                width: 250px;
+                height: 250px;
+                a{
+                    width: 100%;
+                    height: 100%;
+                    img{
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                        object-position: center; 
+                    }
+                }
+            }
+            .podcast_informacoes{
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-start;
+                width: 490px;
+                max-width: 100%;
+                .podcast_titulo{
+                    margin-bottom: 20px;
+                    width: 100%;
+                    a{
+                        h4{
+                            font-size: 24px;
+                            font-weight: bold;
+                            color: #192930;
+                            line-height: normal;
+                            margin: 0;
+                        }
+                    }
+                }
+                .podcast_data{
+                    margin-bottom: 20px;
+                    width: 100%;
+                    time{
+                        margin: 0;
+                        font-size: 14px;
+                        font-weight: bold;
+                        color: #192930;
+                    }
+                }
+                .podcast_resumo{
+                    width: 100%;
+                    p{
+                        font-size: 16px;
+                        line-height: normal;
+                        font-weight: 400;
+                        color: #192930;
+                    }
+                }
+                .podcast_link{
+                    width: 100%;
+                    a{
+                        border: 0;
+                        background: #d7b221;
+                        box-shadow: none;
+                        color: white;
+                        font-weight: bold;
+                        letter-spacing: 1px;
+                        line-height: 1;
+                        transition: 0.3s;
+                        float: right;
+                        font-size: 14px;
+                        border-radius: 10px;
+                        padding: 15px;
+                    }
+                }
+            }
+        }
+    }
+}

@@ -18,11 +18,13 @@ class Debug
 			add_action('wp_footer', array($this, 'showDebugOptions'), PHP_INT_MAX);
 		}
 
-		add_action('wp', static function() {
-			if ( isset( $_GET['wpacu_get_cache_dir_size'] ) && Menu::userCanManageAssets() ) { // Only print within the Dashboard
-				self::printCacheDirInfo();
-			}
-		});
+		foreach(array('wp', 'admin_init') as $wpacuActionHook) {
+			add_action( $wpacuActionHook, static function() {
+				if ( isset( $_GET['wpacu_get_cache_dir_size'] ) && Menu::userCanManageAssets() ) {
+					self::printCacheDirInfo();
+				}
+			});
+        }
 	}
 
 	/**
@@ -178,7 +180,7 @@ class Debug
                                                 <li>From CSS file to Inline: {wpacu_alter_html_source_for_inline_css_exec_time}</li>
                                                 <li>Update Original to Optimized: {wpacu_alter_html_source_original_to_optimized_css_exec_time}</li>
                                                 <li>Preloads: {wpacu_alter_html_source_for_preload_css_exec_time}</li>
-                                                <li>Dynamic Loaded CSS (if any): {wpacu_alter_html_source_for_dynamic_loaded_css_exec_time}</li>
+                                                <!-- -->
                                                 <li>Combine: {wpacu_alter_html_source_for_combine_css_exec_time}</li>
                                                 <li>Minify Inline Tags: {wpacu_alter_html_source_for_minify_inline_style_tags_exec_time}</li>
                                                 <li>Unload (ignore dependencies): {wpacu_alter_html_source_unload_ignore_deps_css_exec_time}</li>
@@ -189,7 +191,7 @@ class Debug
                                             <ul>
                                                 <li>Update Original to Optimized: {wpacu_alter_html_source_original_to_optimized_js_exec_time}</li>
                                                 <li>Preloads: {wpacu_alter_html_source_for_preload_js_exec_time}</li>
-	                                            <li>Dynamic Loaded JS (if any): {wpacu_alter_html_source_for_dynamic_loaded_js_exec_time}</li>
+                                                <!-- -->
                                                 <li>Combine: {wpacu_alter_html_source_for_combine_js_exec_time}</li>
                                                 <li>Unload (ignore dependencies): {wpacu_alter_html_source_unload_ignore_deps_js_exec_time}</li>
                                                 <li>Move any inline wih jQuery code after jQuery library: {wpacu_alter_html_source_move_inline_jquery_after_src_tag_exec_time}</li>
